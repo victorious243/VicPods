@@ -1,0 +1,123 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Series Brief</h3>
+    <a href="/kitchen" class="btn btn-ghost">Back to Kitchen</a>
+  </div>
+  <p><strong>Tone:</strong> <%= series.tone %> · <strong>Audience:</strong> <%= series.audience || 'General' %> · <strong>Planned Episodes:</strong> <%= series.plannedEpisodeCount || 0 %></p>
+  <p><%= series.description || 'No series description yet.' %></p>
+  <% if (series.seriesSummary) { %>
+    <p><strong>Series Continuity Summary:</strong> <%= series.seriesSummary %></p>
+  <% } %>
+</section>
+
+<section class="split-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3>Create Theme</h3>
+      <span class="mini-label">Series → Themes</span>
+    </div>
+    <form method="POST" action="/kitchen/<%= series._id %>/themes" class="form-grid">
+      <label>
+        Theme Name
+        <input type="text" name="name" maxlength="120" required placeholder="Monetization Experiments" />
+      </label>
+      <label>
+        Theme Description
+        <textarea name="description" rows="3" maxlength="1000" placeholder="What this theme explores across episodes"></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary">Create Theme</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3>Pantry Ingredients</h3>
+      <a href="/pantry" class="btn btn-ghost">Open Pantry</a>
+    </div>
+    <% if (!ideas.length) { %>
+      <p class="empty-state">No ideas yet. Add hooks in Pantry.</p>
+    <% } else { %>
+      <div class="chip-wrap">
+        <% ideas.forEach((idea) => { %>
+          <span class="chip"><%= idea.tag %>: <%= idea.hook %></span>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Themes & Episodes</h3>
+    <span class="mini-label">Nested workflow</span>
+  </div>
+
+  <% if (!themesWithEpisodes.length) { %>
+    <p class="empty-state">No themes yet for this series.</p>
+  <% } else { %>
+    <div class="theme-stack">
+      <% themesWithEpisodes.forEach((entry, index) => { %>
+        <% const theme = entry.theme; %>
+        <% const episodes = entry.episodes; %>
+        <% const firstEpisode = episodes[0]; %>
+        <details class="theme-card" id="theme-<%= theme._id %>" <%= index === 0 ? 'open' : '' %>>
+          <summary class="theme-summary">
+            <div>
+              <h4><%= theme.name %></h4>
+              <p><%= theme.description || 'No theme description yet.' %></p>
+            </div>
+            <div class="inline-actions">
+              <span class="mini-label"><%= entry.progress.servedCount %>/<%= entry.progress.totalCount %> served</span>
+              <% if (firstEpisode) { %>
+                <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= firstEpisode._id %>">Open</a>
+              <% } %>
+            </div>
+          </summary>
+
+          <div class="theme-body">
+            <% if (theme.themeSummary) { %>
+              <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
+            <% } %>
+
+            <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes" class="theme-add-episode">
+              <label>
+                Episode Number (within <%= theme.name %>)
+                <input type="number" name="episodeNumberWithinTheme" min="1" placeholder="Auto" />
+              </label>
+              <label>
+                Working Title
+                <input type="text" name="title" maxlength="160" placeholder="Episode title" />
+              </label>
+              <button type="submit" class="btn btn-secondary">Add Episode</button>
+            </form>
+
+            <% if (!episodes.length) { %>
+              <p class="empty-state">No episodes in this theme yet.</p>
+            <% } else { %>
+              <div class="episode-divider-stack">
+                <% episodes.forEach((episode) => { %>
+                  <article class="episode-block">
+                    <header>
+                      <h4>
+                        Theme Ep <%= episode.episodeNumberWithinTheme %>
+                        <% if (episode.globalEpisodeNumber) { %>
+                          · Global <%= episode.globalEpisodeNumber %>
+                        <% } %>
+                        · <%= episode.title || 'Untitled' %>
+                      </h4>
+                      <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+                    </header>
+                    <p><%= episode.hook || 'No hook yet.' %></p>
+                    <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>">
+                      Edit Theme Episode <%= episode.episodeNumberWithinTheme %>
+                    </a>
+                  </article>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </details>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

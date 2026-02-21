@@ -1,0 +1,52 @@
+<section class="card-grid stats-grid">
+  <article class="card stat-card">
+    <p>Series</p>
+    <h3><%= stats.seriesCount %></h3>
+  </article>
+  <article class="card stat-card">
+    <p>Episodes</p>
+    <h3><%= stats.episodeCount %></h3>
+  </article>
+  <article class="card stat-card">
+    <p>Served</p>
+    <h3><%= stats.servedCount %></h3>
+  </article>
+  <article class="card stat-card">
+    <p>Pantry Ideas</p>
+    <h3><%= stats.ideaCount %></h3>
+  </article>
+  <article class="card stat-card wide">
+    <p>Chef AI Credits Today</p>
+    <h3><%= stats.aiRemaining %></h3>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Recent Kitchen Activity</h3>
+    <a href="/kitchen" class="btn btn-ghost">Open Kitchen</a>
+  </div>
+  <% if (!latestEpisodes.length) { %>
+    <p class="empty-state">No episodes yet. Create your first series in Kitchen.</p>
+  <% } else { %>
+    <div class="list-stack">
+      <% latestEpisodes.forEach((episode) => { %>
+        <% const hasTheme = Boolean(episode.themeId?._id); %>
+        <a
+          class="list-item"
+          href="<%= hasTheme ? `/kitchen/${episode.seriesId?._id}/themes/${episode.themeId?._id}/episodes/${episode._id}` : `/kitchen/${episode.seriesId?._id}` %>"
+        >
+          <div>
+            <h4><%= episode.title || `Episode ${episode.episodeNumberWithinTheme || '?'}` %></h4>
+            <p>
+              <%= episode.seriesId?.name || 'Series' %>
+              · <%= episode.themeId?.name || 'Theme pending' %>
+              · Episode <%= episode.episodeNumberWithinTheme || '?' %>
+            </p>
+          </div>
+          <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

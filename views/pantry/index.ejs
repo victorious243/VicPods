@@ -1,0 +1,63 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Add Ingredient</h3>
+    <span class="mini-label">Idea Bank</span>
+  </div>
+  <form method="POST" action="/pantry" class="form-grid">
+    <label>
+      Hook (1-2 lines)
+      <textarea name="hook" rows="2" required maxlength="240" placeholder="A counterintuitive lesson that flips assumptions..."></textarea>
+    </label>
+    <div class="two-col">
+      <label>
+        Tag
+        <input type="text" name="tag" maxlength="60" placeholder="story, growth, monetization" />
+      </label>
+      <label>
+        Notes
+        <input type="text" name="notes" maxlength="1000" placeholder="Optional context" />
+      </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Add to Pantry</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Pantry Shelf</h3>
+    <span class="mini-label"><%= ideas.length %> ideas</span>
+  </div>
+
+  <% if (!ideas.length) { %>
+    <p class="empty-state">No ideas saved yet.</p>
+  <% } else { %>
+    <div class="list-stack">
+      <% ideas.forEach((idea) => { %>
+        <article class="idea-item">
+          <form method="POST" action="/pantry/<%= idea._id %>/update" class="form-grid">
+            <label>
+              Hook
+              <textarea name="hook" rows="2" maxlength="240" required><%= idea.hook %></textarea>
+            </label>
+            <div class="two-col">
+              <label>
+                Tag
+                <input type="text" name="tag" maxlength="60" value="<%= idea.tag %>" />
+              </label>
+              <label>
+                Notes
+                <input type="text" name="notes" maxlength="1000" value="<%= idea.notes %>" />
+              </label>
+            </div>
+            <div class="inline-actions">
+              <button type="submit" class="btn btn-ghost">Update</button>
+            </div>
+          </form>
+          <form method="POST" action="/pantry/<%= idea._id %>/delete">
+            <button class="btn btn-danger" type="submit">Delete</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

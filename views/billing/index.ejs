@@ -1,0 +1,39 @@
+<section class="card-grid plan-grid">
+  <article class="card plan-card <%= currentUser.plan === 'free' ? 'active-plan' : '' %>">
+    <h3>Free</h3>
+    <p class="price">$0</p>
+    <ul>
+      <li>Studio + Kitchen + Pantry</li>
+      <li>5 AI generations/day</li>
+      <li>Basic continuity</li>
+    </ul>
+    <button class="btn btn-muted" disabled>Current Plan</button>
+  </article>
+
+  <article class="card plan-card <%= currentUser.plan === 'pro' ? 'active-plan' : '' %>">
+    <h3>Pro</h3>
+    <p class="price">$19/mo</p>
+    <ul>
+      <li>Higher AI volume</li>
+      <li>Continuity refresh endpoint</li>
+      <li>Priority generation</li>
+    </ul>
+    <button class="btn btn-primary">Upgrade to Pro</button>
+  </article>
+
+  <article class="card plan-card <%= currentUser.plan === 'premium' ? 'active-plan' : '' %>">
+    <h3>Premium</h3>
+    <p class="price">$49/mo</p>
+    <ul>
+      <li>Team workflows</li>
+      <li>Advanced AI strategies</li>
+      <li>Future multi-show controls</li>
+    </ul>
+    <button class="btn btn-primary">Upgrade to Premium</button>
+  </article>
+</section>
+
+<section class="card">
+  <h3>Billing Integration Placeholder</h3>
+  <p>Stripe checkout will be integrated in a later milestone. Route and plan architecture are already in place.</p>
+</section>

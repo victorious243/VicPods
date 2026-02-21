@@ -1,0 +1,28 @@
+<svg width="1200" height="320" viewBox="0 0 1200 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VicPods logo horizontal light">
+  <defs>
+    <linearGradient id="vpWordPrimary" x1="56" y1="36" x2="258" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="vpWordAccent" x1="324" y1="90" x2="560" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(24 24)">
+    <rect x="0" y="0" width="272" height="272" rx="70" fill="#F2F6FF"/>
+    <rect x="0" y="0" width="272" height="272" rx="70" stroke="#D9E3FF" stroke-width="2"/>
+
+    <rect x="74" y="34" width="124" height="164" rx="62" stroke="url(#vpWordPrimary)" stroke-width="18"/>
+    <path d="M136 199V236" stroke="url(#vpWordPrimary)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M92 236C92 260.301 111.699 280 136 280C160.301 280 180 260.301 180 236" stroke="url(#vpWordPrimary)" stroke-width="14" stroke-linecap="round"/>
+
+    <path d="M101 108L136 168L171 108" stroke="#0B1220" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M91 138L109 124L127 138L145 124L163 138L182 122" stroke="#0B1220" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="330" y="184" font-family="Inter, Satoshi, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="122" letter-spacing="-2">
+    <tspan fill="url(#vpWordAccent)" font-weight="780">Vic</tspan><tspan fill="#0F172A" font-weight="460">Pods</tspan>
+  </text>
+</svg>

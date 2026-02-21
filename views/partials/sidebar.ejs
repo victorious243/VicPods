@@ -1,0 +1,28 @@
+<aside class="sidebar">
+  <div class="brand-block">
+    <a href="/studio" class="brand-link" aria-label="VicPods Studio">
+      <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-dark.svg" alt="VicPods" />
+      <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-light.svg" alt="VicPods" />
+      <div>
+        <h1>VicPods</h1>
+        <p>AI Podcast OS</p>
+      </div>
+    </a>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Primary">
+    <% (navItems || []).forEach((item) => { %>
+      <% const active = currentPath && currentPath.startsWith(item.href); %>
+      <a href="<%= item.href %>" class="nav-link <%= active ? 'active' : '' %>">
+        <span class="nav-icon" aria-hidden="true"><%= item.icon %></span>
+        <span><%= item.label %></span>
+      </a>
+    <% }) %>
+  </nav>
+
+  <div class="upgrade-card">
+    <h3>Upgrade Ready</h3>
+    <p>Unlock higher AI volume, faster generation, and advanced continuity controls.</p>
+    <a href="/billing" class="btn btn-secondary">See Plans</a>
+  </div>
+</aside>

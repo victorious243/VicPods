@@ -1,0 +1,20 @@
+<section class="auth-card">
+  <h3>Create account</h3>
+  <p>Build your podcast workflow from one clean dashboard.</p>
+  <form method="POST" action="/auth/register" class="form-grid">
+    <label>
+      Name
+      <input type="text" name="name" required maxlength="80" placeholder="Your name" />
+    </label>
+    <label>
+      Email
+      <input type="email" name="email" required placeholder="you@example.com" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required minlength="8" placeholder="At least 8 characters" />
+    </label>
+    <button type="submit" class="btn btn-primary">Create Workspace</button>
+  </form>
+  <p class="auth-foot">Already have an account? <a href="/auth/login">Sign in</a></p>
+</section>

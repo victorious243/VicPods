@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VicPods icon dark">
+  <defs>
+    <linearGradient id="vpPrimaryDark" x1="116" y1="92" x2="396" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="vpBgDark" x1="88" y1="74" x2="428" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111A31"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="72" y="72" width="368" height="368" rx="96" fill="url(#vpBgDark)"/>
+  <rect x="72" y="72" width="368" height="368" rx="96" stroke="#1E2A45" stroke-width="2"/>
+
+  <rect x="172" y="118" width="168" height="224" rx="84" stroke="url(#vpPrimaryDark)" stroke-width="24"/>
+  <path d="M256 344V398" stroke="url(#vpPrimaryDark)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M196 398C196 431.137 222.863 458 256 458C289.137 458 316 431.137 316 398" stroke="url(#vpPrimaryDark)" stroke-width="18" stroke-linecap="round"/>
+
+  <path d="M208 222L256 304L304 222" stroke="#E6EEFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M194 264L218 246L242 264L266 246L290 264L318 244" stroke="#E6EEFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

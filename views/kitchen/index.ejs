@@ -1,0 +1,58 @@
+<section class="split-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3>Create Series</h3>
+      <span class="mini-label">Kitchen Builder</span>
+    </div>
+    <form action="/kitchen" method="POST" class="form-grid">
+      <label>
+        Series Name
+        <input type="text" name="name" required maxlength="120" placeholder="Creator Growth Playbook" />
+      </label>
+      <label>
+        Description
+        <textarea name="description" rows="3" maxlength="1000" placeholder="What this series helps listeners achieve"></textarea>
+      </label>
+      <label>
+        Tone
+        <select name="tone">
+          <option value="fun">Fun</option>
+          <option value="calm">Calm</option>
+          <option value="serious">Serious</option>
+        </select>
+      </label>
+      <label>
+        Target Audience
+        <input type="text" name="audience" maxlength="240" placeholder="New creators, coaches, indie founders" />
+      </label>
+      <label>
+        Planned Episode Count
+        <input type="number" name="plannedEpisodeCount" min="0" placeholder="12" />
+      </label>
+      <button type="submit" class="btn btn-primary">Create Series</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3>Your Series</h3>
+      <span class="mini-label"><%= seriesList.length %> total</span>
+    </div>
+
+    <% if (!seriesList.length) { %>
+      <p class="empty-state">No series yet. Create one to start building episodes.</p>
+    <% } else { %>
+      <div class="list-stack">
+        <% seriesList.forEach((series) => { %>
+          <a class="list-item" href="/kitchen/<%= series._id %>">
+            <div>
+              <h4><%= series.name %></h4>
+              <p><%= series.tone %> · <%= series.audience || 'General audience' %> · planned: <%= series.plannedEpisodeCount || 0 %></p>
+            </div>
+            <span class="chevron">›</span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+</section>

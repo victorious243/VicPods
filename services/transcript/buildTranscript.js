@@ -1,0 +1,95 @@
+function cleanLine(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function buildIntro(episode) {
+  const firstPoint = (episode.talkingPoints || []).find((item) => cleanLine(item));
+  if (firstPoint) {
+    return `Welcome back. Today we focus on ${cleanLine(firstPoint).toLowerCase()}.`;
+  }
+
+  return 'Welcome back. Today we move this series forward with a focused conversation.';
+}
+
+function buildSections({ series, theme, episode }) {
+  const outline = (episode.outline || []).map(cleanLine).filter(Boolean);
+  const talkingPoints = (episode.talkingPoints || []).map(cleanLine).filter(Boolean);
+  const hostQuestions = (episode.hostQuestions || []).map(cleanLine).filter(Boolean);
+
+  const segmentCount = Math.max(outline.length, Math.min(talkingPoints.length, 6), 1);
+
+  const segments = Array.from({ length: segmentCount }).map((_, index) => {
+    const outlinePoint = outline[index] || `Segment ${index + 1}`;
+    const talkingPoint = talkingPoints[index] || talkingPoints[0] || 'Expand the key insight with one practical example.';
+
+    return {
+      heading: `Segment ${index + 1}: ${outlinePoint}`,
+      body: talkingPoint,
+    };
+  });
+
+  return {
+    title: cleanLine(episode.title || `Episode ${episode.episodeNumberWithinTheme}`),
+    meta: {
+      seriesName: cleanLine(series.name),
+      themeName: cleanLine(theme.name),
+      episodeNumberWithinTheme: episode.episodeNumberWithinTheme,
+      globalEpisodeNumber: episode.globalEpisodeNumber,
+    },
+    hook: cleanLine(episode.hook || 'Hook unavailable.'),
+    intro: buildIntro(episode),
+    segments,
+    hostQuestions,
+    funSegment: cleanLine(episode.funSegment || 'Quick game: pick one bold move and defend it in 30 seconds.'),
+    outro: cleanLine(episode.ending || 'Takeaway: keep your process simple. Teaser: next episode deepens this arc with a stronger challenge.'),
+  };
+}
+
+function buildTranscript({ series, theme, episode }) {
+  const sections = buildSections({ series, theme, episode });
+
+  const lines = [
+    'VICPODS TRANSCRIPT',
+    `${sections.meta.seriesName} - ${sections.meta.themeName}`,
+    `Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''}`,
+    '',
+    `TITLE: ${sections.title}`,
+    '',
+    'HOOK',
+    sections.hook,
+    '',
+    'INTRO',
+    sections.intro,
+    '',
+    'MAIN SEGMENTS',
+  ];
+
+  sections.segments.forEach((segment) => {
+    lines.push(segment.heading);
+    lines.push(segment.body);
+    lines.push('');
+  });
+
+  lines.push('HOST QUESTIONS');
+  if (sections.hostQuestions.length) {
+    sections.hostQuestions.forEach((question, index) => {
+      lines.push(`${index + 1}. ${question}`);
+    });
+  } else {
+    lines.push('1. What is one practical move listeners can try immediately?');
+  }
+
+  lines.push('');
+  lines.push('FUN SEGMENT');
+  lines.push(sections.funSegment);
+  lines.push('');
+  lines.push('OUTRO');
+  lines.push(sections.outro);
+
+  return lines.join('\n');
+}
+
+module.exports = {
+  buildTranscript,
+  buildSections,
+};

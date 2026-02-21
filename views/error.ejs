@@ -1,0 +1,7 @@
+<section class="card">
+  <h3>Error <%= errorCode %></h3>
+  <p><%= subtitle || 'Something went wrong.' %></p>
+  <% if (errorStack) { %>
+    <pre class="error-stack"><%= errorStack %></pre>
+  <% } %>
+</section>

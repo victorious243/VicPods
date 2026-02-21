@@ -1,0 +1,20 @@
+<header class="topbar">
+  <div>
+    <h2><%= pageTitle || 'VicPods' %></h2>
+    <% if (subtitle) { %>
+      <p><%= subtitle %></p>
+    <% } %>
+  </div>
+
+  <div class="topbar-actions">
+    <span class="plan-chip"><%= currentUser?.plan || 'free' %> plan</span>
+    <a href="/kitchen" class="btn btn-primary">New Series</a>
+    <button id="theme-toggle" type="button" class="btn btn-ghost theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+      <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+      <span class="theme-toggle-label">Dark</span>
+    </button>
+    <form method="POST" action="/auth/logout">
+      <button type="submit" class="btn btn-secondary">Logout</button>
+    </form>
+  </div>
+</header>

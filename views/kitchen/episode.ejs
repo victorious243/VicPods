@@ -1,0 +1,194 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Chef AI</h3>
+    <div class="inline-actions">
+      <form method="POST" action="/ai/episode/generate">
+        <input type="hidden" name="seriesId" value="<%= series._id %>" />
+        <input type="hidden" name="themeId" value="<%= theme._id %>" />
+        <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+        <button class="btn btn-primary" type="submit">Generate Full Draft</button>
+      </form>
+      <form method="POST" action="/ai/spices/generate">
+        <input type="hidden" name="seriesId" value="<%= series._id %>" />
+        <input type="hidden" name="themeId" value="<%= theme._id %>" />
+        <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+        <button class="btn btn-ghost" type="submit">Regenerate Spices</button>
+      </form>
+      <form method="POST" action="/ai/continuity/refresh">
+        <input type="hidden" name="seriesId" value="<%= series._id %>" />
+        <input type="hidden" name="themeId" value="<%= theme._id %>" />
+        <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+        <button class="btn btn-muted" type="submit">Refresh Continuity</button>
+      </form>
+    </div>
+  </div>
+  <p class="mini-note">Spices = hook + host questions + fun segment. Continuity refresh is Pro+.</p>
+  <% if (theme.themeSummary) { %>
+    <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
+  <% } %>
+  <% if (previousEpisode?.endState) { %>
+    <p><strong>Carry-forward from Theme Episode <%= previousEpisode.episodeNumberWithinTheme %>:</strong> <%= previousEpisode.endState %></p>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Episode Editor</h3>
+    <a href="/kitchen/<%= series._id %>#theme-<%= theme._id %>" class="btn btn-ghost">Back to Theme</a>
+  </div>
+
+  <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>" class="form-grid">
+    <div class="two-col">
+      <label>
+        Episode Number (within theme)
+        <input type="text" value="<%= episode.episodeNumberWithinTheme %>" disabled />
+      </label>
+      <label>
+        Global Episode Number (series)
+        <input type="text" value="<%= episode.globalEpisodeNumber || '-' %>" disabled />
+      </label>
+    </div>
+
+    <div class="two-col">
+      <label>
+        Theme
+        <input type="text" value="<%= theme.name %>" disabled />
+      </label>
+      <label>
+        Status
+        <select name="status">
+          <% validStatuses.forEach((status) => { %>
+            <option value="<%= status %>" <%= episode.status === status ? 'selected' : '' %>><%= status %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <label>
+      Title
+      <input type="text" name="title" value="<%= episode.title %>" maxlength="160" />
+    </label>
+
+    <label>
+      Hook (1-2 lines)
+      <textarea name="hook" rows="2"><%= episode.hook %></textarea>
+    </label>
+
+    <label>
+      Outline (one bullet per line, max 7)
+      <textarea name="outline" rows="7"><%= (episode.outline || []).join('\n') %></textarea>
+    </label>
+
+    <label>
+      Talking Points (one bullet per line, max 7)
+      <textarea name="talkingPoints" rows="7"><%= (episode.talkingPoints || []).join('\n') %></textarea>
+    </label>
+
+    <label>
+      Host Questions (one per line, max 8)
+      <textarea name="hostQuestions" rows="8"><%= (episode.hostQuestions || []).join('\n') %></textarea>
+    </label>
+
+    <label>
+      Fun Segment (game/dilemma)
+      <textarea name="funSegment" rows="2"><%= episode.funSegment %></textarea>
+    </label>
+
+    <label>
+      Ending (takeaway + teaser)
+      <textarea name="ending" rows="2"><%= episode.ending %></textarea>
+    </label>
+
+    <label>
+      Continuity End State (max 80 words)
+      <textarea name="endState" rows="3"><%= episode.endState %></textarea>
+    </label>
+
+    <fieldset>
+      <legend>Ingredients from Pantry</legend>
+      <% if (!allIdeas.length) { %>
+        <p class="empty-state">No pantry ideas yet.</p>
+      <% } else { %>
+        <div class="checkbox-grid">
+          <% allIdeas.forEach((idea) => { %>
+            <% const linked = (episode.ideaIds || []).some((episodeIdea) => String(episodeIdea._id || episodeIdea) === String(idea._id)); %>
+            <label class="check-item">
+              <input type="checkbox" name="ideaIds" value="<%= idea._id %>" <%= linked ? 'checked' : '' %> />
+              <span><strong><%= idea.tag %></strong> · <%= idea.hook %></span>
+            </label>
+          <% }) %>
+        </div>
+      <% } %>
+    </fieldset>
+
+    <div class="inline-actions">
+      <button type="submit" class="btn btn-primary">Save Episode</button>
+    </div>
+  </form>
+
+  <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/delete" class="danger-form">
+    <button type="submit" class="btn btn-danger">Delete Episode</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Transcript Export</h3>
+    <span class="mini-label">TXT · PDF · DOCX</span>
+  </div>
+
+  <% const isServed = episode.status === 'Served'; %>
+  <% const hasTranscript = Boolean(episode.transcript && episode.transcript.trim()); %>
+
+  <% if (!isServed) { %>
+    <div class="transcript-locked">
+      <p><strong>Serve to unlock transcript export.</strong></p>
+      <p class="mini-note">Set episode status to <strong>Served</strong>, save, then generate and download transcripts.</p>
+      <div class="inline-actions">
+        <button class="btn btn-muted" type="button" disabled>Generate Transcript</button>
+        <form method="GET" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/download">
+          <select name="format" disabled>
+            <option value="pdf">PDF</option>
+            <option value="docx">DOCX</option>
+            <option value="txt">TXT</option>
+          </select>
+          <button class="btn btn-muted" type="button" disabled>Download Transcript</button>
+        </form>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="transcript-ready">
+      <% if (hasTranscript) { %>
+        <p>
+          Transcript ready.
+          <% if (episode.transcriptUpdatedAt) { %>
+            Last updated: <%= new Date(episode.transcriptUpdatedAt).toLocaleString() %>
+          <% } %>
+        </p>
+      <% } else { %>
+        <p>No transcript generated yet. Generate once, then export in any format.</p>
+      <% } %>
+
+      <div class="inline-actions">
+        <% if (!hasTranscript) { %>
+          <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/generate">
+            <button class="btn btn-primary" type="submit">Generate Transcript</button>
+          </form>
+        <% } %>
+
+        <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/generate">
+          <button class="btn btn-ghost" type="submit">Refresh Transcript</button>
+        </form>
+
+        <form method="GET" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/download" class="download-form">
+          <select name="format">
+            <option value="pdf">PDF</option>
+            <option value="docx">DOCX</option>
+            <option value="txt">TXT</option>
+          </select>
+          <button class="btn btn-primary" type="submit">Download Transcript</button>
+        </form>
+      </div>
+    </div>
+  <% } %>
+</section>
