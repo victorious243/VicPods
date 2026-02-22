@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.DS_Store
+android/.gradle/
+android/.idea/
+android/local.properties
+android/captures/
+android/app/build/
+ios/App/build/

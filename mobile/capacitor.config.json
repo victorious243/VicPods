@@ -1,0 +1,21 @@
+{
+  "appId": "com.vicpods.app",
+  "appName": "VicPods",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://app.vicpods.com",
+    "cleartext": false
+  },
+  "allowNavigation": [
+    "*.stripe.com",
+    "checkout.stripe.com",
+    "billing.stripe.com"
+  ],
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
