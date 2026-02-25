@@ -1,58 +1,55 @@
-<section class="split-grid">
-  <article class="card">
-    <div class="section-head">
-      <h3>Create Series</h3>
-      <span class="mini-label">Kitchen Builder</span>
+<section class="card">
+  <div class="section-head">
+    <h3>Kitchen Library</h3>
+    <div class="inline-actions">
+      <a href="/create" class="btn btn-primary">Create Episode</a>
+      <a href="/create/series" class="btn btn-secondary">New Series</a>
     </div>
-    <form action="/kitchen" method="POST" class="form-grid">
-      <label>
-        Series Name
-        <input type="text" name="name" required maxlength="120" placeholder="Creator Growth Playbook" />
-      </label>
-      <label>
-        Description
-        <textarea name="description" rows="3" maxlength="1000" placeholder="What this series helps listeners achieve"></textarea>
-      </label>
-      <label>
-        Tone
-        <select name="tone">
-          <option value="fun">Fun</option>
-          <option value="calm">Calm</option>
-          <option value="serious">Serious</option>
-        </select>
-      </label>
-      <label>
-        Target Audience
-        <input type="text" name="audience" maxlength="240" placeholder="New creators, coaches, indie founders" />
-      </label>
-      <label>
-        Planned Episode Count
-        <input type="number" name="plannedEpisodeCount" min="0" placeholder="12" />
-      </label>
-      <button type="submit" class="btn btn-primary">Create Series</button>
-    </form>
-  </article>
+  </div>
+  <p>Kitchen is the advanced workspace for managing series, themes, and continuity.</p>
+</section>
 
-  <article class="card">
+<% if (singleCollectionSeries) { %>
+  <section class="card single-collection-card">
     <div class="section-head">
-      <h3>Your Series</h3>
-      <span class="mini-label"><%= seriesList.length %> total</span>
+      <h3>Single Episodes</h3>
+      <span class="mini-label">System Collection</span>
     </div>
+    <p>All standalone episodes are stored here without forcing manual series setup.</p>
+    <div class="inline-actions">
+      <a href="/create/single" class="btn btn-primary">Create Single Episode</a>
+      <a href="/kitchen/<%= singleCollectionSeries._id %>" class="btn btn-ghost">Open Collection</a>
+    </div>
+  </section>
+<% } %>
 
-    <% if (!seriesList.length) { %>
-      <p class="empty-state">No series yet. Create one to start building episodes.</p>
-    <% } else { %>
-      <div class="list-stack">
-        <% seriesList.forEach((series) => { %>
-          <a class="list-item" href="/kitchen/<%= series._id %>">
-            <div>
-              <h4><%= series.name %></h4>
-              <p><%= series.tone %> · <%= series.audience || 'General audience' %> · planned: <%= series.plannedEpisodeCount || 0 %></p>
-            </div>
-            <span class="chevron">›</span>
-          </a>
-        <% }) %>
-      </div>
-    <% } %>
-  </article>
+<section class="card">
+  <div class="section-head">
+    <h3>Your Series</h3>
+    <span class="mini-label"><%= regularSeries.length %> total</span>
+  </div>
+
+  <% if (!regularSeries.length) { %>
+    <p class="empty-state">No series yet. Use Create → Series to start a continuity-driven show.</p>
+  <% } else { %>
+    <div class="list-stack">
+      <% regularSeries.forEach((series) => { %>
+        <a class="list-item" href="/kitchen/<%= series._id %>">
+          <div>
+            <h4><%= series.name %></h4>
+            <p>
+              <%= series.tonePreset || 'Conversational & Casual' %> ·
+              <%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5 ·
+              <%= series.audienceType || 'Mixed' %> ·
+              intent: <%= series.intent || 'educate' %>
+            </p>
+            <% if (series.goal) { %>
+              <p><strong>Goal:</strong> <%= series.goal %></p>
+            <% } %>
+          </div>
+          <span class="chevron">›</span>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
 </section>

@@ -1,4 +1,5 @@
 const { refreshContinuityFromEpisodes } = require('../continuityService');
+const { getTonePresetOrDefault } = require('../tone/applyTone');
 
 function hashSeed(text) {
   return [...String(text || '')].reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -10,6 +11,25 @@ function pickRotating(list, seed, count) {
     output.push(list[(seed + i) % list.length]);
   }
   return output;
+}
+
+function buildToneAccent(tonePreset, intensity) {
+  const preset = getTonePresetOrDefault(tonePreset);
+  const power = Number.isInteger(intensity) ? intensity : 3;
+
+  const accentByPreset = {
+    'Educational & Structured': 'Break it into explicit steps and definitions.',
+    'Energetic & Motivational': 'Use urgency and momentum language with short lines.',
+    'Analytical & Deep': 'Use frameworks, evidence, and tradeoff language.',
+    'Storytelling & Emotional': 'Frame points through scenes, tension, and emotional clarity.',
+    'Light & Humorous': 'Use light wit and playful turns while staying clear.',
+    'Professional & Corporate': 'Use executive-level precision and outcome language.',
+    'Calm & Reflective': 'Use steady pacing and intentional reflective framing.',
+    'Conversational & Casual': 'Use natural host voice and plain language.',
+    'Bold & Controversial': 'Lead with a respectful high-conviction claim.',
+  };
+
+  return `${preset.name} (${power}/5): ${accentByPreset[preset.name] || accentByPreset['Conversational & Casual']}`;
 }
 
 class MockProvider {
@@ -24,88 +44,115 @@ class MockProvider {
       episodeNumberWithinTheme,
       previousEpisodeEndState,
       ingredientHooks,
+      effectiveTone,
+      includeFunSegment,
+      isStandalone,
+      requireTeaser,
+      episodeType,
+      targetLength,
     } = input;
 
     const seed = hashSeed(`${series.name}-${theme.name}-${episodeNumberWithinTheme}`);
+    const goal = series.goal || 'Build a successful podcast plan with clear structure and measurable progress.';
+    const tonePreset = effectiveTone?.tonePreset || series.tonePreset;
+    const toneIntensity = effectiveTone?.toneIntensity || series.toneIntensity || 3;
+    const toneAccent = buildToneAccent(tonePreset, toneIntensity);
 
     const outlinePool = [
-      'Cold open story that reframes the theme problem',
-      'Theme-specific challenge breakdown',
-      'Real creator example with one tactical lesson',
-      'Quick myth-busting segment with nuance',
-      'Action checklist listeners can apply today',
-      'Mini listener scenario and reaction',
-      'Transition to the next theme episode',
+      'Hook the listener problem and state this episode milestone',
+      'Explain the practical model behind today\'s decision',
+      'Use one creator example to prove execution detail',
+      'Translate model into a short weekly action checklist',
+      'Define one measurable checkpoint for progress',
+      'Handle one likely listener objection quickly',
+      'Bridge forward to the next episode challenge',
     ];
 
     const talkingPool = [
-      'Clarify the one promise this episode delivers',
-      'Contrast beginner and advanced execution paths',
-      'Call out a common overthinking trap',
-      'Share a lightweight framework for consistency',
-      'Point to one measurable signal of progress',
-      'Translate abstract advice into repeatable steps',
-      'Link this episode to the theme arc',
+      'Name the promise and who benefits first',
+      'Tie this promise directly to the series goal',
+      'Clarify where people overcomplicate this step',
+      'Give one framework that can be reused each week',
+      'Set one metric listeners can track immediately',
+      'Convert insight into a concrete execution sequence',
+      'Preview how this creates momentum for the next episode',
     ];
 
     const questionPool = [
-      'What part of this theme feels heavier than it should?',
-      'If you had one hour this week, where would you focus?',
-      'What evidence shows this theme is resonating?',
-      'Where are you choosing comfort over momentum?',
-      'What experiment can you run before the next episode?',
-      'Which story would make this insight stick?',
-      'What teaser line earns the next listen?',
-      'What can be simplified without losing depth?',
+      'What proof will show this move is actually working?',
+      'What can you ship this week instead of over-planning?',
+      'Which point needs a stronger host story?',
+      'What tradeoff are you avoiding right now?',
+      'What listener objection should you address directly?',
+      'What one metric should improve before next episode?',
+      'What teaser line best earns the next listen?',
+      'What can you simplify without losing depth?',
     ];
 
     const forwardLine = previousEpisodeEndState
-      ? `We continue this theme from the last end state: ${previousEpisodeEndState}`
-      : `This is the opening chapter for the ${theme.name} theme. ${theme.themeSummary || 'Set a clear thesis and momentum.'}`;
+      ? `Carry forward from prior episode: ${previousEpisodeEndState}`
+      : `This opens the ${theme.name} arc with a clear first milestone.`;
 
     const ingredientText = ingredientHooks && ingredientHooks.length
-      ? `Ingredient boost: ${ingredientHooks[0]}.`
-      : 'Ingredient boost: a relatable creator scenario.';
+      ? `Ingredient: ${ingredientHooks[0]}.`
+      : 'Ingredient: a relatable creator field example.';
 
     return {
-      title: `${theme.name}: Episode ${episodeNumberWithinTheme} - Momentum Menu`,
-      hook: `${forwardLine} ${ingredientText}`,
+      title: `${theme.name}: Episode ${episodeNumberWithinTheme} - Structured Momentum${episodeType === 'interview' ? ' (Interview)' : ''}${targetLength ? ` [${targetLength}]` : ''}`,
+      hook: `${forwardLine} ${toneAccent} ${ingredientText}`,
       outline: pickRotating(outlinePool, seed, 7),
       talkingPoints: pickRotating(talkingPool, seed + 2, 7),
       hostQuestions: pickRotating(questionPool, seed + 4, 8),
-      funSegment: 'Dilemma: Would you rather ship quickly or polish deeply for this theme?',
-      ending: 'Takeaway: keep the arc focused and practical. Teaser: next episode raises the stakes with a tougher scenario.',
-      endState: `The host advanced the ${theme.name} arc with one practical system and set up a stronger follow-up test.`,
-      seriesSummary: `${series.name} follows creators building repeatable systems with continuity across themed episode arcs.`,
-      themeSummary: `${theme.name} is an active arc focused on tactical steps, clear experiments, and compounding listener value.`,
+      funSegment: includeFunSegment === false
+        ? ''
+        : 'Dilemma: choose one bold experiment vs one reliable system for next week.',
+      ending: requireTeaser === false
+        ? 'Takeaway: execute one specific action before your next recording and close with confidence.'
+        : 'Takeaway: execute one specific action before your next recording. Teaser: next episode pressure-tests this with a tougher scenario.',
+      endState: isStandalone
+        ? 'Episode closed with a complete standalone outcome and one clear next action for listeners.'
+        : `The host advanced ${theme.name} toward goal: ${goal}, with one action completed and one measurable next checkpoint set.`,
+      seriesSummary: `${series.name} tracks creators executing a consistent podcast growth plan toward: ${goal}`,
+      themeSummary: `${theme.name} now emphasizes practical execution, measurable checkpoints, and tight continuity in ${tonePreset} style.`,
     };
   }
 
   async generateSpices(input) {
-    const { series, theme, episodeNumberWithinTheme } = input;
+    const {
+      series,
+      theme,
+      episodeNumberWithinTheme,
+      effectiveTone,
+      includeFunSegment,
+    } = input;
+
     const seed = hashSeed(`${series.name}-${theme.name}-spice-${episodeNumberWithinTheme}`);
+    const tonePreset = effectiveTone?.tonePreset || series.tonePreset;
+    const toneIntensity = effectiveTone?.toneIntensity || series.toneIntensity || 3;
 
     const hooks = [
-      `What if ${theme.name} could click in one recording session?`,
-      `Today we make ${theme.name} practical, fast, and repeatable.`,
-      `If ${theme.name} feels messy, this one shift will reset your flow.`,
+      `This episode pushes ${theme.name} forward with ${tonePreset.toLowerCase()} clarity (${toneIntensity}/5).`,
+      `If ${theme.name} is stuck, this is the fastest path to forward momentum this week.`,
+      `Let us tighten ${theme.name} into actions you can record and ship today.`,
     ];
 
     const questions = [
-      'Which point deserves a stronger personal story?',
-      'What would make this episode instantly shareable?',
-      'Where can you surprise your audience without losing clarity?',
-      'What teaser line earns the next listen?',
-      'Which part sounds generic and needs your voice?',
-      'What can you cut to make the core insight land harder?',
-      'What challenge should carry into the next theme episode?',
-      'What would your future self wish you recorded today?',
+      'What is the one decision this episode must force?',
+      'What would make this segment clearer in your own voice?',
+      'Where can you be more specific without being longer?',
+      'What point should challenge the listener\'s default assumption?',
+      'What practical action should listeners take in 24 hours?',
+      'What evidence would strengthen this claim?',
+      'What teaser line creates urgency for the next episode?',
+      'What should be removed to keep this concise?',
     ];
 
     return {
       hook: hooks[seed % hooks.length],
       hostQuestions: pickRotating(questions, seed, 8),
-      funSegment: `Game: 60-second hook battle centered on ${theme.name}.`,
+      funSegment: includeFunSegment === false
+        ? ''
+        : `Rapid-fire: in 60 seconds, defend the strongest ${tonePreset} angle for this theme.`,
     };
   }
 
@@ -117,6 +164,19 @@ class MockProvider {
       recentSeriesEpisodes: input.recentSeriesEpisodes,
       currentEpisode: input.episode,
     });
+  }
+
+  async fixTone(input) {
+    const tonePreset = input.effectiveTone?.tonePreset || input.series.tonePreset || 'Conversational & Casual';
+    const toneIntensity = input.effectiveTone?.toneIntensity || input.series.toneIntensity || 3;
+
+    return {
+      hook: `${input.episode.hook || 'This episode gets straight to the point.'} Tone alignment: ${tonePreset} (${toneIntensity}/5).`,
+      hostQuestions: (input.episode.hostQuestions || []).slice(0, 8).map((question) => `${question}`),
+      ending: input.requireTeaser === false
+        ? (input.episode.ending || 'Takeaway: execute one action and close the episode with clarity.')
+        : `${input.episode.ending || 'Takeaway: execute one action.'} Teaser: next episode deepens this with a sharper constraint.`,
+    };
   }
 }
 

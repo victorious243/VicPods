@@ -31,6 +31,10 @@ const themeSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    isSystem: {
+      type: Boolean,
+      default: false,
+    },
     themeSummary: {
       type: String,
       default: '',

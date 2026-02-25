@@ -1,0 +1,12 @@
+<section class="card">
+  <h3>Checkout Completed</h3>
+  <p>Your payment was submitted. We are syncing your subscription with Stripe now.</p>
+  <p class="mini-note">Plan access updates from webhook events. This usually completes in a few seconds.</p>
+  <% if (checkoutSessionId) { %>
+    <p class="mini-note">Session: <%= checkoutSessionId %></p>
+  <% } %>
+  <div class="inline-actions">
+    <a href="/settings?section=billing" class="btn btn-primary">Back to Billing</a>
+    <a href="/studio" class="btn btn-ghost">Go to Studio</a>
+  </div>
+</section>

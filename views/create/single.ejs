@@ -1,0 +1,133 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Single Episode Wizard</h3>
+    <a href="/create" class="btn btn-ghost">Back to Create</a>
+  </div>
+
+  <div class="wizard-progress" role="list" aria-label="Single mode steps">
+    <span class="step active" role="listitem">1. Topic</span>
+    <span class="step active" role="listitem">2. Tone</span>
+    <span class="step active" role="listitem">3. Format</span>
+    <span class="step active" role="listitem">4. Generate</span>
+  </div>
+
+  <form method="POST" action="/create/single" class="form-grid">
+    <section class="wizard-step">
+      <h4>Step 1 - Topic</h4>
+      <label>
+        Topic Title
+        <input type="text" name="title" required maxlength="160" placeholder="How to Launch Your Podcast in 30 Days" />
+      </label>
+      <label>
+        Description (optional)
+        <textarea name="description" rows="2" maxlength="400" placeholder="1-2 lines on what this episode should deliver"></textarea>
+      </label>
+      <div class="two-col">
+        <label>
+          Audience Type
+          <select name="audienceType">
+            <% audienceTypes.forEach((type) => { %>
+              <option value="<%= type %>" <%= type === 'Mixed' ? 'selected' : '' %>><%= type %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Intent
+          <select name="intent">
+            <% intentOptions.forEach((intent) => { %>
+              <option value="<%= intent %>" <%= intent === 'educate' ? 'selected' : '' %>><%= intent %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <label>
+        Custom Audience Type (optional)
+        <input type="text" name="audienceTypeCustom" maxlength="120" placeholder="e.g. first-time podcast hosts" />
+      </label>
+      <label>
+        Audience Notes (optional)
+        <input type="text" name="audienceNotes" maxlength="240" placeholder="What this audience cares about most" />
+      </label>
+      <label>
+        Outcome Goal (optional)
+        <input type="text" name="goal" maxlength="320" placeholder="What this standalone episode should help listeners achieve" />
+      </label>
+    </section>
+
+    <section class="wizard-step">
+      <h4>Step 2 - Tone</h4>
+      <div class="tone-grid">
+        <% tonePresets.forEach((preset, index) => { %>
+          <label class="tone-card">
+            <input
+              type="radio"
+              name="tonePreset"
+              value="<%= preset.name %>"
+              <%= (index === 7 || (!index && !tonePresets[7])) ? 'checked' : '' %>
+            />
+            <span class="tone-card-title"><%= preset.name %></span>
+            <span class="tone-card-desc"><%= preset.description %></span>
+            <span class="tone-card-example">"<%= preset.exampleHook %>"</span>
+          </label>
+        <% }) %>
+      </div>
+      <label>
+        Tone Intensity (<span data-range-value="single-tone-intensity">3</span>/5)
+        <input
+          id="single-tone-intensity"
+          type="range"
+          name="toneIntensity"
+          min="1"
+          max="<%= maxToneIntensity || 3 %>"
+          value="3"
+          data-range-source="single-tone-intensity"
+        />
+      </label>
+      <% if (effectivePlan === 'premium') { %>
+        <label>
+          Voice Persona (Premium)
+          <textarea name="voicePersona" rows="2" maxlength="400" data-char-count="single-persona" placeholder="Describe how you speak. Keep it short."></textarea>
+          <small class="mini-note"><span data-char-count-label="single-persona">0</span>/400</small>
+        </label>
+      <% } else { %>
+        <label>
+          Voice Persona (Premium)
+          <textarea rows="2" disabled placeholder="Upgrade to Premium to use a custom persona."></textarea>
+          <small class="mini-note">Premium only. <a href="/settings?section=billing">Upgrade</a></small>
+        </label>
+      <% } %>
+    </section>
+
+    <section class="wizard-step">
+      <h4>Step 3 - Format</h4>
+      <div class="two-col">
+        <label>
+          Episode Type
+          <select name="episodeType">
+            <option value="solo">Solo</option>
+            <option value="interview">Interview</option>
+          </select>
+        </label>
+        <label>
+          Target Length
+          <select name="targetLength">
+            <option value="">Flexible</option>
+            <option value="10-15">10-15 min</option>
+            <option value="20-30">20-30 min</option>
+            <option value="45+">45+ min</option>
+          </select>
+        </label>
+      </div>
+      <label class="check-item">
+        <input type="checkbox" name="includeFunSegment" checked />
+        <span>Include a fun segment</span>
+      </label>
+    </section>
+
+    <section class="wizard-step">
+      <h4>Step 4 - Generate</h4>
+      <p class="mini-note">This creates the episode in your Single Episodes collection and opens the editor with a structured draft.</p>
+      <button type="submit" class="btn btn-primary">Generate Episode Draft</button>
+    </section>
+  </form>
+</section>

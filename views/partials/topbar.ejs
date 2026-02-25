@@ -7,12 +7,24 @@
   </div>
 
   <div class="topbar-actions">
-    <span class="plan-chip"><%= currentUser?.plan || 'free' %> plan</span>
-    <a href="/kitchen" class="btn btn-primary">New Series</a>
+    <span class="plan-chip"><%= effectivePlan || currentUser?.plan || 'free' %> plan</span>
+    <a href="/create" class="btn btn-primary">Create Episode</a>
     <button id="theme-toggle" type="button" class="btn btn-ghost theme-toggle" aria-label="Toggle theme" title="Toggle theme">
       <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
       <span class="theme-toggle-label">Dark</span>
     </button>
+    <% const userDisplayName = (currentUser?.name || currentUser?.email || 'User').trim(); %>
+    <% const userInitials = userDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
+    <a href="/settings?section=profile" class="topbar-user" aria-label="Open profile settings">
+      <span class="topbar-avatar">
+        <% if (currentUser?.avatarUrl) { %>
+          <img src="<%= currentUser.avatarUrl %>" alt="<%= userDisplayName %> avatar" />
+        <% } else { %>
+          <span><%= userInitials %></span>
+        <% } %>
+      </span>
+      <span class="topbar-user-name"><%= currentUser?.name || 'Profile' %></span>
+    </a>
     <form method="POST" action="/auth/logout">
       <button type="submit" class="btn btn-secondary">Logout</button>
     </form>

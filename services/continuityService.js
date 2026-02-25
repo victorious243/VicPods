@@ -43,15 +43,19 @@ function refreshContinuityFromEpisodes({
     120
   );
 
+  const goalLine = cleanSentence(
+    series.goal || 'Build a successful podcast plan that improves listener value and consistency.'
+  );
+
   const seriesSummary = truncateWords(
-    `${cleanSentence(series.name)} for ${cleanSentence(series.audience || 'curious listeners')}. ${summarizeEpisodes(latestSeries, 'G').join(' ')}`,
+    `${cleanSentence(series.name)} for ${cleanSentence(series.audience || 'curious listeners')}. Primary goal: ${goalLine}. Tone: ${cleanSentence(series.tonePreset || 'Conversational & Casual')} (${series.toneIntensity || 3}/5). Intent: ${cleanSentence(series.intent || 'educate')}. ${summarizeEpisodes(latestSeries, 'G').join(' ')}`,
     120
   );
 
   const currentPoints = (currentEpisode.talkingPoints || []).slice(0, 2).map(cleanSentence).join(' | ');
   const ending = cleanSentence(currentEpisode.ending || 'Closes with a clear takeaway and teaser.');
   const endState = truncateWords(
-    `Episode ${currentEpisode.episodeNumberWithinTheme} in ${cleanSentence(theme.name)} now leaves listeners with ${ending} Next carry-forward: ${currentPoints || 'build the next angle without repeating points.'}`,
+    `Episode ${currentEpisode.episodeNumberWithinTheme} in ${cleanSentence(theme.name)} advances goal: ${goalLine}. It leaves listeners with ${ending} Next carry-forward: ${currentPoints || 'build the next angle without repeating points.'}`,
     80
   );
 

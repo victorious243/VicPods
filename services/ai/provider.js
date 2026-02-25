@@ -2,6 +2,7 @@ const { OpenAIProvider } = require('./openaiProvider');
 const { MockProvider } = require('./mockProvider');
 
 let providerInstance;
+let mockProviderInstance;
 
 function getAiProvider() {
   if (providerInstance) {
@@ -21,6 +22,14 @@ function getAiProvider() {
   return providerInstance;
 }
 
+function getMockProvider() {
+  if (!mockProviderInstance) {
+    mockProviderInstance = new MockProvider();
+  }
+  return mockProviderInstance;
+}
+
 module.exports = {
   getAiProvider,
+  getMockProvider,
 };

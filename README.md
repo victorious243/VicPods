@@ -12,7 +12,8 @@ VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + Mong
 - Continuity guard (`seriesSummary` + `endState` flow)
 - Theme continuity guard (`themeSummary` + theme-local episode `endState`)
 - Served-only transcript generation + export (`txt`, `pdf`, `docx`)
-- Plan gating middleware (`requirePlan`) and free AI daily limit (5/day)
+- Stripe subscription billing (Checkout + Customer Portal + Webhooks)
+- Plan gating middleware (`requirePlan`) with auto-expiry downgrade logic
 
 ## Tech
 - Node.js
@@ -20,6 +21,7 @@ VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + Mong
 - EJS
 - MongoDB + Mongoose
 - dotenv
+- Stripe
 
 ## Setup
 1. Install dependencies:
@@ -30,7 +32,7 @@ VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + Mong
    ```bash
    cp .env.example .env
    ```
-3. Start MongoDB locally (default URI uses `127.0.0.1:27017`).
+3. Start MongoDB locally (or use Atlas via `MONGO_URI`).
 4. Run app:
    ```bash
    npm start
@@ -51,6 +53,12 @@ MONGO_URI=mongodb://127.0.0.1:27017/vicpods
 SESSION_SECRET=some_long_secret
 AI_PROVIDER=openai
 OPENAI_API_KEY=
+APP_URL=http://localhost:3000
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLIC_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_PREMIUM=price_...
 ```
 
 If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically falls back to deterministic mock AI output.
@@ -62,9 +70,18 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 - Transcript: `POST /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/generate`, `GET /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/download?format=pdf|docx|txt`
 - Pantry: `/pantry`
 - AI: `/ai/episode/generate`, `/ai/spices/generate`, `/ai/continuity/refresh`
-- Billing: `/billing`
+- Billing: `/billing`, `POST /billing/checkout`, `POST /billing/portal`, `/billing/success`, `/billing/cancel`
+- Webhook: `POST /webhooks/stripe`
 
 ## Notes
-- `/ai/continuity/refresh` is gated to Pro+ (`requirePlan('pro')`) to demonstrate premium endpoint architecture.
-- Free plan generation actions (AI + transcript generation) are capped at 5/day.
+- Stripe webhooks are the source of truth for plan activation/cancellation/expiry.
+- `/ai/continuity/refresh` is gated to Pro+ (`requirePlan('pro')`).
+- Daily generation limits: Free `5/day`, Pro `50/day`, Premium `unlimited`.
+- Transcript export tiers: Free `TXT`, Pro `TXT+PDF`, Premium `TXT+PDF+DOCX`.
 - Legacy series episodes are auto-migrated into a `General` theme when first opened.
+
+## Stripe Webhook Dev
+Use Stripe CLI in development:
+```bash
+stripe listen --forward-to localhost:3000/webhooks/stripe
+```

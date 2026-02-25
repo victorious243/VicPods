@@ -1,3 +1,6 @@
+<% const isToneOverride = Boolean(episode.toneOverridePreset); %>
+<% const toneLabel = effectiveTone?.toneSource === 'override' ? 'Override' : 'Inherited'; %>
+
 <section class="card">
   <div class="section-head">
     <h3>Chef AI</h3>
@@ -20,9 +23,23 @@
         <input type="hidden" name="episodeId" value="<%= episode._id %>" />
         <button class="btn btn-muted" type="submit">Refresh Continuity</button>
       </form>
+      <% if (toneFixAvailable) { %>
+        <form method="POST" action="/ai/tone/fix">
+          <input type="hidden" name="seriesId" value="<%= series._id %>" />
+          <input type="hidden" name="themeId" value="<%= theme._id %>" />
+          <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+          <button class="btn btn-secondary" type="submit">Auto-Fix Tone</button>
+        </form>
+      <% } else { %>
+        <a class="btn btn-muted" href="/settings?section=billing">Auto-Fix Tone (Premium)</a>
+      <% } %>
     </div>
   </div>
-  <p class="mini-note">Spices = hook + host questions + fun segment. Continuity refresh is Pro+.</p>
+  <p class="mini-note">Spices = hook + host questions + fun segment. Tone Auto-Fix updates hook/questions/ending only.</p>
+  <p><strong>Series Goal:</strong> <%= series.goal || 'Set a clear podcast growth objective.' %></p>
+  <p><strong>Mode:</strong> <%= episode.isSingle ? 'Standalone single episode' : 'Series continuity episode' %></p>
+  <p><strong>Tone:</strong> <%= toneLabel %> (<%= effectiveTone.tonePreset %>, <%= effectiveTone.toneIntensity %>/5)</p>
+  <p><strong>Audience Type:</strong> <%= effectiveTone.audienceType || 'Mixed' %> · <strong>Intent:</strong> <%= effectiveTone.intent || 'educate' %></p>
   <% if (theme.themeSummary) { %>
     <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
   <% } %>
@@ -64,10 +81,76 @@
       </label>
     </div>
 
+    <div class="two-col">
+      <label>
+        Episode Type
+        <select name="episodeType">
+          <option value="solo" <%= (episode.episodeType || 'solo') === 'solo' ? 'selected' : '' %>>Solo</option>
+          <option value="interview" <%= (episode.episodeType || 'solo') === 'interview' ? 'selected' : '' %>>Interview</option>
+        </select>
+      </label>
+      <label>
+        Target Length
+        <select name="targetLength">
+          <option value="" <%= !episode.targetLength ? 'selected' : '' %>>Flexible</option>
+          <option value="10-15" <%= episode.targetLength === '10-15' ? 'selected' : '' %>>10-15 min</option>
+          <option value="20-30" <%= episode.targetLength === '20-30' ? 'selected' : '' %>>20-30 min</option>
+          <option value="45+" <%= episode.targetLength === '45+' ? 'selected' : '' %>>45+ min</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="check-item">
+      <input type="checkbox" name="includeFunSegment" <%= episode.includeFunSegment !== false ? 'checked' : '' %> />
+      <span>Include fun segment</span>
+    </label>
+
     <label>
       Title
       <input type="text" name="title" value="<%= episode.title %>" maxlength="160" />
+      <small class="mini-note">Tone: <%= toneLabel %> (<%= effectiveTone.tonePreset %>, <%= effectiveTone.toneIntensity %>/5)</small>
     </label>
+
+    <details class="tone-override-card" <%= isToneOverride ? 'open' : '' %>>
+      <summary>Tone Override</summary>
+      <div class="tone-override-body">
+        <label class="check-item">
+          <input type="checkbox" name="toneOverrideEnabled" data-tone-override-toggle <%= isToneOverride ? 'checked' : '' %> />
+          <span>Override series tone for this episode</span>
+        </label>
+
+        <div class="tone-override-fields" data-tone-override-fields>
+          <div class="tone-grid compact">
+            <% tonePresets.forEach((preset) => { %>
+              <label class="tone-card compact">
+                <input
+                  type="radio"
+                  name="toneOverridePreset"
+                  value="<%= preset.name %>"
+                  <%= (episode.toneOverridePreset ? episode.toneOverridePreset : effectiveTone.tonePreset) === preset.name ? 'checked' : '' %>
+                />
+                <span class="tone-card-title"><%= preset.name %></span>
+                <span class="tone-card-desc"><%= preset.description %></span>
+              </label>
+            <% }) %>
+          </div>
+
+          <label>
+            Override Intensity (<span data-range-value="tone-intensity-episode"><%= Math.min(episode.toneOverrideIntensity || effectiveTone.toneIntensity || 3, maxToneIntensity || 3) %></span>/5)
+            <input
+              id="tone-intensity-episode"
+              type="range"
+              name="toneOverrideIntensity"
+              min="1"
+              max="<%= maxToneIntensity || 3 %>"
+              value="<%= Math.min(episode.toneOverrideIntensity || effectiveTone.toneIntensity || 3, maxToneIntensity || 3) %>"
+              data-range-source="tone-intensity-episode"
+            />
+          </label>
+          <p class="mini-note">Free plan can use up to intensity 3.</p>
+        </div>
+      </div>
+    </details>
 
     <label>
       Hook (1-2 lines)
@@ -95,7 +178,7 @@
     </label>
 
     <label>
-      Ending (takeaway + teaser)
+      Ending (<%= episode.isSingle ? 'strong close, no teaser required' : 'takeaway + teaser' %>)
       <textarea name="ending" rows="2"><%= episode.ending %></textarea>
     </label>
 
@@ -129,6 +212,29 @@
   <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/delete" class="danger-form">
     <button type="submit" class="btn btn-danger">Delete Episode</button>
   </form>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Tone Consistency</h3>
+    <span class="mini-label">Tone Engine v1</span>
+  </div>
+
+  <% if (showToneScore) { %>
+    <p><strong>Score:</strong> <%= Number.isFinite(episode.toneScore) ? `${episode.toneScore}/100` : 'Not scored yet' %></p>
+    <% if (episode.toneWarnings && episode.toneWarnings.length) { %>
+      <ul class="tone-warnings">
+        <% episode.toneWarnings.forEach((warning) => { %>
+          <li><%= warning %></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="mini-note">No major drift detected.</p>
+    <% } %>
+  <% } else { %>
+    <p class="mini-note">Tone consistency scoring is available on Pro and Premium plans.</p>
+    <a href="/settings?section=billing" class="btn btn-ghost">Upgrade</a>
+  <% } %>
 </section>
 
 <section class="card">
@@ -182,13 +288,16 @@
 
         <form method="GET" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/download" class="download-form">
           <select name="format">
-            <option value="pdf">PDF</option>
-            <option value="docx">DOCX</option>
-            <option value="txt">TXT</option>
+            <% (allowedTranscriptFormats || ['txt']).forEach((format) => { %>
+              <option value="<%= format %>"><%= format.toUpperCase() %></option>
+            <% }) %>
           </select>
           <button class="btn btn-primary" type="submit">Download Transcript</button>
         </form>
       </div>
+      <% if ((allowedTranscriptFormats || ['txt']).length < 3) { %>
+        <p class="mini-note">Need more formats? Upgrade in Billing to unlock higher export tiers.</p>
+      <% } %>
     </div>
   <% } %>
 </section>

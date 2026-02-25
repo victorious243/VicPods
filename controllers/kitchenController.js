@@ -7,11 +7,46 @@ const {
   getNextThemeEpisodeNumber,
   getNextGlobalEpisodeNumber,
 } = require('../services/themeService');
+const { TONE_PRESETS } = require('../services/tone/tonePresets');
+const { computeToneConsistencyScore } = require('../services/tone/consistencyScore');
+const {
+  INTENT_OPTIONS,
+  AUDIENCE_TYPES,
+  getMaxIntensityForPlan,
+  normalizeSeriesToneInput,
+  normalizeEpisodeToneOverride,
+  resolveEffectiveTone,
+  ensureSeriesToneDefaults,
+} = require('../services/tone/toneService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 const { renderPage } = require('../utils/render');
 
 const VALID_STATUSES = ['Planned', 'Draft', 'Ready', 'Served'];
+const TRANSCRIPT_FORMATS_BY_PLAN = {
+  free: ['txt'],
+  pro: ['txt', 'pdf'],
+  premium: ['txt', 'pdf', 'docx'],
+};
+const INTENSITY_LABELS = {
+  1: 'Subtle',
+  2: 'Light',
+  3: 'Balanced',
+  4: 'Strong',
+  5: 'Bold',
+};
+
+function normalizeText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function clampWords(value, maxWords) {
+  const words = normalizeText(value).split(' ').filter(Boolean);
+  if (words.length <= maxWords) {
+    return words.join(' ');
+  }
+  return `${words.slice(0, maxWords).join(' ')}...`;
+}
 
 function toLines(value, max = 16) {
   return String(value || '')
@@ -38,6 +73,7 @@ async function getOwnedSeries({ userId, seriesId }) {
   if (!series) {
     throw new AppError('Series not found.', 404);
   }
+  await ensureSeriesToneDefaults(series);
   return series;
 }
 
@@ -52,14 +88,28 @@ async function getOwnedTheme({ userId, seriesId, themeId }) {
 async function listSeries(req, res, next) {
   try {
     const seriesList = await Series.find({ userId: req.currentUser._id }).sort({ updatedAt: -1 });
+    await Promise.all(seriesList.map((series) => ensureSeriesToneDefaults(series)));
+
+    const effectivePlan = req.effectivePlan || 'free';
+    const singleCollectionSeries = seriesList.find((series) => (
+      series.creationMode === 'single_collection' || series.isSystem
+    ));
+    const regularSeries = seriesList.filter((series) => String(series._id) !== String(singleCollectionSeries?._id));
 
     return renderPage(res, {
       title: 'Kitchen - VicPods',
       pageTitle: 'Kitchen',
-      subtitle: 'Build series, group by themes, and shape episodes with structure.',
+      subtitle: 'Series library and advanced management workspace.',
       view: 'kitchen/index',
       data: {
-        seriesList,
+        regularSeries,
+        singleCollectionSeries,
+        tonePresets: TONE_PRESETS,
+        intentOptions: INTENT_OPTIONS,
+        audienceTypes: AUDIENCE_TYPES,
+        maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
+        intensityLabels: INTENSITY_LABELS,
+        effectivePlan,
       },
     });
   } catch (error) {
@@ -71,10 +121,13 @@ async function createSeries(req, res, next) {
   try {
     const name = String(req.body.name || '').trim();
     const plannedEpisodeCount = Number.parseInt(req.body.plannedEpisodeCount, 10);
+    const effectivePlan = req.effectivePlan || req.currentUser?.plan || 'free';
 
     if (!name) {
       throw new AppError('Series name is required.', 400);
     }
+
+    const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
 
     await Series.create({
       userId: req.currentUser._id,
@@ -82,6 +135,14 @@ async function createSeries(req, res, next) {
       description: String(req.body.description || '').trim(),
       tone: ['fun', 'calm', 'serious'].includes(req.body.tone) ? req.body.tone : 'fun',
       audience: String(req.body.audience || '').trim(),
+      tonePreset: toneInput.tonePreset,
+      toneIntensity: toneInput.toneIntensity,
+      audienceType: toneInput.audienceType,
+      intent: toneInput.intent,
+      voicePersona: toneInput.voicePersona,
+      creationMode: 'series',
+      isSystem: false,
+      goal: String(req.body.goal || '').trim(),
       plannedEpisodeCount: Number.isInteger(plannedEpisodeCount) && plannedEpisodeCount > 0
         ? plannedEpisodeCount
         : 0,
@@ -103,6 +164,7 @@ async function showSeries(req, res, next) {
   try {
     const userId = req.currentUser._id;
     const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const effectivePlan = req.effectivePlan || 'free';
 
     await ensureSeriesThemesMigrated({ userId, seriesId: series._id });
 
@@ -111,6 +173,7 @@ async function showSeries(req, res, next) {
       Episode.find({ seriesId: series._id, userId }).sort({ themeId: 1, episodeNumberWithinTheme: 1, createdAt: 1 }),
       Idea.find({ userId }).sort({ updatedAt: -1 }).limit(20),
     ]);
+    const isSystemSingleCollection = series.creationMode === 'single_collection' || series.isSystem;
 
     const episodesByTheme = new Map();
     episodes.forEach((episode) => {
@@ -143,9 +206,59 @@ async function showSeries(req, res, next) {
         series,
         themesWithEpisodes,
         ideas,
+        isSystemSingleCollection,
+        flatEpisodes: episodes,
+        tonePresets: TONE_PRESETS,
+        intentOptions: INTENT_OPTIONS,
+        audienceTypes: AUDIENCE_TYPES,
+        maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
+        intensityLabels: INTENSITY_LABELS,
+        isPremiumPlan: effectivePlan === 'premium',
+        effectivePlan,
       },
     });
   } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateSeriesSettings(req, res, next) {
+  try {
+    const userId = req.currentUser._id;
+    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const effectivePlan = req.effectivePlan || req.currentUser?.plan || 'free';
+    const plannedEpisodeCount = Number.parseInt(req.body.plannedEpisodeCount, 10);
+    const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
+
+    series.name = String(req.body.name || series.name || '').trim() || series.name;
+    series.description = String(req.body.description || '').trim();
+    series.audience = String(req.body.audience || '').trim();
+    series.goal = String(req.body.goal || '').trim();
+    series.plannedEpisodeCount = Number.isInteger(plannedEpisodeCount) && plannedEpisodeCount > 0
+      ? plannedEpisodeCount
+      : 0;
+
+    series.tonePreset = toneInput.tonePreset;
+    series.toneIntensity = toneInput.toneIntensity;
+    series.audienceType = toneInput.audienceType;
+    series.intent = toneInput.intent;
+    series.voicePersona = toneInput.voicePersona;
+
+    await series.save();
+
+    if (effectivePlan !== 'premium' && String(req.body.voicePersona || '').trim()) {
+      req.flash('success', 'Series settings updated. Voice Persona requires Premium.');
+    } else {
+      req.flash('success', 'Series settings updated.');
+    }
+
+    return res.redirect(`/kitchen/${series._id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(`/kitchen/${req.params.seriesId}`);
+    }
+
     return next(error);
   }
 }
@@ -154,6 +267,9 @@ async function createTheme(req, res, next) {
   try {
     const userId = req.currentUser._id;
     const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    if (series.creationMode === 'single_collection' || series.isSystem) {
+      throw new AppError('Themes cannot be added to the Single Episodes system collection.', 400);
+    }
     const name = String(req.body.name || '').trim();
 
     if (!name) {
@@ -261,6 +377,7 @@ async function showEpisodeEditor(req, res, next) {
     const userId = req.currentUser._id;
     const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
     const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const effectivePlan = req.effectivePlan || 'free';
 
     const [episode, allIdeas] = await Promise.all([
       Episode.findOne({
@@ -283,6 +400,12 @@ async function showEpisodeEditor(req, res, next) {
       episodeNumberWithinTheme: { $lt: episode.episodeNumberWithinTheme },
     }).sort({ episodeNumberWithinTheme: -1 });
 
+    const effectiveTone = resolveEffectiveTone({
+      series,
+      episode,
+      plan: effectivePlan,
+    });
+
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
       pageTitle: `Kitchen: ${series.name} / ${theme.name} / Episode ${episode.episodeNumberWithinTheme}`,
@@ -295,6 +418,13 @@ async function showEpisodeEditor(req, res, next) {
         allIdeas,
         previousEpisode,
         validStatuses: VALID_STATUSES,
+        allowedTranscriptFormats: TRANSCRIPT_FORMATS_BY_PLAN[req.effectivePlan || 'free'] || ['txt'],
+        tonePresets: TONE_PRESETS,
+        intensityLabels: INTENSITY_LABELS,
+        maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
+        effectiveTone,
+        showToneScore: effectivePlan === 'pro' || effectivePlan === 'premium',
+        toneFixAvailable: effectivePlan === 'premium',
       },
     });
   } catch (error) {
@@ -307,6 +437,7 @@ async function saveEpisode(req, res, next) {
     const userId = req.currentUser._id;
     const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
     const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const effectivePlan = req.effectivePlan || req.currentUser?.plan || 'free';
 
     const episode = await Episode.findOne({
       _id: req.params.episodeId,
@@ -321,13 +452,30 @@ async function saveEpisode(req, res, next) {
 
     episode.title = String(req.body.title || '').trim();
     episode.status = VALID_STATUSES.includes(req.body.status) ? req.body.status : 'Draft';
-    episode.hook = String(req.body.hook || '').trim();
-    episode.outline = toLines(req.body.outline, 7);
-    episode.talkingPoints = toLines(req.body.talkingPoints, 7);
-    episode.hostQuestions = toLines(req.body.hostQuestions, 8);
-    episode.funSegment = String(req.body.funSegment || '').trim();
-    episode.ending = String(req.body.ending || '').trim();
-    episode.endState = String(req.body.endState || '').trim();
+    episode.episodeType = ['solo', 'interview'].includes(req.body.episodeType) ? req.body.episodeType : 'solo';
+    episode.targetLength = ['10-15', '20-30', '45+', ''].includes(req.body.targetLength) ? req.body.targetLength : '';
+    episode.includeFunSegment = req.body.includeFunSegment === 'on';
+    episode.hook = clampWords(req.body.hook, 42);
+    episode.outline = toLines(req.body.outline, 7).map((line) => clampWords(line, 24));
+    episode.talkingPoints = toLines(req.body.talkingPoints, 7).map((line) => clampWords(line, 24));
+    episode.hostQuestions = toLines(req.body.hostQuestions, 8).map((line) => clampWords(line, 24));
+    episode.funSegment = episode.includeFunSegment ? String(req.body.funSegment || '').trim() : '';
+    episode.funSegment = clampWords(episode.funSegment, 120);
+    episode.ending = clampWords(req.body.ending, 45);
+    episode.endState = clampWords(req.body.endState, 80);
+
+    if (episode.isSingle) {
+      episode.ending = normalizeText(episode.ending).replace(/\s+Teaser:.*$/i, '').trim();
+    } else if (episode.ending && !/(teaser|next episode|next time)/i.test(episode.ending)) {
+      episode.ending = `${episode.ending} Teaser: next episode builds on this with a sharper angle.`.trim();
+    }
+
+    const toneOverride = normalizeEpisodeToneOverride(req.body, {
+      series,
+      plan: effectivePlan,
+    });
+    episode.toneOverridePreset = toneOverride.toneOverridePreset;
+    episode.toneOverrideIntensity = toneOverride.toneOverrideIntensity;
 
     const submittedIdeaIds = toObjectIdList(req.body.ideaIds);
     const validIdeas = await Idea.find({
@@ -336,6 +484,19 @@ async function saveEpisode(req, res, next) {
     }).select('_id');
 
     episode.ideaIds = validIdeas.map((idea) => idea._id);
+
+    const effectiveTone = resolveEffectiveTone({
+      series,
+      episode,
+      plan: effectivePlan,
+    });
+    const toneCheck = computeToneConsistencyScore({
+      episode,
+      tonePreset: effectiveTone.tonePreset,
+      toneIntensity: effectiveTone.toneIntensity,
+    });
+    episode.toneScore = toneCheck.toneScore;
+    episode.toneWarnings = toneCheck.warnings;
 
     await episode.save();
 
@@ -388,6 +549,7 @@ module.exports = {
   listSeries,
   createSeries,
   showSeries,
+  updateSeriesSettings,
   createTheme,
   createEpisodeInTheme,
   showEpisodeEditor,

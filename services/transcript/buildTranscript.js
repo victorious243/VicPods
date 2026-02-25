@@ -11,6 +11,14 @@ function buildIntro(episode) {
   return 'Welcome back. Today we move this series forward with a focused conversation.';
 }
 
+function buildDefaultOutro(episode) {
+  if (episode.isSingle) {
+    return 'Takeaway: apply one practical step from this episode and close the loop.';
+  }
+
+  return 'Takeaway: keep your process simple. Teaser: next episode deepens this arc with a stronger challenge.';
+}
+
 function buildSections({ series, theme, episode }) {
   const outline = (episode.outline || []).map(cleanLine).filter(Boolean);
   const talkingPoints = (episode.talkingPoints || []).map(cleanLine).filter(Boolean);
@@ -40,8 +48,10 @@ function buildSections({ series, theme, episode }) {
     intro: buildIntro(episode),
     segments,
     hostQuestions,
-    funSegment: cleanLine(episode.funSegment || 'Quick game: pick one bold move and defend it in 30 seconds.'),
-    outro: cleanLine(episode.ending || 'Takeaway: keep your process simple. Teaser: next episode deepens this arc with a stronger challenge.'),
+    funSegment: episode.includeFunSegment === false
+      ? ''
+      : cleanLine(episode.funSegment || 'Quick game: pick one bold move and defend it in 30 seconds.'),
+    outro: cleanLine(episode.ending || buildDefaultOutro(episode)),
   };
 }
 
@@ -80,9 +90,11 @@ function buildTranscript({ series, theme, episode }) {
   }
 
   lines.push('');
-  lines.push('FUN SEGMENT');
-  lines.push(sections.funSegment);
-  lines.push('');
+  if (sections.funSegment) {
+    lines.push('FUN SEGMENT');
+    lines.push(sections.funSegment);
+    lines.push('');
+  }
   lines.push('OUTRO');
   lines.push(sections.outro);
 

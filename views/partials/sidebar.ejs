@@ -11,8 +11,9 @@
   </div>
 
   <nav class="sidebar-nav" aria-label="Primary">
+    <% const normalizedPath = (currentPath || '').split('?')[0]; %>
     <% (navItems || []).forEach((item) => { %>
-      <% const active = currentPath && currentPath.startsWith(item.href); %>
+      <% const active = normalizedPath && normalizedPath.startsWith(item.href); %>
       <a href="<%= item.href %>" class="nav-link <%= active ? 'active' : '' %>">
         <span class="nav-icon" aria-hidden="true"><%= item.icon %></span>
         <span><%= item.label %></span>
@@ -20,9 +21,27 @@
     <% }) %>
   </nav>
 
+  <% if (currentUser) { %>
+    <% const sidebarName = (currentUser.name || currentUser.email || 'User').trim(); %>
+    <% const sidebarInitials = sidebarName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
+    <a href="/settings?section=profile" class="sidebar-user-card">
+      <span class="sidebar-user-avatar">
+        <% if (currentUser.avatarUrl) { %>
+          <img src="<%= currentUser.avatarUrl %>" alt="<%= sidebarName %> avatar" />
+        <% } else { %>
+          <span><%= sidebarInitials %></span>
+        <% } %>
+      </span>
+      <span class="sidebar-user-meta">
+        <strong><%= currentUser.name %></strong>
+        <small><%= currentUser.email %></small>
+      </span>
+    </a>
+  <% } %>
+
   <div class="upgrade-card">
     <h3>Upgrade Ready</h3>
     <p>Unlock higher AI volume, faster generation, and advanced continuity controls.</p>
-    <a href="/billing" class="btn btn-secondary">See Plans</a>
+    <a href="/settings?section=billing" class="btn btn-secondary">See Plans</a>
   </div>
 </aside>

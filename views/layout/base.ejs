@@ -6,12 +6,13 @@
   <title><%= title || 'VicPods' %></title>
   <script>
     (function initTheme() {
+      var serverDefault = '<%= (currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';
       try {
         var stored = localStorage.getItem('vicpods_theme');
-        var theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
+        var theme = stored === 'light' || stored === 'dark' ? stored : serverDefault;
         document.documentElement.setAttribute('data-theme', theme);
       } catch (error) {
-        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme', serverDefault);
       }
     }());
   </script>
@@ -37,5 +38,8 @@
   <% } %>
 
   <script src="/javascripts/theme.js" defer></script>
+  <script src="/javascripts/settings.js" defer></script>
+  <script src="/javascripts/tone.js" defer></script>
+  <script src="/javascripts/create.js" defer></script>
 </body>
 </html>

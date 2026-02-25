@@ -1,39 +1,83 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Subscription Status</h3>
+    <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
+  </div>
+  <p>
+    <strong>Current Access:</strong> <%= billing.effectivePlan %>
+    <% if (billing.storedPlan !== billing.effectivePlan) { %>
+      <span class="mini-note">(stored: <%= billing.storedPlan %>)</span>
+    <% } %>
+  </p>
+  <% if (billing.currentPeriodStartLabel) { %>
+    <p><strong>Current period started:</strong> <%= billing.currentPeriodStartLabel %></p>
+  <% } %>
+  <% if (billing.currentPeriodEndLabel) { %>
+    <p><strong>Current period ends:</strong> <%= billing.currentPeriodEndLabel %></p>
+  <% } %>
+  <% if (billing.cancelAtPeriodEnd && billing.currentPeriodEndLabel) { %>
+    <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
+  <% } %>
+  <% if (billing.planStatus === 'past_due') { %>
+    <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
+  <% } %>
+  <div class="inline-actions">
+    <form method="POST" action="/billing/portal">
+      <button class="btn btn-secondary" type="submit">Manage Billing</button>
+    </form>
+  </div>
+</section>
+
 <section class="card-grid plan-grid">
-  <article class="card plan-card <%= currentUser.plan === 'free' ? 'active-plan' : '' %>">
+  <article class="card plan-card <%= billing.effectivePlan === 'free' ? 'active-plan' : '' %>">
     <h3>Free</h3>
     <p class="price">$0</p>
     <ul>
-      <li>Studio + Kitchen + Pantry</li>
-      <li>5 AI generations/day</li>
-      <li>Basic continuity</li>
+      <li>Core Studio + Kitchen + Pantry access</li>
+      <li>5 generations/day</li>
+      <li>Transcript TXT export only</li>
     </ul>
-    <button class="btn btn-muted" disabled>Current Plan</button>
+    <button class="btn btn-secondary" disabled>Current Access</button>
   </article>
 
-  <article class="card plan-card <%= currentUser.plan === 'pro' ? 'active-plan' : '' %>">
+  <article class="card plan-card <%= billing.effectivePlan === 'pro' ? 'active-plan' : '' %>">
     <h3>Pro</h3>
     <p class="price">$19/mo</p>
     <ul>
-      <li>Higher AI volume</li>
-      <li>Continuity refresh endpoint</li>
-      <li>Priority generation</li>
+      <li>50 generations/day</li>
+      <li>Continuity tools + faster workflow</li>
+      <li>Transcript TXT + PDF exports</li>
     </ul>
-    <button class="btn btn-primary">Upgrade to Pro</button>
+    <% if (billing.effectivePlan === 'pro' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
+      <button class="btn btn-secondary" disabled>Current Access</button>
+    <% } else { %>
+      <form method="POST" action="/billing/checkout">
+        <input type="hidden" name="plan" value="pro" />
+        <button class="btn btn-primary" type="submit">Upgrade to Pro</button>
+      </form>
+    <% } %>
   </article>
 
-  <article class="card plan-card <%= currentUser.plan === 'premium' ? 'active-plan' : '' %>">
+  <article class="card plan-card <%= billing.effectivePlan === 'premium' ? 'active-plan' : '' %>">
     <h3>Premium</h3>
     <p class="price">$49/mo</p>
     <ul>
-      <li>Team workflows</li>
-      <li>Advanced AI strategies</li>
-      <li>Future multi-show controls</li>
+      <li>Unlimited generations</li>
+      <li>Highest continuity + future team features</li>
+      <li>Transcript TXT + PDF + DOCX exports</li>
     </ul>
-    <button class="btn btn-primary">Upgrade to Premium</button>
+    <% if (billing.effectivePlan === 'premium' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
+      <button class="btn btn-secondary" disabled>Current Access</button>
+    <% } else { %>
+      <form method="POST" action="/billing/checkout">
+        <input type="hidden" name="plan" value="premium" />
+        <button class="btn btn-primary" type="submit">Upgrade to Premium</button>
+      </form>
+    <% } %>
   </article>
 </section>
 
 <section class="card">
-  <h3>Billing Integration Placeholder</h3>
-  <p>Stripe checkout will be integrated in a later milestone. Route and plan architecture are already in place.</p>
+  <h3>Billing Notes</h3>
+  <p>Stripe webhooks are the source of truth for activation, renewal, cancellation, and expiry. Success pages are informational only.</p>
 </section>

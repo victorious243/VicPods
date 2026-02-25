@@ -3,121 +3,263 @@
     <h3>Series Brief</h3>
     <a href="/kitchen" class="btn btn-ghost">Back to Kitchen</a>
   </div>
-  <p><strong>Tone:</strong> <%= series.tone %> · <strong>Audience:</strong> <%= series.audience || 'General' %> · <strong>Planned Episodes:</strong> <%= series.plannedEpisodeCount || 0 %></p>
-  <p><%= series.description || 'No series description yet.' %></p>
+  <p>
+    <strong>Mode:</strong> <%= isSystemSingleCollection ? 'Single Collection' : 'Series' %>
+    · <strong>Tone:</strong> <%= series.tonePreset || 'Conversational & Casual' %> (<%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5)
+    · <strong>Audience Type:</strong> <%= series.audienceType || 'Mixed' %>
+    · <strong>Intent:</strong> <%= series.intent || 'educate' %>
+    · <strong>Planned Episodes:</strong> <%= series.plannedEpisodeCount || 0 %>
+  </p>
+  <% if (series.goal) { %>
+    <p><strong>Primary Goal:</strong> <%= series.goal %></p>
+  <% } %>
+  <p><%= series.description || (isSystemSingleCollection ? 'System-managed standalone episodes collection.' : 'No series description yet.') %></p>
   <% if (series.seriesSummary) { %>
     <p><strong>Series Continuity Summary:</strong> <%= series.seriesSummary %></p>
   <% } %>
+  <% if (series.voicePersona) { %>
+    <p><strong>Voice Persona:</strong> <%= series.voicePersona %></p>
+  <% } %>
 </section>
 
-<section class="split-grid">
-  <article class="card">
+<% if (isSystemSingleCollection) { %>
+  <section class="card">
     <div class="section-head">
-      <h3>Create Theme</h3>
-      <span class="mini-label">Series → Themes</span>
+      <h3>Single Episodes</h3>
+      <a href="/create/single" class="btn btn-primary">Create Single Episode</a>
     </div>
-    <form method="POST" action="/kitchen/<%= series._id %>/themes" class="form-grid">
-      <label>
-        Theme Name
-        <input type="text" name="name" maxlength="120" required placeholder="Monetization Experiments" />
-      </label>
-      <label>
-        Theme Description
-        <textarea name="description" rows="3" maxlength="1000" placeholder="What this theme explores across episodes"></textarea>
-      </label>
-      <button type="submit" class="btn btn-primary">Create Theme</button>
-    </form>
-  </article>
 
-  <article class="card">
-    <div class="section-head">
-      <h3>Pantry Ingredients</h3>
-      <a href="/pantry" class="btn btn-ghost">Open Pantry</a>
-    </div>
-    <% if (!ideas.length) { %>
-      <p class="empty-state">No ideas yet. Add hooks in Pantry.</p>
+    <% if (!flatEpisodes.length) { %>
+      <p class="empty-state">No standalone episodes yet. Start one from Create.</p>
     <% } else { %>
-      <div class="chip-wrap">
-        <% ideas.forEach((idea) => { %>
-          <span class="chip"><%= idea.tag %>: <%= idea.hook %></span>
+      <div class="episode-divider-stack">
+        <% flatEpisodes.forEach((episode) => { %>
+          <article class="episode-block">
+            <header>
+              <h4>
+                Episode <%= episode.episodeNumberWithinTheme %>
+                <% if (episode.globalEpisodeNumber) { %>
+                  · Global <%= episode.globalEpisodeNumber %>
+                <% } %>
+                · <%= episode.title || 'Untitled' %>
+              </h4>
+              <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+            </header>
+            <p><%= episode.hook || 'No hook yet.' %></p>
+            <div class="inline-actions">
+              <span class="mini-label"><%= episode.episodeType || 'solo' %></span>
+              <% if (episode.targetLength) { %>
+                <span class="mini-label"><%= episode.targetLength %> min</span>
+              <% } %>
+            </div>
+            <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= episode.themeId %>/episodes/<%= episode._id %>">
+              Edit Episode
+            </a>
+          </article>
         <% }) %>
       </div>
     <% } %>
-  </article>
-</section>
+  </section>
+<% } else { %>
+  <section class="split-grid">
+    <article class="card">
+      <div class="section-head">
+        <h3>Series Settings</h3>
+        <span class="mini-label">Tone Engine v1</span>
+      </div>
 
-<section class="card">
-  <div class="section-head">
-    <h3>Themes & Episodes</h3>
-    <span class="mini-label">Nested workflow</span>
-  </div>
+      <form action="/kitchen/<%= series._id %>/settings" method="POST" class="form-grid">
+        <label>
+          Series Name
+          <input type="text" name="name" maxlength="120" value="<%= series.name %>" required />
+        </label>
 
-  <% if (!themesWithEpisodes.length) { %>
-    <p class="empty-state">No themes yet for this series.</p>
-  <% } else { %>
-    <div class="theme-stack">
-      <% themesWithEpisodes.forEach((entry, index) => { %>
-        <% const theme = entry.theme; %>
-        <% const episodes = entry.episodes; %>
-        <% const firstEpisode = episodes[0]; %>
-        <details class="theme-card" id="theme-<%= theme._id %>" <%= index === 0 ? 'open' : '' %>>
-          <summary class="theme-summary">
-            <div>
-              <h4><%= theme.name %></h4>
-              <p><%= theme.description || 'No theme description yet.' %></p>
-            </div>
-            <div class="inline-actions">
-              <span class="mini-label"><%= entry.progress.servedCount %>/<%= entry.progress.totalCount %> served</span>
-              <% if (firstEpisode) { %>
-                <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= firstEpisode._id %>">Open</a>
+        <label>
+          Description
+          <textarea name="description" rows="3" maxlength="1000"><%= series.description %></textarea>
+        </label>
+
+        <label>
+          Target Audience Notes
+          <input type="text" name="audience" maxlength="240" value="<%= series.audience %>" />
+        </label>
+
+        <label>
+          Primary Goal
+          <input type="text" name="goal" maxlength="320" value="<%= series.goal %>" />
+        </label>
+
+        <div class="tone-section">
+          <div class="section-head">
+            <h4>Series Tone</h4>
+            <span class="mini-label"><%= effectivePlan === 'free' ? 'Free max 3/5 intensity' : 'Full tone controls' %></span>
+          </div>
+
+          <div class="tone-grid">
+            <% tonePresets.forEach((preset) => { %>
+              <label class="tone-card">
+                <input type="radio" name="tonePreset" value="<%= preset.name %>" <%= (series.tonePreset || 'Conversational & Casual') === preset.name ? 'checked' : '' %> />
+                <span class="tone-card-title"><%= preset.name %></span>
+                <span class="tone-card-desc"><%= preset.description %></span>
+                <span class="tone-card-example">"<%= preset.exampleHook %>"</span>
+              </label>
+            <% }) %>
+          </div>
+
+          <label>
+            Tone Intensity (<span data-range-value="tone-intensity-series"><%= Math.min(series.toneIntensity || 3, maxToneIntensity || 3) %></span>/5)
+            <input
+              id="tone-intensity-series"
+              type="range"
+              name="toneIntensity"
+              min="1"
+              max="<%= maxToneIntensity || 3 %>"
+              value="<%= Math.min(series.toneIntensity || 3, maxToneIntensity || 3) %>"
+              data-range-source="tone-intensity-series"
+            />
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Audience Type
+            <select name="audienceType">
+              <% audienceTypes.forEach((audienceType) => { %>
+                <option value="<%= audienceType %>" <%= (series.audienceType || 'Mixed') === audienceType ? 'selected' : '' %>><%= audienceType %></option>
+              <% }) %>
+            </select>
+          </label>
+
+          <label>
+            Intent
+            <select name="intent">
+              <% intentOptions.forEach((intent) => { %>
+                <option value="<%= intent %>" <%= (series.intent || 'educate') === intent ? 'selected' : '' %>><%= intent %></option>
+              <% }) %>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Custom Audience Type (optional)
+          <input type="text" name="audienceTypeCustom" maxlength="120" placeholder="Use only when Audience Type is Custom" />
+        </label>
+
+        <% if (isPremiumPlan) { %>
+          <label>
+            Voice Persona (Premium)
+            <textarea name="voicePersona" rows="3" maxlength="400" data-char-count="persona-series" placeholder="Describe how you speak. Keep it short."><%= series.voicePersona %></textarea>
+            <small class="mini-note"><span data-char-count-label="persona-series"><%= (series.voicePersona || '').length %></span>/400</small>
+          </label>
+        <% } else { %>
+          <label>
+            Voice Persona (Premium)
+            <textarea rows="3" disabled placeholder="Upgrade to Premium to save a voice persona."><%= series.voicePersona %></textarea>
+            <small class="mini-note">Premium only. <a href="/settings?section=billing">Upgrade</a></small>
+          </label>
+        <% } %>
+
+        <label>
+          Planned Episode Count
+          <input type="number" name="plannedEpisodeCount" min="0" value="<%= series.plannedEpisodeCount || 0 %>" />
+        </label>
+
+        <button type="submit" class="btn btn-primary">Save Series Settings</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-head">
+        <h3>Create Theme</h3>
+        <span class="mini-label">Series → Themes</span>
+      </div>
+      <form method="POST" action="/kitchen/<%= series._id %>/themes" class="form-grid">
+        <label>
+          Theme Name
+          <input type="text" name="name" maxlength="120" required placeholder="Monetization Experiments" />
+        </label>
+        <label>
+          Theme Description
+          <textarea name="description" rows="3" maxlength="1000" placeholder="What this theme explores across episodes"></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">Create Theme</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <h3>Themes & Episodes</h3>
+      <span class="mini-label">Nested workflow</span>
+    </div>
+
+    <% if (!themesWithEpisodes.length) { %>
+      <p class="empty-state">No themes yet for this series.</p>
+    <% } else { %>
+      <div class="theme-stack">
+        <% themesWithEpisodes.forEach((entry, index) => { %>
+          <% const theme = entry.theme; %>
+          <% const episodes = entry.episodes; %>
+          <% const firstEpisode = episodes[0]; %>
+          <details class="theme-card" id="theme-<%= theme._id %>" <%= index === 0 ? 'open' : '' %>>
+            <summary class="theme-summary">
+              <div>
+                <h4><%= theme.name %></h4>
+                <p><%= theme.description || 'No theme description yet.' %></p>
+              </div>
+              <div class="inline-actions">
+                <span class="mini-label"><%= entry.progress.servedCount %>/<%= entry.progress.totalCount %> served</span>
+                <% if (firstEpisode) { %>
+                  <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= firstEpisode._id %>">Open</a>
+                <% } %>
+              </div>
+            </summary>
+
+            <div class="theme-body">
+              <% if (theme.themeSummary) { %>
+                <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
+              <% } %>
+
+              <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes" class="theme-add-episode">
+                <label>
+                  Episode Number (within <%= theme.name %>)
+                  <input type="number" name="episodeNumberWithinTheme" min="1" placeholder="Auto" />
+                </label>
+                <label>
+                  Working Title
+                  <input type="text" name="title" maxlength="160" placeholder="Episode title" />
+                </label>
+                <button type="submit" class="btn btn-secondary">Add Episode</button>
+              </form>
+
+              <% if (!episodes.length) { %>
+                <p class="empty-state">No episodes in this theme yet.</p>
+              <% } else { %>
+                <div class="episode-divider-stack">
+                  <% episodes.forEach((episode) => { %>
+                    <article class="episode-block">
+                      <header>
+                        <h4>
+                          Theme Ep <%= episode.episodeNumberWithinTheme %>
+                          <% if (episode.globalEpisodeNumber) { %>
+                            · Global <%= episode.globalEpisodeNumber %>
+                          <% } %>
+                          · <%= episode.title || 'Untitled' %>
+                        </h4>
+                        <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+                      </header>
+                      <p><%= episode.hook || 'No hook yet.' %></p>
+                      <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>">
+                        Edit Theme Episode <%= episode.episodeNumberWithinTheme %>
+                      </a>
+                    </article>
+                  <% }) %>
+                </div>
               <% } %>
             </div>
-          </summary>
-
-          <div class="theme-body">
-            <% if (theme.themeSummary) { %>
-              <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
-            <% } %>
-
-            <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes" class="theme-add-episode">
-              <label>
-                Episode Number (within <%= theme.name %>)
-                <input type="number" name="episodeNumberWithinTheme" min="1" placeholder="Auto" />
-              </label>
-              <label>
-                Working Title
-                <input type="text" name="title" maxlength="160" placeholder="Episode title" />
-              </label>
-              <button type="submit" class="btn btn-secondary">Add Episode</button>
-            </form>
-
-            <% if (!episodes.length) { %>
-              <p class="empty-state">No episodes in this theme yet.</p>
-            <% } else { %>
-              <div class="episode-divider-stack">
-                <% episodes.forEach((episode) => { %>
-                  <article class="episode-block">
-                    <header>
-                      <h4>
-                        Theme Ep <%= episode.episodeNumberWithinTheme %>
-                        <% if (episode.globalEpisodeNumber) { %>
-                          · Global <%= episode.globalEpisodeNumber %>
-                        <% } %>
-                        · <%= episode.title || 'Untitled' %>
-                      </h4>
-                      <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
-                    </header>
-                    <p><%= episode.hook || 'No hook yet.' %></p>
-                    <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>">
-                      Edit Theme Episode <%= episode.episodeNumberWithinTheme %>
-                    </a>
-                  </article>
-                <% }) %>
-              </div>
-            <% } %>
-          </div>
-        </details>
-      <% }) %>
-    </div>
-  <% } %>
-</section>
+          </details>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+<% } %>

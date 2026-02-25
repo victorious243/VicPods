@@ -1,6 +1,7 @@
 const { AppError } = require('../utils/errors');
 
 const FREE_DAILY_LIMIT = 5;
+const PRO_DAILY_LIMIT = 50;
 
 function isSameUtcDay(dateA, dateB) {
   return (
@@ -10,12 +11,27 @@ function isSameUtcDay(dateA, dateB) {
   );
 }
 
+function getDailyLimitForPlan(plan) {
+  if (plan === 'premium') {
+    return Infinity;
+  }
+
+  if (plan === 'pro') {
+    return PRO_DAILY_LIMIT;
+  }
+
+  return FREE_DAILY_LIMIT;
+}
+
 async function consumeAiCredit(user) {
   if (!user) {
     throw new AppError('Authentication required.', 401);
   }
 
-  if (user.plan !== 'free') {
+  const plan = user.plan || 'free';
+  const planLimit = getDailyLimitForPlan(plan);
+
+  if (planLimit === Infinity) {
     return;
   }
 
@@ -27,8 +43,8 @@ async function consumeAiCredit(user) {
     user.aiDailyResetDate = now;
   }
 
-  if (user.aiDailyCount >= FREE_DAILY_LIMIT) {
-    throw new AppError('Free plan limit reached (5 AI generations/day). Upgrade for more.', 429);
+  if (user.aiDailyCount >= planLimit) {
+    throw new AppError(`${plan.charAt(0).toUpperCase() + plan.slice(1)} plan limit reached (${planLimit} generations/day). Upgrade for more.`, 429);
   }
 
   user.aiDailyCount += 1;
@@ -37,5 +53,7 @@ async function consumeAiCredit(user) {
 
 module.exports = {
   FREE_DAILY_LIMIT,
+  PRO_DAILY_LIMIT,
+  getDailyLimitForPlan,
   consumeAiCredit,
 };

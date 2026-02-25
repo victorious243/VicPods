@@ -1,0 +1,237 @@
+<section class="card settings-nav-card">
+  <div class="section-head">
+    <h3>Settings</h3>
+    <span class="mini-label"><%= effectivePlan %> plan</span>
+  </div>
+  <div class="settings-tab-grid">
+    <a class="settings-tab-card <%= selectedSection === 'profile' ? 'active-settings-tab' : '' %>" href="/settings?section=profile">
+      <span class="settings-tab-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </span>
+      <span class="settings-tab-text">
+        <strong>Profile</strong>
+        <small>Name, email, avatar</small>
+      </span>
+    </a>
+
+    <a class="settings-tab-card <%= selectedSection === 'appearance' ? 'active-settings-tab' : '' %>" href="/settings?section=appearance">
+      <span class="settings-tab-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v2" />
+          <path d="M12 19v2" />
+          <path d="M4.93 4.93l1.41 1.41" />
+          <path d="M17.66 17.66l1.41 1.41" />
+          <path d="M3 12h2" />
+          <path d="M19 12h2" />
+          <path d="M4.93 19.07l1.41-1.41" />
+          <path d="M17.66 6.34l1.41-1.41" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>
+      </span>
+      <span class="settings-tab-text">
+        <strong>Appearance</strong>
+        <small>Dark and light mode</small>
+      </span>
+    </a>
+
+    <a class="settings-tab-card <%= selectedSection === 'security' ? 'active-settings-tab' : '' %>" href="/settings?section=security">
+      <span class="settings-tab-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="10" rx="2" />
+          <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+        </svg>
+      </span>
+      <span class="settings-tab-text">
+        <strong>Security</strong>
+        <small>Password and account safety</small>
+      </span>
+    </a>
+
+    <a class="settings-tab-card <%= selectedSection === 'billing' ? 'active-settings-tab' : '' %>" href="/settings?section=billing">
+      <span class="settings-tab-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <path d="M2 10h20" />
+          <path d="M7 15h3" />
+        </svg>
+      </span>
+      <span class="settings-tab-text">
+        <strong>Billing</strong>
+        <small>Plan, invoices, upgrades</small>
+      </span>
+    </a>
+  </div>
+</section>
+
+<% if (selectedSection === 'profile') { %>
+  <section class="split-grid settings-grid">
+    <article class="card">
+      <div class="section-head">
+        <h3>Profile Details</h3>
+      </div>
+      <form method="POST" action="/settings/profile" class="form-grid">
+        <label>
+          Full Name
+          <input type="text" name="name" required maxlength="80" value="<%= currentUser.name %>" />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required maxlength="160" value="<%= currentUser.email %>" />
+        </label>
+        <label>
+          Avatar URL (optional)
+          <input type="text" name="avatarUrl" maxlength="1000" value="<%= currentUser.avatarUrl || '' %>" placeholder="https://..." />
+        </label>
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-head">
+        <h3>Avatar Preview</h3>
+      </div>
+      <% const avatarName = (currentUser.name || currentUser.email || 'User').trim(); %>
+      <% const avatarInitials = avatarName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
+      <div class="settings-avatar">
+        <% if (currentUser.avatarUrl) { %>
+          <img src="<%= currentUser.avatarUrl %>" alt="User avatar" />
+        <% } else { %>
+          <span><%= avatarInitials %></span>
+        <% } %>
+      </div>
+      <p><strong><%= currentUser.name %></strong></p>
+      <p class="mini-note"><%= currentUser.email %></p>
+      <p class="mini-note">Every user has an avatar: custom image URL or automatic initials badge.</p>
+    </article>
+  </section>
+<% } %>
+
+<% if (selectedSection === 'appearance') { %>
+  <section class="card">
+    <div class="section-head">
+      <h3>Theme Preferences</h3>
+      <span class="mini-label">Dark + Light</span>
+    </div>
+    <form method="POST" action="/settings/appearance" class="form-grid" id="appearance-form">
+      <label>
+        Default Theme
+        <select name="themePreference" id="theme-preference-select">
+          <option value="dark" <%= (currentUser.themePreference || 'dark') === 'dark' ? 'selected' : '' %>>Dark</option>
+          <option value="light" <%= currentUser.themePreference === 'light' ? 'selected' : '' %>>Light</option>
+        </select>
+      </label>
+      <p class="mini-note">Topbar toggle still works instantly. This sets your account default theme.</p>
+      <button type="submit" class="btn btn-primary">Save Appearance</button>
+    </form>
+  </section>
+<% } %>
+
+<% if (selectedSection === 'security') { %>
+  <section class="card">
+    <div class="section-head">
+      <h3>Change Password</h3>
+      <span class="mini-label">Account Security</span>
+    </div>
+    <form method="POST" action="/settings/security/password" class="form-grid">
+      <label>
+        Current Password
+        <input type="password" name="currentPassword" required minlength="8" autocomplete="current-password" />
+      </label>
+      <div class="two-col">
+        <label>
+          New Password
+          <input type="password" name="newPassword" required minlength="8" autocomplete="new-password" />
+        </label>
+        <label>
+          Confirm New Password
+          <input type="password" name="confirmPassword" required minlength="8" autocomplete="new-password" />
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Update Password</button>
+    </form>
+  </section>
+<% } %>
+
+<% if (selectedSection === 'billing') { %>
+  <section class="card">
+    <div class="section-head">
+      <h3>Subscription Status</h3>
+      <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
+    </div>
+    <p>
+      <strong>Current Access:</strong> <%= billing.effectivePlan %>
+      <% if (billing.storedPlan !== billing.effectivePlan) { %>
+        <span class="mini-note">(stored: <%= billing.storedPlan %>)</span>
+      <% } %>
+    </p>
+    <% if (billing.currentPeriodStartLabel) { %>
+      <p><strong>Current period started:</strong> <%= billing.currentPeriodStartLabel %></p>
+    <% } %>
+    <% if (billing.currentPeriodEndLabel) { %>
+      <p><strong>Current period ends:</strong> <%= billing.currentPeriodEndLabel %></p>
+    <% } %>
+    <% if (billing.cancelAtPeriodEnd && billing.currentPeriodEndLabel) { %>
+      <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
+    <% } %>
+    <% if (billing.planStatus === 'past_due') { %>
+      <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
+    <% } %>
+    <div class="inline-actions">
+      <form method="POST" action="/billing/portal">
+        <button class="btn btn-secondary" type="submit">Manage Billing</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card-grid plan-grid">
+    <article class="card plan-card <%= billing.effectivePlan === 'free' ? 'active-plan' : '' %>">
+      <h3>Free</h3>
+      <p class="price">$0</p>
+      <ul>
+        <li>Core Studio + Kitchen + Pantry access</li>
+        <li>5 generations/day</li>
+        <li>Transcript TXT export only</li>
+      </ul>
+      <button class="btn btn-secondary" disabled>Current Access</button>
+    </article>
+
+    <article class="card plan-card <%= billing.effectivePlan === 'pro' ? 'active-plan' : '' %>">
+      <h3>Pro</h3>
+      <p class="price">$19/mo</p>
+      <ul>
+        <li>50 generations/day</li>
+        <li>Continuity tools + faster workflow</li>
+        <li>Transcript TXT + PDF exports</li>
+      </ul>
+      <% if (billing.effectivePlan === 'pro' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
+        <button class="btn btn-secondary" disabled>Current Access</button>
+      <% } else { %>
+        <form method="POST" action="/billing/checkout">
+          <input type="hidden" name="plan" value="pro" />
+          <button class="btn btn-primary" type="submit">Upgrade to Pro</button>
+        </form>
+      <% } %>
+    </article>
+
+    <article class="card plan-card <%= billing.effectivePlan === 'premium' ? 'active-plan' : '' %>">
+      <h3>Premium</h3>
+      <p class="price">$49/mo</p>
+      <ul>
+        <li>Unlimited generations</li>
+        <li>Highest continuity + future team features</li>
+        <li>Transcript TXT + PDF + DOCX exports</li>
+      </ul>
+      <% if (billing.effectivePlan === 'premium' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
+        <button class="btn btn-secondary" disabled>Current Access</button>
+      <% } else { %>
+        <form method="POST" action="/billing/checkout">
+          <input type="hidden" name="plan" value="premium" />
+          <button class="btn btn-primary" type="submit">Upgrade to Premium</button>
+        </form>
+      <% } %>
+    </article>
+  </section>
+<% } %>

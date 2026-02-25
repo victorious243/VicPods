@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/', kitchenController.listSeries);
 router.post('/', kitchenController.createSeries);
 router.get('/:seriesId', kitchenController.showSeries);
+router.post('/:seriesId/settings', kitchenController.updateSeriesSettings);
 router.post('/:seriesId/themes', kitchenController.createTheme);
 router.post('/:seriesId/themes/:themeId/episodes', kitchenController.createEpisodeInTheme);
 router.get('/:seriesId/themes/:themeId/episodes/:episodeId', kitchenController.showEpisodeEditor);

@@ -1,50 +1,157 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Start Creating</h3>
+    <a href="/create" class="btn btn-primary">Create Episode</a>
+  </div>
+  <p>Single mode for speed, Series mode for continuity. Both produce compact recording-ready drafts.</p>
+</section>
+
 <section class="card-grid stats-grid">
-  <article class="card stat-card">
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'series' ? 'active-stat-card' : '' %>" href="/studio?inspect=series">
     <p>Series</p>
     <h3><%= stats.seriesCount %></h3>
-  </article>
-  <article class="card stat-card">
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'episodes' ? 'active-stat-card' : '' %>" href="/studio?inspect=episodes">
     <p>Episodes</p>
     <h3><%= stats.episodeCount %></h3>
-  </article>
-  <article class="card stat-card">
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'single' ? 'active-stat-card' : '' %>" href="/studio?inspect=single">
+    <p>Single</p>
+    <h3><%= stats.singleEpisodeCount %></h3>
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'ready' ? 'active-stat-card' : '' %>" href="/studio?inspect=ready">
+    <p>Ready</p>
+    <h3><%= stats.readyCount %></h3>
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'served' ? 'active-stat-card' : '' %>" href="/studio?inspect=served">
     <p>Served</p>
     <h3><%= stats.servedCount %></h3>
-  </article>
-  <article class="card stat-card">
-    <p>Pantry Ideas</p>
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link <%= selectedInspect === 'ideas' ? 'active-stat-card' : '' %>" href="/studio?inspect=ideas">
+    <p>Ideas</p>
     <h3><%= stats.ideaCount %></h3>
-  </article>
-  <article class="card stat-card wide">
+    <span class="mini-note">Open list</span>
+  </a>
+  <a class="card stat-card stat-card-link wide <%= selectedInspect === 'ai' ? 'active-stat-card' : '' %>" href="/studio?inspect=ai">
     <p>Chef AI Credits Today</p>
     <h3><%= stats.aiRemaining %></h3>
-  </article>
+    <span class="mini-note">Usage details</span>
+  </a>
 </section>
+
+<% if (inspectPanel) { %>
+  <section class="card">
+    <div class="section-head">
+      <h3><%= inspectPanel.title %></h3>
+      <a href="/studio" class="btn btn-ghost">Clear</a>
+    </div>
+
+    <% if (inspectPanel.key === 'ai') { %>
+      <p><strong>Remaining today:</strong> <%= stats.aiRemaining %></p>
+      <p class="mini-note">Need more AI generations? Upgrade your plan for higher limits.</p>
+      <a href="/settings?section=billing" class="btn btn-secondary">Open Billing</a>
+    <% } else if (!inspectPanel.items.length) { %>
+      <p class="empty-state">No items found in this category yet.</p>
+    <% } else if (inspectPanel.key === 'series') { %>
+      <div class="list-stack">
+        <% inspectPanel.items.forEach((series) => { %>
+          <a class="list-item" href="/kitchen/<%= series._id %>">
+            <div>
+              <h4><%= series.name %></h4>
+              <p><%= series.creationMode === 'single_collection' ? 'Single collection' : 'Series workspace' %></p>
+              <% if (series.description) { %>
+                <p><%= series.description %></p>
+              <% } %>
+            </div>
+            <span class="chevron">›</span>
+          </a>
+        <% }) %>
+      </div>
+    <% } else if (inspectPanel.key === 'ideas') { %>
+      <div class="list-stack">
+        <% inspectPanel.items.forEach((idea) => { %>
+          <a class="list-item" href="/pantry">
+            <div>
+              <h4><%= idea.hook %></h4>
+              <p>
+                <%= idea.tag || 'Uncategorized' %>
+                <% if (idea.notes) { %>
+                  · <%= idea.notes %>
+                <% } %>
+              </p>
+            </div>
+            <span class="chevron">›</span>
+          </a>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="list-stack">
+        <% inspectPanel.items.forEach((episode) => { %>
+          <% const hasTheme = Boolean(episode.themeId?._id); %>
+          <a
+            class="list-item"
+            href="<%= hasTheme ? `/kitchen/${episode.seriesId?._id}/themes/${episode.themeId?._id}/episodes/${episode._id}` : `/kitchen/${episode.seriesId?._id}` %>"
+          >
+            <div>
+              <h4><%= episode.title || `Episode ${episode.episodeNumberWithinTheme || '?'}` %></h4>
+              <p>
+                <%= episode.isSingle ? 'Single Episode' : (episode.seriesId?.name || 'Series') %>
+                · <%= episode.themeId?.name || 'Theme pending' %>
+                · Episode <%= episode.episodeNumberWithinTheme || '?' %>
+              </p>
+            </div>
+            <div class="inline-actions">
+              <span class="mini-label"><%= episode.isSingle ? 'Single' : 'Series' %></span>
+              <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+<% } %>
 
 <section class="card">
   <div class="section-head">
-    <h3>Recent Kitchen Activity</h3>
+    <h3>Recent Episodes</h3>
     <a href="/kitchen" class="btn btn-ghost">Open Kitchen</a>
   </div>
+
+  <div class="chip-wrap">
+    <a class="chip <%= selectedFilter === 'all' ? 'active-chip' : '' %>" href="/studio">All</a>
+    <a class="chip <%= selectedFilter === 'single' ? 'active-chip' : '' %>" href="/studio?filter=single">Single</a>
+    <a class="chip <%= selectedFilter === 'series' ? 'active-chip' : '' %>" href="/studio?filter=series">Series</a>
+    <a class="chip <%= selectedFilter === 'ready' ? 'active-chip' : '' %>" href="/studio?filter=ready">Ready</a>
+    <a class="chip <%= selectedFilter === 'served' ? 'active-chip' : '' %>" href="/studio?filter=served">Served</a>
+  </div>
+
   <% if (!latestEpisodes.length) { %>
-    <p class="empty-state">No episodes yet. Create your first series in Kitchen.</p>
+    <p class="empty-state">No episodes yet. Use Create to start your first episode.</p>
   <% } else { %>
-    <div class="list-stack">
+    <div class="list-stack studio-recent-list">
       <% latestEpisodes.forEach((episode) => { %>
         <% const hasTheme = Boolean(episode.themeId?._id); %>
         <a
-          class="list-item"
+          class="list-item studio-recent-item"
           href="<%= hasTheme ? `/kitchen/${episode.seriesId?._id}/themes/${episode.themeId?._id}/episodes/${episode._id}` : `/kitchen/${episode.seriesId?._id}` %>"
         >
-          <div>
+          <div class="studio-recent-main">
             <h4><%= episode.title || `Episode ${episode.episodeNumberWithinTheme || '?'}` %></h4>
             <p>
-              <%= episode.seriesId?.name || 'Series' %>
+              <%= episode.isSingle ? 'Single Episode' : (episode.seriesId?.name || 'Series') %>
               · <%= episode.themeId?.name || 'Theme pending' %>
               · Episode <%= episode.episodeNumberWithinTheme || '?' %>
             </p>
           </div>
-          <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+          <div class="inline-actions">
+            <span class="mini-label"><%= episode.isSingle ? 'Single' : 'Series' %></span>
+            <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
+          </div>
         </a>
       <% }) %>
     </div>

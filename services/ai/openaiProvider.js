@@ -2,6 +2,7 @@ const {
   buildEpisodeGenerationPrompt,
   buildSpicesPrompt,
   buildContinuityRefreshPrompt,
+  buildToneFixPrompt,
 } = require('./prompts');
 
 class OpenAIProvider {
@@ -24,7 +25,7 @@ class OpenAIProvider {
         messages: [
           {
             role: 'system',
-            content: 'You are Chef AI for VicPods. Return compact valid JSON only.',
+            content: 'You are Chef AI for VicPods. Build concise, actionable podcast plans and return compact valid JSON only.',
           },
           {
             role: 'user',
@@ -41,7 +42,16 @@ class OpenAIProvider {
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
-    return JSON.parse(content || '{}');
+    if (!content) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(content);
+    } catch (_error) {
+      const match = String(content).match(/\{[\s\S]*\}/);
+      return match ? JSON.parse(match[0]) : {};
+    }
   }
 
   async generateEpisodeDraft(input) {
@@ -56,6 +66,11 @@ class OpenAIProvider {
 
   async refreshContinuity(input) {
     const prompt = buildContinuityRefreshPrompt(input);
+    return this.requestJson(prompt);
+  }
+
+  async fixTone(input) {
+    const prompt = buildToneFixPrompt(input);
     return this.requestJson(prompt);
   }
 }

@@ -35,6 +35,10 @@ async function run() {
         name: adminName,
         passwordHash,
         plan: 'premium',
+        planStatus: 'active',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date('2099-12-31T23:59:59.000Z'),
+        cancelAtPeriodEnd: false,
         role: 'admin',
       },
       $setOnInsert: {

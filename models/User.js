@@ -19,10 +19,57 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 80,
     },
+    avatarUrl: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 1000,
+    },
+    themePreference: {
+      type: String,
+      enum: ['dark', 'light'],
+      default: 'dark',
+    },
     plan: {
       type: String,
       enum: ['free', 'pro', 'premium'],
       default: 'free',
+    },
+    planStatus: {
+      type: String,
+      enum: [
+        'active',
+        'trialing',
+        'past_due',
+        'canceled',
+        'unpaid',
+        'incomplete',
+        'incomplete_expired',
+        'paused',
+      ],
+      default: 'canceled',
+    },
+    currentPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    currentPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
+    stripeCustomerId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: null,
+      index: true,
     },
     role: {
       type: String,

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { TONE_PRESET_NAMES } = require('../services/tone/tonePresets');
 
 const episodeSchema = new mongoose.Schema(
   {
@@ -42,6 +43,36 @@ const episodeSchema = new mongoose.Schema(
       default: '',
       trim: true,
       maxlength: 160,
+    },
+    toneOverridePreset: {
+      type: String,
+      enum: ['', ...TONE_PRESET_NAMES],
+      default: '',
+    },
+    toneOverrideIntensity: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
+    },
+    episodeType: {
+      type: String,
+      enum: ['solo', 'interview'],
+      default: 'solo',
+    },
+    targetLength: {
+      type: String,
+      enum: ['10-15', '20-30', '45+', ''],
+      default: '',
+    },
+    includeFunSegment: {
+      type: Boolean,
+      default: true,
+    },
+    isSingle: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     status: {
       type: String,
@@ -91,6 +122,16 @@ const episodeSchema = new mongoose.Schema(
     transcriptUpdatedAt: {
       type: Date,
       default: null,
+    },
+    toneScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: null,
+    },
+    toneWarnings: {
+      type: [String],
+      default: [],
     },
     ideaIds: [
       {

@@ -11,6 +11,11 @@ const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 
 const ALLOWED_FORMATS = new Set(['pdf', 'docx', 'txt']);
+const PLAN_FORMAT_ACCESS = {
+  free: new Set(['txt']),
+  pro: new Set(['txt', 'pdf']),
+  premium: new Set(['txt', 'pdf', 'docx']),
+};
 
 function wantsJson(req) {
   return req.accepts('json') && !req.accepts('html');
@@ -52,6 +57,21 @@ function getEditorPath({ series, theme, episode }) {
   });
 }
 
+function assertFormatAccess(plan, format) {
+  const normalizedPlan = String(plan || 'free');
+  const allowed = PLAN_FORMAT_ACCESS[normalizedPlan] || PLAN_FORMAT_ACCESS.free;
+
+  if (allowed.has(format)) {
+    return;
+  }
+
+  throw new AppError(`The ${format.toUpperCase()} export is not available on the ${normalizedPlan} plan.`, 403);
+}
+
+function isPlanUpgradeError(error) {
+  return error.statusCode === 403 && /not available on the/i.test(error.message || '');
+}
+
 async function generateTranscript(req, res, next) {
   try {
     const context = await getOwnedEpisodeContext(req);
@@ -74,7 +94,7 @@ async function generateTranscript(req, res, next) {
       }
 
       req.flash('error', error.message);
-      return res.redirect('/kitchen');
+      return res.redirect(isPlanUpgradeError(error) ? '/settings?section=billing' : '/kitchen');
     }
 
     return next(error);
@@ -84,16 +104,20 @@ async function generateTranscript(req, res, next) {
 async function downloadTranscript(req, res, next) {
   try {
     const context = await getOwnedEpisodeContext(req);
+    const format = String(req.query.format || 'pdf').toLowerCase();
+
+    if (!ALLOWED_FORMATS.has(format)) {
+      throw new AppError('Invalid transcript format. Use pdf, docx, or txt.', 400);
+    }
+
+    const planForAccess = req.effectivePlan || req.currentUser?.plan || 'free';
+    assertFormatAccess(planForAccess, format);
+
     if (!context.episode.transcript || !String(context.episode.transcript).trim()) {
       await consumeAiCredit(req.currentUser);
       await refreshTranscript(context);
     } else {
       await ensureTranscript(context);
-    }
-
-    const format = String(req.query.format || 'pdf').toLowerCase();
-    if (!ALLOWED_FORMATS.has(format)) {
-      throw new AppError('Invalid transcript format. Use pdf, docx, or txt.', 400);
     }
 
     const filename = buildTranscriptFilename({
