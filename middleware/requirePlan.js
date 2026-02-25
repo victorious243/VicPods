@@ -7,6 +7,23 @@ const planPriority = {
 };
 
 const ACCESS_STATUSES = new Set(['active', 'trialing']);
+const ADMIN_DEFAULT_PLAN = 'premium';
+
+function isAdmin(user) {
+  return Boolean(user && user.role === 'admin');
+}
+
+function getAdminEffectivePlan(user) {
+  if (!isAdmin(user)) {
+    return null;
+  }
+
+  if (user.plan === 'pro' || user.plan === 'premium') {
+    return user.plan;
+  }
+
+  return ADMIN_DEFAULT_PLAN;
+}
 
 function hasActiveSubscription(user, now = new Date()) {
   if (!user) {
@@ -29,6 +46,11 @@ function resolveEffectivePlan(user, now = new Date()) {
     return 'free';
   }
 
+  const adminPlan = getAdminEffectivePlan(user);
+  if (adminPlan) {
+    return adminPlan;
+  }
+
   if (user.plan === 'free') {
     return 'free';
   }
@@ -40,6 +62,41 @@ async function syncPlanStatus(req, res, next) {
   try {
     if (!req.currentUser) {
       res.locals.effectivePlan = 'free';
+      return next();
+    }
+
+    if (isAdmin(req.currentUser)) {
+      const adminPlan = getAdminEffectivePlan(req.currentUser);
+      req.effectivePlan = adminPlan;
+      res.locals.effectivePlan = adminPlan;
+
+      let changed = false;
+      if (req.currentUser.plan !== adminPlan) {
+        req.currentUser.plan = adminPlan;
+        changed = true;
+      }
+      if (req.currentUser.planStatus !== 'active') {
+        req.currentUser.planStatus = 'active';
+        changed = true;
+      }
+      if (!req.currentUser.currentPeriodStart) {
+        req.currentUser.currentPeriodStart = new Date();
+        changed = true;
+      }
+      if (!req.currentUser.currentPeriodEnd || req.currentUser.currentPeriodEnd.getTime() <= Date.now()) {
+        req.currentUser.currentPeriodEnd = new Date('2099-12-31T23:59:59.000Z');
+        changed = true;
+      }
+      if (req.currentUser.cancelAtPeriodEnd) {
+        req.currentUser.cancelAtPeriodEnd = false;
+        changed = true;
+      }
+
+      if (changed) {
+        await req.currentUser.save();
+        res.locals.currentUser = req.currentUser;
+      }
+
       return next();
     }
 

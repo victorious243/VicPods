@@ -122,12 +122,12 @@
     <a href="/kitchen" class="btn btn-ghost">Open Kitchen</a>
   </div>
 
-  <div class="chip-wrap">
-    <a class="chip <%= selectedFilter === 'all' ? 'active-chip' : '' %>" href="/studio">All</a>
-    <a class="chip <%= selectedFilter === 'single' ? 'active-chip' : '' %>" href="/studio?filter=single">Single</a>
-    <a class="chip <%= selectedFilter === 'series' ? 'active-chip' : '' %>" href="/studio?filter=series">Series</a>
-    <a class="chip <%= selectedFilter === 'ready' ? 'active-chip' : '' %>" href="/studio?filter=ready">Ready</a>
-    <a class="chip <%= selectedFilter === 'served' ? 'active-chip' : '' %>" href="/studio?filter=served">Served</a>
+  <div class="chip-wrap studio-filter-bar">
+    <a class="chip studio-filter-chip <%= selectedFilter === 'all' ? 'active-chip' : '' %>" href="/studio">All</a>
+    <a class="chip studio-filter-chip <%= selectedFilter === 'single' ? 'active-chip' : '' %>" href="/studio?filter=single">Single</a>
+    <a class="chip studio-filter-chip <%= selectedFilter === 'series' ? 'active-chip' : '' %>" href="/studio?filter=series">Series</a>
+    <a class="chip studio-filter-chip <%= selectedFilter === 'ready' ? 'active-chip' : '' %>" href="/studio?filter=ready">Ready</a>
+    <a class="chip studio-filter-chip <%= selectedFilter === 'served' ? 'active-chip' : '' %>" href="/studio?filter=served">Served</a>
   </div>
 
   <% if (!latestEpisodes.length) { %>

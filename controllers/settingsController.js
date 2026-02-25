@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { renderPage } = require('../utils/render');
 const { AppError } = require('../utils/errors');
 const { resolveEffectivePlan } = require('../middleware/requirePlan');
+const { getPricingDisplay } = require('../services/billing/pricing');
 
 const SALT_ROUNDS = 12;
 const VALID_SECTIONS = new Set(['profile', 'appearance', 'security', 'billing']);
@@ -87,6 +88,7 @@ function showSettings(req, res) {
       effectivePlan,
       selectedSection,
       billing: getBillingViewModel(req.currentUser, effectivePlan),
+      pricing: getPricingDisplay(),
     },
   });
 }

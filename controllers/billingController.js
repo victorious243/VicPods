@@ -1,6 +1,7 @@
 const { renderPage } = require('../utils/render');
 const { createCheckoutSession } = require('../services/stripe/checkout');
 const { ensureStripeCustomerForUser, createPortalSession } = require('../services/stripe/portal');
+const { getPricingDisplay } = require('../services/billing/pricing');
 
 function showBilling(req, res) {
   return res.redirect('/settings?section=billing');
@@ -55,6 +56,7 @@ function showSuccess(req, res) {
     view: 'billing/success',
     data: {
       checkoutSessionId: req.query.session_id || null,
+      pricing: getPricingDisplay(),
     },
   });
 }

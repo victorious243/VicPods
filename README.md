@@ -57,8 +57,14 @@ APP_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLIC_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_BILLING_CURRENCY=eur
 STRIPE_PRICE_PRO=price_...
 STRIPE_PRICE_PREMIUM=price_...
+BILLING_CURRENCY_SYMBOL=€
+BILLING_INTERVAL_LABEL=/mo
+BILLING_PRICE_FREE=0
+BILLING_PRICE_PRO=12.95
+BILLING_PRICE_PREMIUM=16.95
 ```
 
 If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically falls back to deterministic mock AI output.
@@ -84,4 +90,10 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 Use Stripe CLI in development:
 ```bash
 stripe listen --forward-to localhost:3000/webhooks/stripe
+```
+
+## Stripe Plan Bootstrap
+You can create/find VicPods Pro/Premium monthly Stripe prices and write IDs to `.env` automatically:
+```bash
+npm run stripe:setup-plans
 ```
