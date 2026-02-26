@@ -1,0 +1,47 @@
+<section class="auth-card">
+  <h3>Verify your email</h3>
+  <p>Enter the 6-digit PIN sent to your inbox to activate your VicPods account.</p>
+
+  <form method="POST" action="/auth/verify" class="form-grid">
+    <label>
+      Email
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="you@example.com"
+        value="<%= email || '' %>"
+      />
+    </label>
+    <label>
+      Verification PIN
+      <input
+        type="text"
+        name="pin"
+        inputmode="numeric"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        minlength="6"
+        required
+        placeholder="6-digit PIN"
+      />
+    </label>
+    <button type="submit" class="btn btn-primary">Verify and Continue</button>
+  </form>
+
+  <form method="POST" action="/auth/verify/resend" class="form-grid">
+    <label>
+      Resend PIN to
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="you@example.com"
+        value="<%= email || '' %>"
+      />
+    </label>
+    <button type="submit" class="btn btn-ghost">Resend PIN</button>
+  </form>
+
+  <p class="auth-foot">Already verified? <a href="/auth/login">Sign in</a></p>
+</section>

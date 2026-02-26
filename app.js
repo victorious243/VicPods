@@ -5,10 +5,14 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
+const helmet = require('helmet');
 
 const { connectDatabase } = require('./config/database');
+const { validateEnvironment } = require('./config/envValidation');
 const { loadCurrentUser, requireAuth } = require('./middleware/auth');
 const { syncPlanStatus } = require('./middleware/requirePlan');
+const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtection');
 const { flashMiddleware } = require('./middleware/flash');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
@@ -24,6 +28,26 @@ const billingRouter = require('./routes/billing');
 const settingsRouter = require('./routes/settings');
 
 const app = express();
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = String(process.env.SESSION_SECRET || '').trim();
+const envValidation = validateEnvironment({ isProduction });
+
+if (envValidation.warnings.length) {
+  envValidation.warnings.forEach((warning) => {
+    // eslint-disable-next-line no-console
+    console.warn(`[Config Warning] ${warning}`);
+  });
+}
+
+if (envValidation.errors.length) {
+  throw new Error(`Configuration error:\n- ${envValidation.errors.join('\n- ')}`);
+}
+
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
+app.disable('x-powered-by');
 
 connectDatabase(process.env.MONGO_URI)
   .then(() => {
@@ -33,34 +57,57 @@ connectDatabase(process.env.MONGO_URI)
   .catch((error) => {
     // eslint-disable-next-line no-console
     console.error('MongoDB connection error:', error.message);
+    if (isProduction) {
+      process.exit(1);
+    }
   });
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 app.use('/webhooks', webhooksRouter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
+const sessionConfig = {
   name: 'vicpods.sid',
-  secret: process.env.SESSION_SECRET || 'replace-me-in-env',
+  secret: sessionSecret || 'dev-insecure-secret',
   resave: false,
   saveUninitialized: false,
+  proxy: isProduction,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 14,
   },
+};
+
+if (process.env.MONGO_URI) {
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions',
+    ttl: 60 * 60 * 24 * 14,
+    autoRemove: 'native',
+  });
+}
+
+app.use(session({
+  ...sessionConfig,
 }));
 
 app.use(loadCurrentUser);
 app.use(syncPlanStatus);
 app.use(flashMiddleware);
+app.use(ensureCsrfToken);
+app.use(verifyCsrfToken);
 app.use((req, res, next) => {
   res.locals.currentPath = req.originalUrl || req.path;
   next();

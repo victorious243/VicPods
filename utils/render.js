@@ -5,6 +5,7 @@ function renderPage(res, options) {
     subtitle = '',
     view,
     authPage = false,
+    authShellClass = '',
     data = {},
   } = options;
 
@@ -14,6 +15,7 @@ function renderPage(res, options) {
     subtitle,
     view,
     authPage,
+    authShellClass,
     ...data,
   });
 }

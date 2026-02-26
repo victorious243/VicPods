@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="<%= csrfToken || '' %>" />
   <title><%= title || 'VicPods' %></title>
   <script>
     (function initTheme() {
-      var serverDefault = '<%= (currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';
+      var serverDefault = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';
       try {
         var stored = localStorage.getItem('vicpods_theme');
         var theme = stored === 'light' || stored === 'dark' ? stored : serverDefault;
@@ -20,7 +21,7 @@
 </head>
 <body class="<%= authPage ? 'auth-body' : 'app-body' %>">
   <% if (authPage) { %>
-    <main class="auth-shell">
+    <main class="auth-shell <%= (typeof authShellClass !== 'undefined' && authShellClass) ? authShellClass : '' %>">
       <%- include('../partials/flash') %>
       <%- include('../' + view) %>
     </main>
@@ -35,11 +36,41 @@
         </main>
       </div>
     </div>
+    <div id="ai-loader-overlay" class="ai-loader-overlay" hidden aria-hidden="true">
+      <div class="ai-loader-card" role="status" aria-live="polite" aria-atomic="true">
+        <div class="ai-loader-logo-wrap" aria-hidden="true">
+          <span class="ai-loader-ring"></span>
+          <img
+            src="/images/logo/vicpods-icon-circle-dark.svg"
+            alt=""
+            class="ai-loader-logo ai-loader-logo-dark"
+            width="58"
+            height="58"
+          />
+          <img
+            src="/images/logo/vicpods-icon-circle-light.svg"
+            alt=""
+            class="ai-loader-logo ai-loader-logo-light"
+            width="58"
+            height="58"
+          />
+        </div>
+        <h3>Chef AI is cooking your draft</h3>
+        <p data-ai-loader-status>Analyzing your episode context and goals.</p>
+        <div class="ai-loader-steps" aria-hidden="true">
+          <span class="ai-loader-step is-active">Context</span>
+          <span class="ai-loader-step">Tone</span>
+          <span class="ai-loader-step">Draft</span>
+        </div>
+      </div>
+    </div>
   <% } %>
 
   <script src="/javascripts/theme.js" defer></script>
+  <script src="/javascripts/csrf.js" defer></script>
   <script src="/javascripts/settings.js" defer></script>
   <script src="/javascripts/tone.js" defer></script>
   <script src="/javascripts/create.js" defer></script>
+  <script src="/javascripts/ai-loading.js" defer></script>
 </body>
 </html>

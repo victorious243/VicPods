@@ -10,7 +10,14 @@
     <span class="step active" role="listitem">3. Episodes</span>
   </div>
 
-  <form method="POST" action="/create/series" class="form-grid" id="series-create-form">
+  <form
+    method="POST"
+    action="/create/series"
+    class="form-grid"
+    id="series-create-form"
+    data-ai-loading="true"
+    data-ai-loading-guard="generateFirstDraft"
+  >
     <section class="wizard-step">
       <h4>Step 1 - Series Setup</h4>
       <label>

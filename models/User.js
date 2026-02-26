@@ -19,6 +19,45 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 80,
     },
+    authProvider: {
+      type: String,
+      enum: ['local', 'mojoauth', 'google'],
+      default: 'local',
+    },
+    oidcSubject: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 255,
+      index: true,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: true,
+    },
+    emailVerificationPinHash: {
+      type: String,
+      default: '',
+      maxlength: 128,
+    },
+    emailVerificationPinExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    termsAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    termsAcceptedVersion: {
+      type: String,
+      default: '',
+      maxlength: 40,
+    },
+    termsAcceptedIp: {
+      type: String,
+      default: '',
+      maxlength: 80,
+    },
     avatarUrl: {
       type: String,
       default: '',
