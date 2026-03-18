@@ -1,12 +1,12 @@
 <section class="card">
   <div class="section-head">
-    <h3>Kitchen Library</h3>
+    <h3>Workspace</h3>
     <div class="inline-actions">
-      <a href="/create" class="btn btn-primary">Create Episode</a>
+      <a href="/create/single" class="btn btn-primary">New Episode</a>
       <a href="/create/series" class="btn btn-secondary">New Series</a>
     </div>
   </div>
-  <p>Kitchen is the advanced workspace for managing series, themes, and continuity.</p>
+  <p>Workspace is where you start new episodes, launch new series, and manage every draft already in progress.</p>
 </section>
 
 <% if (singleCollectionSeries) { %>
@@ -15,9 +15,9 @@
       <h3>Single Episodes</h3>
       <span class="mini-label">System Collection</span>
     </div>
-    <p>All standalone episodes are stored here without forcing manual series setup.</p>
+    <p>All standalone episodes live here, so quick one-off creations and existing drafts stay in one organized place.</p>
     <div class="inline-actions">
-      <a href="/create/single" class="btn btn-primary">Create Single Episode</a>
+      <a href="/create/single" class="btn btn-primary">New Episode</a>
       <a href="/kitchen/<%= singleCollectionSeries._id %>" class="btn btn-ghost">Open Collection</a>
     </div>
   </section>
@@ -30,7 +30,7 @@
   </div>
 
   <% if (!regularSeries.length) { %>
-    <p class="empty-state">No series yet. Use Create → Series to start a continuity-driven show.</p>
+    <p class="empty-state">No series yet. Start a new series from Workspace.</p>
   <% } else { %>
     <div class="list-stack">
       <% regularSeries.forEach((series) => { %>

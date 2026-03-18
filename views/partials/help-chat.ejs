@@ -1,0 +1,51 @@
+<% if (currentUser) { %>
+  <div
+    id="help-chat-widget"
+    class="help-chat-widget"
+    data-endpoint="/ai/help/chat"
+    data-loading-text="<%= t('help.chat.loading', 'VicPods Help is thinking...') %>"
+    data-error-text="<%= t('help.chat.error', 'Help is unavailable right now. Please open the Help Center.') %>"
+  >
+    <button
+      id="help-chat-toggle"
+      type="button"
+      class="help-chat-toggle"
+      aria-expanded="false"
+      aria-controls="help-chat-panel"
+    >
+      <span class="help-chat-toggle-label"><%= t('help.chat.open', 'Help') %></span>
+    </button>
+
+    <section id="help-chat-panel" class="help-chat-panel" hidden>
+      <header class="help-chat-header">
+        <div>
+          <h3><%= t('help.chat.title', 'VicPods Help AI') %></h3>
+          <p><%= t('help.chat.subtitle', 'VicPods-only support for features, workflows, settings, and plans.') %></p>
+        </div>
+        <div class="inline-actions">
+          <a href="/help" class="btn btn-ghost"><%= t('page.help.link', 'Help Center') %></a>
+          <button id="help-chat-close" type="button" class="btn btn-ghost"><%= t('help.chat.close', 'Close') %></button>
+        </div>
+      </header>
+
+      <div id="help-chat-messages" class="help-chat-messages" aria-live="polite">
+        <article class="help-chat-message help-chat-message-assistant">
+          <p><%= t('help.chat.intro', 'Ask about single episodes, series setup, Workspace, Pantry, language settings, billing, or plan access.') %></p>
+        </article>
+      </div>
+
+      <div class="help-chat-starters">
+        <button type="button" class="chip" data-help-chat-prompt="<%= t('help.chat.starter.single', 'How do I start a single episode?') %>"><%= t('help.chat.starter.single', 'How do I start a single episode?') %></button>
+        <button type="button" class="chip" data-help-chat-prompt="<%= t('help.chat.starter.workspace', 'What is the difference between Studio and Workspace?') %>"><%= t('help.chat.starter.workspace', 'What is the difference between Studio and Workspace?') %></button>
+        <button type="button" class="chip" data-help-chat-prompt="<%= t('help.chat.starter.language', 'How do I change the app language?') %>"><%= t('help.chat.starter.language', 'How do I change the app language?') %></button>
+        <button type="button" class="chip" data-help-chat-prompt="<%= t('help.chat.starter.billing', 'What does each plan include?') %>"><%= t('help.chat.starter.billing', 'What does each plan include?') %></button>
+      </div>
+
+      <form id="help-chat-form" class="help-chat-form">
+        <label class="sr-only" for="help-chat-input"><%= t('help.chat.label', 'Ask a VicPods question') %></label>
+        <textarea id="help-chat-input" name="message" rows="2" maxlength="420" placeholder="<%= t('help.chat.placeholder', 'Ask a question about VicPods...') %>"></textarea>
+        <button type="submit" class="btn btn-primary"><%= t('help.chat.send', 'Send') %></button>
+      </form>
+    </section>
+  </div>
+<% } %>

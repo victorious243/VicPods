@@ -3,7 +3,7 @@
     <h3>Settings</h3>
     <span class="mini-label"><%= effectivePlan %> plan</span>
   </div>
-  <div class="settings-tab-grid">
+  <div class="settings-tab-grid" id="onboarding-settings-tabs">
     <a class="settings-tab-card <%= selectedSection === 'profile' ? 'active-settings-tab' : '' %>" href="/settings?section=profile">
       <span class="settings-tab-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -17,7 +17,7 @@
       </span>
     </a>
 
-    <a class="settings-tab-card <%= selectedSection === 'appearance' ? 'active-settings-tab' : '' %>" href="/settings?section=appearance">
+    <a id="onboarding-settings-tab-appearance" class="settings-tab-card <%= selectedSection === 'appearance' ? 'active-settings-tab' : '' %>" href="/settings?section=appearance">
       <span class="settings-tab-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3v2" />
@@ -72,7 +72,7 @@
       <div class="section-head">
         <h3>Profile Details</h3>
       </div>
-      <form method="POST" action="/settings/profile" class="form-grid">
+      <form method="POST" action="/settings/profile" class="form-grid" id="onboarding-settings-profile-form">
         <label>
           Full Name
           <input type="text" name="name" required maxlength="80" value="<%= currentUser.name %>" />
@@ -105,6 +105,9 @@
       <p><strong><%= currentUser.name %></strong></p>
       <p class="mini-note"><%= currentUser.email %></p>
       <p class="mini-note">Every user has an avatar: custom image URL or automatic initials badge.</p>
+      <form method="POST" action="/settings/onboarding/reset">
+        <button class="btn btn-ghost" type="submit">Replay onboarding tour</button>
+      </form>
     </article>
   </section>
 <% } %>
@@ -119,11 +122,20 @@
       <label>
         Default Theme
         <select name="themePreference" id="theme-preference-select">
-          <option value="dark" <%= (currentUser.themePreference || 'dark') === 'dark' ? 'selected' : '' %>>Dark</option>
-          <option value="light" <%= currentUser.themePreference === 'light' ? 'selected' : '' %>>Light</option>
+          <option value="dark" <%= (currentUser.themePreference || 'dark') === 'dark' ? 'selected' : '' %>><%= t('theme.dark', 'Dark') %></option>
+          <option value="light" <%= currentUser.themePreference === 'light' ? 'selected' : '' %>><%= t('theme.light', 'Light') %></option>
         </select>
       </label>
-      <p class="mini-note">Topbar toggle still works instantly. This sets your account default theme.</p>
+      <label>
+        <%= t('settings.language.label', 'App Language') %>
+        <select name="languagePreference" id="language-preference-select">
+          <% (languageOptions || []).forEach((option) => { %>
+            <option value="<%= option.value %>" <%= (currentUser.languagePreference || 'en') === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <p class="mini-note"><%= t('settings.theme.note', 'Topbar toggle still works instantly. This sets your account default theme.') %></p>
+      <p class="mini-note"><%= t('settings.language.note', 'UI labels and AI output will follow this language.') %></p>
       <button type="submit" class="btn btn-primary">Save Appearance</button>
     </form>
   </section>
@@ -191,7 +203,7 @@
       <h3>Free</h3>
       <p class="price"><%= pricing.free %></p>
       <ul>
-        <li>Core Studio + Kitchen + Pantry access</li>
+        <li>Core Studio + Workspace + Pantry access</li>
         <li>5 generations/day</li>
         <li>Transcript TXT export only</li>
       </ul>

@@ -40,11 +40,36 @@
   <p><strong>Mode:</strong> <%= episode.isSingle ? 'Standalone single episode' : 'Series continuity episode' %></p>
   <p><strong>Tone:</strong> <%= toneLabel %> (<%= effectiveTone.tonePreset %>, <%= effectiveTone.toneIntensity %>/5)</p>
   <p><strong>Audience Type:</strong> <%= effectiveTone.audienceType || 'Mixed' %> · <strong>Intent:</strong> <%= effectiveTone.intent || 'educate' %></p>
+  <p>
+    <strong>Episode Architect:</strong>
+    <%= resolvedStructure.formatTemplateMeta.label %> ·
+    <%= resolvedStructure.hookStyleMeta.label %> ·
+    <%= resolvedStructure.targetLengthMeta.presetLabel %>
+  </p>
+  <p><strong>Delivery Style:</strong> <%= deliveryStyleOptions.find((option) => option.value === effectiveDeliveryStyle)?.label || 'Friendly' %></p>
+  <% if (resolvedBlueprint.audienceProblem) { %>
+    <p><strong>Audience Problem:</strong> <%= resolvedBlueprint.audienceProblem %></p>
+  <% } %>
+  <% if (resolvedBlueprint.listenerTransformation) { %>
+    <p><strong>Listener Transformation:</strong> <%= resolvedBlueprint.listenerTransformation %></p>
+  <% } %>
+  <% if (resolvedBlueprint.contentPillars.length) { %>
+    <p><strong>Content Pillars:</strong> <%= resolvedBlueprint.contentPillars.join(' · ') %></p>
+  <% } %>
+  <% if (resolvedBlueprint.brandVoiceRules.length) { %>
+    <p><strong>Brand Voice Rules:</strong> <%= resolvedBlueprint.brandVoiceRules.join(' · ') %></p>
+  <% } %>
+  <% if (resolvedBlueprint.bannedWords.length) { %>
+    <p><strong>Banned Words:</strong> <%= resolvedBlueprint.bannedWords.join(', ') %></p>
+  <% } %>
   <% if (theme.themeSummary) { %>
     <p><strong>Theme Summary:</strong> <%= theme.themeSummary %></p>
   <% } %>
-  <% if (previousEpisode?.endState) { %>
+<% if (previousEpisode?.endState) { %>
     <p><strong>Carry-forward from Theme Episode <%= previousEpisode.episodeNumberWithinTheme %>:</strong> <%= previousEpisode.endState %></p>
+  <% } %>
+  <% if (episodeContinuityContext?.seasonArcStep) { %>
+    <p><strong>Season Arc Position:</strong> <%= episodeContinuityContext.seasonArcStep %></p>
   <% } %>
 </section>
 
@@ -90,17 +115,45 @@
         </select>
       </label>
       <label>
-        Target Length
+        Duration Preset
         <select name="targetLength">
-          <option value="" <%= !episode.targetLength ? 'selected' : '' %>>Flexible</option>
-          <option value="10-15" <%= episode.targetLength === '10-15' ? 'selected' : '' %>>10-15 min</option>
-          <option value="20-30" <%= episode.targetLength === '20-30' ? 'selected' : '' %>>20-30 min</option>
-          <option value="45+" <%= episode.targetLength === '45+' ? 'selected' : '' %>>45+ min</option>
+          <% targetLengthOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= resolvedStructure.targetLength === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
         </select>
       </label>
     </div>
 
+    <div class="two-col">
+      <label>
+        Format Template
+        <select name="formatTemplate">
+          <% formatTemplateOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= resolvedStructure.formatTemplate === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        Hook Style
+        <select name="hookStyle">
+          <% hookStyleOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= resolvedStructure.hookStyle === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <label>
+      Delivery Style
+      <select name="deliveryStyle">
+        <% deliveryStyleOptions.forEach((option) => { %>
+          <option value="<%= option.value %>" <%= effectiveDeliveryStyle === option.value ? 'selected' : '' %>><%= option.label %></option>
+        <% }) %>
+      </select>
+    </label>
+
     <label class="check-item">
+      <input type="hidden" name="includeFunSegment" value="off" />
       <input type="checkbox" name="includeFunSegment" <%= episode.includeFunSegment !== false ? 'checked' : '' %> />
       <span>Include fun segment</span>
     </label>
@@ -151,6 +204,51 @@
         </div>
       </div>
     </details>
+
+    <% if (episode.isSingle) { %>
+      <details class="tone-override-card" open>
+        <summary>Single Episode Blueprint</summary>
+        <div class="tone-override-body">
+          <div class="two-col">
+            <label>
+              Audience Problem
+              <input type="text" name="audienceProblem" maxlength="240" value="<%= resolvedBlueprint.audienceProblem %>" />
+            </label>
+            <label>
+              Listener Transformation
+              <input type="text" name="listenerTransformation" maxlength="240" value="<%= resolvedBlueprint.listenerTransformation %>" />
+            </label>
+          </div>
+
+          <label>
+            Content Pillars
+            <textarea name="contentPillars" rows="3" maxlength="480"><%= resolvedBlueprint.contentPillars.join('\n') %></textarea>
+          </label>
+
+          <div class="two-col">
+            <label>
+              CTA Style
+              <select name="ctaStyle">
+                <% ctaStyleOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedBlueprint.ctaStyle === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Brand Voice Rules
+              <textarea name="brandVoiceRules" rows="3" maxlength="480"><%= resolvedBlueprint.brandVoiceRules.join('\n') %></textarea>
+            </label>
+          </div>
+
+          <label>
+            Banned Words or Phrases
+            <textarea name="bannedWords" rows="2" maxlength="240"><%= resolvedBlueprint.bannedWords.join('\n') %></textarea>
+          </label>
+        </div>
+      </details>
+    <% } else { %>
+      <p class="mini-note">This episode inherits show blueprint rules from the series workspace.</p>
+    <% } %>
 
     <label>
       Hook (1-2 lines)
@@ -212,6 +310,117 @@
   <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/delete" class="danger-form">
     <button type="submit" class="btn btn-danger">Delete Episode</button>
   </form>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Series Continuity</h3>
+    <span class="mini-label">Phase 3</span>
+  </div>
+
+  <% if (episodeContinuityContext?.warnings?.length) { %>
+    <p><strong>Continuity Checker:</strong> <%= episodeContinuityContext.warnings.join(' · ') %></p>
+  <% } else { %>
+    <p class="mini-note">No major continuity conflicts detected for this episode right now.</p>
+  <% } %>
+
+  <% if (episodeContinuityContext?.callbackSuggestions?.length) { %>
+    <p><strong>Callback Planner:</strong> <%= episodeContinuityContext.callbackSuggestions.join(' · ') %></p>
+  <% } else { %>
+    <p class="mini-note">No callback prompt yet. As the series grows, VicPods will surface more callback opportunities.</p>
+  <% } %>
+
+  <% if (episodeContinuityContext?.gapSuggestion) { %>
+    <p><strong>Topic Gap Finder:</strong> <%= episodeContinuityContext.gapSuggestion %></p>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Writing Intelligence</h3>
+    <span class="mini-label">Phase 2</span>
+  </div>
+
+  <div class="inline-actions">
+    <form method="POST" action="/ai/hooks/generate">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <button class="btn btn-primary" type="submit">Generate Hook Options</button>
+    </form>
+    <form method="POST" action="/ai/rewrite/section">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <input type="hidden" name="section" value="intro" />
+      <button class="btn btn-ghost" type="submit">Improve Intro</button>
+    </form>
+    <form method="POST" action="/ai/rewrite/section">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <input type="hidden" name="section" value="body" />
+      <button class="btn btn-ghost" type="submit">Tighten Body</button>
+    </form>
+    <form method="POST" action="/ai/rewrite/section">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <input type="hidden" name="section" value="cta" />
+      <button class="btn btn-secondary" type="submit">Stronger CTA</button>
+    </form>
+  </div>
+
+  <% if (episode.scriptDoctor?.overallScore) { %>
+    <p>
+      <strong>Script Doctor:</strong>
+      <%= episode.scriptDoctor.overallScore %>/100 overall
+      · clarity <%= episode.scriptDoctor.clarityScore %>
+      · pacing <%= episode.scriptDoctor.pacingScore %>
+      · repetition <%= episode.scriptDoctor.repetitionScore %>
+      · transitions <%= episode.scriptDoctor.transitionScore %>
+    </p>
+    <% if (episode.scriptDoctor.issues?.length) { %>
+      <p><strong>Issues:</strong> <%= episode.scriptDoctor.issues.join(' · ') %></p>
+    <% } %>
+    <% if (episode.scriptDoctor.strengths?.length) { %>
+      <p><strong>Strengths:</strong> <%= episode.scriptDoctor.strengths.join(' · ') %></p>
+    <% } %>
+    <% if (episode.scriptDoctor.recommendations?.length) { %>
+      <p><strong>Recommendations:</strong> <%= episode.scriptDoctor.recommendations.join(' · ') %></p>
+    <% } %>
+  <% } else { %>
+    <p class="mini-note">Save or generate the episode once to calculate the first Script Doctor score.</p>
+  <% } %>
+
+  <% if (episode.timeEstimate?.summary) { %>
+    <p><strong>Time Estimate:</strong> <%= episode.timeEstimate.summary %></p>
+    <% if (episode.timeEstimate.sectionBreakdown?.length) { %>
+      <p><strong>Section Breakdown:</strong> <%= episode.timeEstimate.sectionBreakdown.join(' · ') %></p>
+    <% } %>
+  <% } %>
+
+  <% if (episode.hookOptions?.length) { %>
+    <div class="list-stack">
+      <% episode.hookOptions.forEach((hookOption) => { %>
+        <article class="list-item">
+          <div>
+            <h4>Hook Option</h4>
+            <p><%= hookOption %></p>
+          </div>
+          <form method="POST" action="/ai/hooks/apply">
+            <input type="hidden" name="seriesId" value="<%= series._id %>" />
+            <input type="hidden" name="themeId" value="<%= theme._id %>" />
+            <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+            <input type="hidden" name="hook" value="<%= hookOption %>" />
+            <button class="btn btn-ghost" type="submit">Apply Hook</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="mini-note">Hook Generator will create multiple opening angles so you can pick the strongest one.</p>
+  <% } %>
 </section>
 
 <section class="card">

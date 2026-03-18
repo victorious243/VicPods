@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="<%= language || 'en' %>" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,34 +8,51 @@
   <script>
     (function initTheme() {
       var serverDefault = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';
+      var serverLanguage = '<%= language || "en" %>';
+      var hasCurrentUser = <%= (typeof currentUser !== "undefined" && currentUser) ? 'true' : 'false' %>;
       try {
         var stored = localStorage.getItem('vicpods_theme');
         var theme = stored === 'light' || stored === 'dark' ? stored : serverDefault;
         document.documentElement.setAttribute('data-theme', theme);
+
+        var storedLanguage = localStorage.getItem('vicpods_language');
+        var language = serverLanguage;
+        if (hasCurrentUser) {
+          localStorage.setItem('vicpods_language', serverLanguage);
+        } else if (storedLanguage === 'es' || storedLanguage === 'pt' || storedLanguage === 'en') {
+          language = storedLanguage;
+        }
+        document.documentElement.setAttribute('lang', language);
       } catch (error) {
         document.documentElement.setAttribute('data-theme', serverDefault);
+        document.documentElement.setAttribute('lang', serverLanguage);
       }
     }());
   </script>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="7031f7cc-b0f4-4087-bc4b-de5aaaec95f7" data-blockingmode="auto" type="text/javascript"></script>
   <link rel="stylesheet" href="/stylesheets/style.css" />
 </head>
-<body class="<%= authPage ? 'auth-body' : 'app-body' %>">
+<body class="<%= authPage ? 'auth-body' : (((typeof publicShell !== 'undefined') && publicShell) ? 'app-body app-body-public' : 'app-body') %>">
   <% if (authPage) { %>
     <main class="auth-shell <%= (typeof authShellClass !== 'undefined' && authShellClass) ? authShellClass : '' %>">
       <%- include('../partials/flash') %>
       <%- include('../' + view) %>
     </main>
   <% } else { %>
-    <div class="app-shell">
-      <%- include('../partials/sidebar') %>
+    <div class="app-shell <%= ((typeof publicShell !== 'undefined') && publicShell) ? 'app-shell-public' : '' %>">
+      <% if (!((typeof publicShell !== 'undefined') && publicShell)) { %>
+        <%- include('../partials/sidebar') %>
+      <% } %>
       <div class="app-main">
         <%- include('../partials/topbar') %>
         <main class="content-wrap">
           <%- include('../partials/flash') %>
           <%- include('../' + view) %>
         </main>
+        <%- include('../partials/footer') %>
       </div>
     </div>
+    <%- include('../partials/help-chat') %>
     <div id="ai-loader-overlay" class="ai-loader-overlay" hidden aria-hidden="true">
       <div class="ai-loader-card" role="status" aria-live="polite" aria-atomic="true">
         <div class="ai-loader-logo-wrap" aria-hidden="true">
@@ -64,6 +81,8 @@
         </div>
       </div>
     </div>
+
+    <%- include('../partials/onboarding') %>
   <% } %>
 
   <script src="/javascripts/theme.js" defer></script>
@@ -72,5 +91,8 @@
   <script src="/javascripts/tone.js" defer></script>
   <script src="/javascripts/create.js" defer></script>
   <script src="/javascripts/ai-loading.js" defer></script>
+  <script src="/javascripts/onboarding.js" defer></script>
+  <script src="/javascripts/i18n-ui.js" defer></script>
+  <script src="/javascripts/help-chat.js" defer></script>
 </body>
 </html>

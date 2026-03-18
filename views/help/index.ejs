@@ -1,0 +1,185 @@
+<div class="help-page-shell">
+  <section class="card help-hero" data-help-reveal>
+    <div class="help-hero-copy">
+      <span class="landing-kicker"><%= t('page.help.link', 'Help Center') %></span>
+      <h2><%= t('page.help.hero.title', 'VicPods Help Center') %></h2>
+      <p class="help-hero-lead"><%= t('page.help.hero.body', 'This is the official knowledge source for how VicPods works. It covers setup, episode creation, series planning, workspace usage, Pantry usage, and account settings.') %></p>
+      <p class="help-hero-note"><%= t('page.help.sourceNote', 'Future VicPods AI help responses should follow this Help Center as the source of truth.') %></p>
+
+      <div class="inline-actions">
+        <% if (currentUser) { %>
+          <a href="/kitchen" class="btn btn-primary"><%= t('page.help.cta.workspace', 'Open Workspace') %></a>
+          <a href="/settings" class="btn btn-secondary"><%= t('page.help.cta.settings', 'Open Settings') %></a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary"><%= t('page.about.cta.guest.primary', 'Create account') %></a>
+          <a href="/auth/login" class="btn btn-secondary"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="help-hero-visual" aria-hidden="true" data-help-mic-hero>
+      <div class="help-visual-orb help-visual-orb-a"></div>
+      <div class="help-visual-orb help-visual-orb-b"></div>
+      <div class="help-mic-stage">
+        <span class="mini-label help-mic-chip help-mic-chip-a"><%= t('page.help.quick.gettingStarted', 'Getting started') %></span>
+        <span class="mini-label help-mic-chip help-mic-chip-b"><%= t('page.help.quick.single', 'Single episode') %></span>
+        <span class="mini-label help-mic-chip help-mic-chip-c"><%= t('page.help.quick.series', 'Create a series') %></span>
+        <span class="mini-label help-mic-chip help-mic-chip-d"><%= t('page.help.quick.workspace', 'Workspace') %></span>
+        <span class="mini-label help-mic-chip help-mic-chip-e"><%= t('page.help.quick.pantry', 'Pantry') %></span>
+        <span class="mini-label help-mic-chip help-mic-chip-f"><%= t('page.help.quick.settings', 'Language, settings, billing') %></span>
+
+        <div class="help-mic-shell">
+          <div class="help-mic-motion" data-help-mic-motion>
+            <model-viewer
+              src="/models/help-center-mic.glb"
+              shadow-intensity="1"
+              exposure="1.05"
+              environment-image="neutral"
+              interaction-prompt="none"
+              touch-action="pan-y"
+              style="width: 100%; height: 100%; background: transparent;"
+            ></model-viewer>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card help-anchor-strip" id="help-quick-links" data-help-reveal>
+    <div class="section-head">
+      <h3><%= t('page.help.quick.title', 'Quick navigation') %></h3>
+    </div>
+    <div class="help-anchor-grid">
+      <a class="chip" href="#getting-started"><%= t('page.help.quick.gettingStarted', 'Getting started') %></a>
+      <a class="chip" href="#single-episode"><%= t('page.help.quick.single', 'Single episode') %></a>
+      <a class="chip" href="#series-creation"><%= t('page.help.quick.series', 'Create a series') %></a>
+      <a class="chip" href="#workspace-help"><%= t('page.help.quick.workspace', 'Workspace') %></a>
+      <a class="chip" href="#pantry-help"><%= t('page.help.quick.pantry', 'Pantry') %></a>
+      <a class="chip" href="#settings-help"><%= t('page.help.quick.settings', 'Language, settings, billing') %></a>
+      <a class="chip" href="#common-questions"><%= t('page.help.quick.faq', 'Common questions') %></a>
+    </div>
+  </section>
+
+  <section class="help-story-stack">
+    <article class="card help-story-section" id="getting-started" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">01</span>
+        <h3><%= t('page.help.start.title', 'Getting started') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.start.body', 'Start in Studio if you want a high-level view of your activity. Open Workspace when you are ready to create a new episode, set up a new series, or continue a draft already in progress.') %></p>
+        <ol class="help-step-list">
+          <li><%= t('page.help.start.step1', 'Create your account and verify your email.') %></li>
+          <li><%= t('page.help.start.step2', 'Choose your app language and appearance in Settings.') %></li>
+          <li><%= t('page.help.start.step3', 'Open Workspace and choose either a new single episode or a new series.') %></li>
+          <li><%= t('page.help.start.step4', 'Use Pantry later to save reusable ideas, hooks, and ingredients.') %></li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="card help-story-section" id="single-episode" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">02</span>
+        <h3><%= t('page.help.single.title', 'How to create a single episode') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.single.body', 'Single Episode is the fastest way to go from one topic to a structured, recording-ready draft without setting up a full show.') %></p>
+        <ol class="help-step-list">
+          <li><%= t('page.help.single.step1', 'Open Workspace and choose New Episode.') %></li>
+          <li><%= t('page.help.single.step2', 'Enter the topic, audience notes, and the result you want the episode to help listeners achieve.') %></li>
+          <li><%= t('page.help.single.step3', 'Choose the tone, format template, hook style, and target length.') %></li>
+          <li><%= t('page.help.single.step4', 'Generate the draft, then refine it inside the episode editor.') %></li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="card help-story-section" id="series-creation" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">03</span>
+        <h3><%= t('page.help.series.title', 'How to create a series') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.series.body', 'Series creation is for shows that need continuity, recurring themes, and stronger planning across multiple episodes.') %></p>
+        <ol class="help-step-list">
+          <li><%= t('page.help.series.step1', 'Open Workspace and choose New Series.') %></li>
+          <li><%= t('page.help.series.step2', 'Define the series setup, season goal, audience promise, and recurring themes.') %></li>
+          <li><%= t('page.help.series.step3', 'Set blueprint defaults, tone, delivery style, and episode structure rules.') %></li>
+          <li><%= t('page.help.series.step4', 'Create the workspace, then manage themes and episode drafts from the series page.') %></li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="card help-story-section" id="workspace-help" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">04</span>
+        <h3><%= t('page.help.workspace.title', 'How Workspace works') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.workspace.body', 'Workspace is the main production area. It is where you start new episodes, launch new series, open the single-episode collection, and manage series already in progress.') %></p>
+        <ul class="help-bullet-list">
+          <li><%= t('page.help.workspace.item1', 'Use Workspace for active drafting and management.') %></li>
+          <li><%= t('page.help.workspace.item2', 'Use the series view to manage themes, continuity, settings, and planning.') %></li>
+          <li><%= t('page.help.workspace.item3', 'Use the episode editor to refine structure, writing quality, and readiness before recording.') %></li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="card help-story-section" id="pantry-help" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">05</span>
+        <h3><%= t('page.help.pantry.title', 'How Pantry works') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.pantry.body', 'Pantry stores reusable ingredients for future episodes, such as hooks, ideas, tags, and notes you may want to bring into later drafts.') %></p>
+        <ul class="help-bullet-list">
+          <li><%= t('page.help.pantry.item1', 'Save ideas you are not ready to turn into full episodes yet.') %></li>
+          <li><%= t('page.help.pantry.item2', 'Use Pantry hooks during generation to guide the draft in a specific direction.') %></li>
+          <li><%= t('page.help.pantry.item3', 'Treat Pantry as your ingredient shelf, not your editing workspace.') %></li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="card help-story-section" id="settings-help" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">06</span>
+        <h3><%= t('page.help.settings.title', 'Language, settings, and billing help') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.help.settings.body', 'Settings controls your profile, app language, theme preference, password, and subscription details. Billing and plan access are managed there as well.') %></p>
+        <ul class="help-bullet-list">
+          <li><%= t('page.help.settings.item1', 'Change app language in Settings > Appearance.') %></li>
+          <li><%= t('page.help.settings.item2', 'Change profile details in Settings > Profile.') %></li>
+          <li><%= t('page.help.settings.item3', 'Change password in Settings > Security.') %></li>
+          <li><%= t('page.help.settings.item4', 'Review plan, invoices, and upgrades in Settings > Billing.') %></li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="card help-faq-shell" id="common-questions" data-help-reveal>
+    <div class="section-head">
+      <h3><%= t('page.help.faq.title', 'Common questions') %></h3>
+    </div>
+    <div class="help-faq-stack">
+      <details class="help-faq-item" open>
+        <summary><%= t('page.help.faq.q1', 'What is the difference between Studio and Workspace?') %></summary>
+        <p><%= t('page.help.faq.a1', 'Studio is the overview area for seeing recent activity and high-level status. Workspace is where creation and editing actually happen.') %></p>
+      </details>
+      <details class="help-faq-item">
+        <summary><%= t('page.help.faq.q2', 'Should I start with a single episode or a series?') %></summary>
+        <p><%= t('page.help.faq.a2', 'Start with a single episode when you want speed and one focused draft. Start with a series when you need continuity, recurring themes, and planning across multiple episodes.') %></p>
+      </details>
+      <details class="help-faq-item">
+        <summary><%= t('page.help.faq.q3', 'Does changing the app language affect AI output?') %></summary>
+        <p><%= t('page.help.faq.a3', 'Yes. The app language setting is designed to guide interface labels and AI-generated output so they follow the language selected by the user.') %></p>
+      </details>
+      <details class="help-faq-item">
+        <summary><%= t('page.help.faq.q4', 'Where should I go if I want to reuse an idea later?') %></summary>
+        <p><%= t('page.help.faq.a4', 'Save it in Pantry. Pantry is for storing hooks, notes, and reusable ingredients for future episode drafts.') %></p>
+      </details>
+    </div>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>

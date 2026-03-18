@@ -3,6 +3,7 @@ const Idea = require('../models/Idea');
 const Series = require('../models/Series');
 const Theme = require('../models/Theme');
 const aiService = require('../services/ai/aiService');
+const { answerHelpQuestion } = require('../services/help/helpAssistantService');
 const { computeToneConsistencyScore } = require('../services/tone/consistencyScore');
 const {
   resolveEffectiveTone,
@@ -13,6 +14,20 @@ const {
   getNextThemeEpisodeNumber,
   getNextGlobalEpisodeNumber,
 } = require('../services/themeService');
+const {
+  FORMAT_TEMPLATE_VALUES,
+  HOOK_STYLE_VALUES,
+  normalizeIncludeFunSegment,
+  resolveSeriesStructureDefaults,
+} = require('../services/structure/structureService');
+const {
+  REWRITE_SECTION_VALUES,
+  buildHookOptions,
+  normalizeEpisodeWritingSettings,
+  refreshEpisodeWritingIntelligence,
+  rewriteEpisodeSection,
+} = require('../services/writing/writingIntelligenceService');
+const { buildEpisodeContinuityContext } = require('../services/series/seriesPlanningService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 
@@ -84,6 +99,25 @@ async function getSeriesThemeEpisode(req, { allowCreate = false } = {}) {
   }
 
   if (!episode && allowCreate) {
+    const seriesStructure = resolveSeriesStructureDefaults(series);
+    const episodeType = ['solo', 'interview'].includes(req.body.episodeType)
+      ? req.body.episodeType
+      : seriesStructure.defaultEpisodeType;
+    const targetLength = ['10-15', '20-30', '45+', ''].includes(req.body.targetLength)
+      ? req.body.targetLength
+      : seriesStructure.defaultTargetLength;
+    const includeFunSegment = Object.prototype.hasOwnProperty.call(req.body, 'includeFunSegment')
+      ? normalizeIncludeFunSegment(req.body.includeFunSegment, seriesStructure.defaultIncludeFunSegment)
+      : seriesStructure.defaultIncludeFunSegment;
+    const formatTemplate = FORMAT_TEMPLATE_VALUES.includes(req.body.formatTemplate)
+      ? req.body.formatTemplate
+      : seriesStructure.defaultFormatTemplate;
+    const hookStyle = HOOK_STYLE_VALUES.includes(req.body.hookStyle)
+      ? req.body.hookStyle
+      : seriesStructure.defaultHookStyle;
+    const writingSettings = normalizeEpisodeWritingSettings(req.body, {
+      deliveryStyle: series.defaultDeliveryStyle,
+    });
     const episodeNumberWithinTheme = requestedEpisodeNumber || await getNextThemeEpisodeNumber({
       userId,
       seriesId: series._id,
@@ -114,9 +148,12 @@ async function getSeriesThemeEpisode(req, { allowCreate = false } = {}) {
         globalEpisodeNumber,
         status: 'Draft',
         title: `Episode ${episodeNumberWithinTheme}`,
-        episodeType: ['solo', 'interview'].includes(req.body.episodeType) ? req.body.episodeType : 'solo',
-        targetLength: ['10-15', '20-30', '45+', ''].includes(req.body.targetLength) ? req.body.targetLength : '',
-        includeFunSegment: req.body.includeFunSegment !== 'off',
+        episodeType,
+        targetLength,
+        includeFunSegment,
+        formatTemplate,
+        hookStyle,
+        deliveryStyle: writingSettings.deliveryStyle,
         isSingle: false,
       });
     }
@@ -144,12 +181,16 @@ async function generateEpisode(req, res, next) {
     const isStandalone = Boolean(episode.isSingle);
     const requireTeaser = !isStandalone;
 
-    const [themeEpisodes, ideas, previousThemeEpisode] = await Promise.all([
+    const [themeEpisodes, allSeriesEpisodes, ideas, previousThemeEpisode] = await Promise.all([
       Episode.find({
         userId: req.currentUser._id,
         seriesId: series._id,
         themeId: theme._id,
       }).sort({ episodeNumberWithinTheme: 1 }),
+      Episode.find({
+        userId: req.currentUser._id,
+        seriesId: series._id,
+      }).sort({ globalEpisodeNumber: 1, createdAt: 1 }),
       Idea.find({
         userId: req.currentUser._id,
         _id: { $in: episode.ideaIds || [] },
@@ -163,10 +204,22 @@ async function generateEpisode(req, res, next) {
           episodeNumberWithinTheme: { $lt: episode.episodeNumberWithinTheme },
         }).sort({ episodeNumberWithinTheme: -1 }),
     ]);
-
-    const generated = await aiService.generateEpisodeDraft({
+    const episodeContinuityContext = buildEpisodeContinuityContext({
       series,
       theme,
+      episode,
+      episodes: allSeriesEpisodes,
+      language: req.language,
+    });
+
+    const generated = await aiService.generateEpisodeDraft({
+      language: req.language,
+      series,
+      theme,
+      episode,
+      callbackSuggestions: episodeContinuityContext.callbackSuggestions,
+      continuityWarnings: episodeContinuityContext.warnings,
+      seasonArcStep: episodeContinuityContext.seasonArcStep,
       episodeNumberWithinTheme: episode.episodeNumberWithinTheme,
       globalEpisodeNumber: episode.globalEpisodeNumber,
       previousEpisodeEndState: isStandalone ? null : previousThemeEpisode?.endState,
@@ -218,6 +271,7 @@ async function generateEpisode(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await Promise.all([episode.save(), series.save(), theme.save()]);
 
@@ -256,18 +310,36 @@ async function generateSpices(req, res, next) {
     const effectivePlan = req.effectivePlan || 'free';
     const isStandalone = Boolean(episode.isSingle);
 
-    const previousThemeEpisode = isStandalone
-      ? null
-      : await Episode.findOne({
+    const [allSeriesEpisodes, previousThemeEpisode] = await Promise.all([
+      Episode.find({
         userId: req.currentUser._id,
         seriesId: series._id,
-        themeId: theme._id,
-        episodeNumberWithinTheme: { $lt: episode.episodeNumberWithinTheme },
-      }).sort({ episodeNumberWithinTheme: -1 });
-
-    const generated = await aiService.generateSpices({
+      }).sort({ globalEpisodeNumber: 1, createdAt: 1 }),
+      isStandalone
+        ? Promise.resolve(null)
+        : Episode.findOne({
+          userId: req.currentUser._id,
+          seriesId: series._id,
+          themeId: theme._id,
+          episodeNumberWithinTheme: { $lt: episode.episodeNumberWithinTheme },
+        }).sort({ episodeNumberWithinTheme: -1 }),
+    ]);
+    const episodeContinuityContext = buildEpisodeContinuityContext({
       series,
       theme,
+      episode,
+      episodes: allSeriesEpisodes,
+      language: req.language,
+    });
+
+    const generated = await aiService.generateSpices({
+      language: req.language,
+      series,
+      theme,
+      episode,
+      callbackSuggestions: episodeContinuityContext.callbackSuggestions,
+      continuityWarnings: episodeContinuityContext.warnings,
+      seasonArcStep: episodeContinuityContext.seasonArcStep,
       episodeNumberWithinTheme: episode.episodeNumberWithinTheme,
       currentHook: episode.hook,
       existingTalkingPoints: episode.talkingPoints,
@@ -300,6 +372,7 @@ async function generateSpices(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();
 
@@ -345,6 +418,7 @@ async function refreshContinuity(req, res, next) {
     ]);
 
     const refreshed = await aiService.refreshContinuity({
+      language: req.language,
       series,
       theme,
       episode,
@@ -360,6 +434,7 @@ async function refreshContinuity(req, res, next) {
     episode.endState = refreshed.endState;
     series.seriesSummary = refreshed.seriesSummary || series.seriesSummary;
     theme.themeSummary = refreshed.themeSummary || theme.themeSummary;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await Promise.all([episode.save(), series.save(), theme.save()]);
 
@@ -399,6 +474,7 @@ async function fixTone(req, res, next) {
     });
 
     const fixed = await aiService.fixTone({
+      language: req.language,
       series,
       theme,
       episode,
@@ -417,6 +493,7 @@ async function fixTone(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();
 
@@ -445,9 +522,177 @@ async function fixTone(req, res, next) {
   }
 }
 
+async function generateHooks(req, res, next) {
+  try {
+    const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
+    episode.hookOptions = buildHookOptions({
+      language: req.language,
+      series,
+      theme,
+      episode,
+    });
+    await episode.save();
+
+    if (wantsJson(req)) {
+      return res.json({
+        provider: 'deterministic',
+        hookOptions: episode.hookOptions,
+      });
+    }
+
+    req.flash('success', 'Fresh hook angles generated for this episode.');
+    return editorRedirect(res, { series, theme, episode });
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
+async function applyHookOption(req, res, next) {
+  try {
+    const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
+    const selectedHook = String(req.body.hook || '').trim();
+
+    if (!selectedHook) {
+      throw new AppError('Hook option is required.', 400);
+    }
+
+    episode.hook = selectedHook;
+    const effectivePlan = req.effectivePlan || 'free';
+    const toneState = resolveEffectiveTone({
+      series,
+      episode,
+      plan: effectivePlan,
+    });
+    const toneCheck = computeToneConsistencyScore({
+      episode,
+      tonePreset: toneState.tonePreset,
+      toneIntensity: toneState.toneIntensity,
+    });
+    episode.toneScore = toneCheck.toneScore;
+    episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
+    await episode.save();
+
+    if (wantsJson(req)) {
+      return res.json({
+        provider: 'deterministic',
+        hook: episode.hook,
+      });
+    }
+
+    req.flash('success', 'Hook applied to the episode draft.');
+    return editorRedirect(res, { series, theme, episode });
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
+async function rewriteSection(req, res, next) {
+  try {
+    const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
+    const effectivePlan = req.effectivePlan || 'free';
+    const section = REWRITE_SECTION_VALUES.includes(req.body.section)
+      ? req.body.section
+      : 'intro';
+    const rewrite = rewriteEpisodeSection({
+      language: req.language,
+      series,
+      theme,
+      episode,
+      section,
+    });
+
+    if (section === 'intro' && rewrite.hook) {
+      episode.hook = rewrite.hook;
+    }
+
+    if (section === 'body' && rewrite.talkingPoints?.length) {
+      episode.talkingPoints = rewrite.talkingPoints;
+    }
+
+    if (section === 'cta' && rewrite.ending) {
+      episode.ending = rewrite.ending;
+    }
+
+    const toneState = resolveEffectiveTone({
+      series,
+      episode,
+      plan: effectivePlan,
+    });
+    const toneCheck = computeToneConsistencyScore({
+      episode,
+      tonePreset: toneState.tonePreset,
+      toneIntensity: toneState.toneIntensity,
+    });
+    episode.toneScore = toneCheck.toneScore;
+    episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
+    await episode.save();
+
+    if (wantsJson(req)) {
+      return res.json({
+        provider: 'deterministic',
+        section,
+        episode,
+      });
+    }
+
+    req.flash('success', `Writing Intelligence rewrote the ${section}.`);
+    return editorRedirect(res, { series, theme, episode });
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
+async function answerHelpChat(req, res, next) {
+  try {
+    const message = String(req.body.message || '').trim();
+    const response = await answerHelpQuestion({
+      message,
+      language: req.language,
+      effectivePlan: req.effectivePlan || 'free',
+    });
+
+    return res.json(response);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   generateEpisode,
   generateSpices,
   refreshContinuity,
   fixTone,
+  generateHooks,
+  applyHookOption,
+  rewriteSection,
+  answerHelpChat,
 };

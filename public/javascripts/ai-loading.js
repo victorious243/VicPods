@@ -1,4 +1,42 @@
 (function initAiLoading() {
+  function resolveLanguage() {
+    return String(document.documentElement.getAttribute('lang') || 'en').toLowerCase().slice(0, 2);
+  }
+
+  function getLanguageCopy() {
+    var language = resolveLanguage();
+    if (language === 'es') {
+      return {
+        messages: [
+          'Analizando el contexto y objetivos de tu episodio.',
+          'Aplicando guias de tono, estructura y continuidad.',
+          'Sirviendo tu borrador compacto listo para grabar.',
+        ],
+        cooking: 'Cocinando...',
+      };
+    }
+
+    if (language === 'pt') {
+      return {
+        messages: [
+          'Analisando o contexto e objetivos do seu episodio.',
+          'Aplicando guias de tom, estrutura e continuidade.',
+          'Servindo seu rascunho compacto pronto para gravacao.',
+        ],
+        cooking: 'Cozinhando...',
+      };
+    }
+
+    return {
+      messages: [
+        'Analyzing your episode context and goals.',
+        'Applying tone, structure, and continuity guardrails.',
+        'Plating your compact recording-ready draft.',
+      ],
+      cooking: 'Cooking...',
+    };
+  }
+
   function getAiForms() {
     return Array.from(document.querySelectorAll('form[action^="/ai/"], form[data-ai-loading="true"]'));
   }
@@ -15,11 +53,8 @@
 
     var statusLabel = overlay.querySelector('[data-ai-loader-status]');
     var steps = Array.from(overlay.querySelectorAll('.ai-loader-step'));
-    var messages = [
-      'Analyzing your episode context and goals.',
-      'Applying tone, structure, and continuity guardrails.',
-      'Plating your compact recording-ready draft.',
-    ];
+    var copy = getLanguageCopy();
+    var messages = copy.messages;
     var timer = null;
     var currentStep = 0;
 
@@ -67,7 +102,7 @@
       overlay.hidden = true;
     }
 
-    return { show: show, hide: hide };
+    return { show: show, hide: hide, cookingText: copy.cooking };
   }
 
   document.addEventListener('DOMContentLoaded', function onReady() {
@@ -96,17 +131,17 @@
             if (!control.dataset.originalLabel) {
               control.dataset.originalLabel = control.textContent;
             }
-            control.textContent = 'Cooking...';
+            control.textContent = overlay.cookingText;
           } else if (control.tagName === 'INPUT') {
             if (!control.dataset.originalLabel) {
               control.dataset.originalLabel = control.value;
             }
-            control.value = 'Cooking...';
+            control.value = overlay.cookingText;
           }
         });
 
         if (event.submitter && event.submitter.tagName === 'BUTTON') {
-          event.submitter.textContent = 'Cooking...';
+          event.submitter.textContent = overlay.cookingText;
         }
       });
     });

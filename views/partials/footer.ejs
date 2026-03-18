@@ -1,0 +1,21 @@
+<footer class="site-footer">
+  <div class="site-footer-copy">
+    <strong>VicPods</strong>
+    <p><%= t('footer.tagline', 'AI-powered podcast structuring application.') %></p>
+    <small>&copy; <%= new Date().getFullYear() %> VicPods. <%= t('footer.note', 'Built to help creators plan stronger episodes before they record.') %></small>
+  </div>
+
+  <nav class="site-footer-links" aria-label="Footer">
+    <a href="/about"><%= t('page.about.link', 'About VicPods') %></a>
+    <a href="/help"><%= t('page.help.link', 'Help Center') %></a>
+    <a href="/auth/terms"><%= t('footer.terms', 'Terms') %></a>
+    <% if (currentUser) { %>
+      <a href="/studio"><%= t('nav.studio', 'Studio') %></a>
+      <a href="/kitchen"><%= t('nav.kitchen', 'Workspace') %></a>
+      <a href="/settings"><%= t('nav.settings', 'Settings') %></a>
+    <% } else { %>
+      <a href="/auth/login"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+      <a href="/auth/register"><%= t('page.about.cta.guest.primary', 'Create account') %></a>
+    <% } %>
+  </nav>
+</footer>

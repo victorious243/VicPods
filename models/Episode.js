@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 const { TONE_PRESET_NAMES } = require('../services/tone/tonePresets');
+const {
+  CTA_STYLE_VALUES,
+  FORMAT_TEMPLATE_VALUES,
+  HOOK_STYLE_VALUES,
+  VALID_TARGET_LENGTHS,
+} = require('../services/structure/structureService');
+const { DELIVERY_STYLE_VALUES } = require('../services/writing/writingIntelligenceService');
 
 const episodeSchema = new mongoose.Schema(
   {
@@ -44,6 +51,37 @@ const episodeSchema = new mongoose.Schema(
       trim: true,
       maxlength: 160,
     },
+    showBlueprint: {
+      audienceProblem: {
+        type: String,
+        default: '',
+        maxlength: 240,
+        trim: true,
+      },
+      listenerTransformation: {
+        type: String,
+        default: '',
+        maxlength: 240,
+        trim: true,
+      },
+      contentPillars: {
+        type: [String],
+        default: [],
+      },
+      ctaStyle: {
+        type: String,
+        enum: CTA_STYLE_VALUES,
+        default: 'direct_action',
+      },
+      bannedWords: {
+        type: [String],
+        default: [],
+      },
+      brandVoiceRules: {
+        type: [String],
+        default: [],
+      },
+    },
     toneOverridePreset: {
       type: String,
       enum: ['', ...TONE_PRESET_NAMES],
@@ -62,8 +100,23 @@ const episodeSchema = new mongoose.Schema(
     },
     targetLength: {
       type: String,
-      enum: ['10-15', '20-30', '45+', ''],
+      enum: VALID_TARGET_LENGTHS,
       default: '',
+    },
+    formatTemplate: {
+      type: String,
+      enum: FORMAT_TEMPLATE_VALUES,
+      default: 'signature_framework',
+    },
+    hookStyle: {
+      type: String,
+      enum: HOOK_STYLE_VALUES,
+      default: 'problem_first',
+    },
+    deliveryStyle: {
+      type: String,
+      enum: DELIVERY_STYLE_VALUES,
+      default: 'friendly',
     },
     includeFunSegment: {
       type: Boolean,
@@ -132,6 +185,67 @@ const episodeSchema = new mongoose.Schema(
     toneWarnings: {
       type: [String],
       default: [],
+    },
+    hookOptions: {
+      type: [String],
+      default: [],
+    },
+    timeEstimate: {
+      totalMinutes: {
+        type: Number,
+        default: null,
+      },
+      spokenWords: {
+        type: Number,
+        default: null,
+      },
+      sectionBreakdown: {
+        type: [String],
+        default: [],
+      },
+      summary: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+    },
+    scriptDoctor: {
+      overallScore: {
+        type: Number,
+        default: null,
+      },
+      clarityScore: {
+        type: Number,
+        default: null,
+      },
+      pacingScore: {
+        type: Number,
+        default: null,
+      },
+      repetitionScore: {
+        type: Number,
+        default: null,
+      },
+      transitionScore: {
+        type: Number,
+        default: null,
+      },
+      strengths: {
+        type: [String],
+        default: [],
+      },
+      issues: {
+        type: [String],
+        default: [],
+      },
+      recommendations: {
+        type: [String],
+        default: [],
+      },
+      updatedAt: {
+        type: Date,
+        default: null,
+      },
     },
     ideaIds: [
       {

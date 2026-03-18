@@ -1,3 +1,5 @@
+const { translateUserMessage } = require('../services/i18n/languageService');
+
 function flashMiddleware(req, res, next) {
   req.flash = (type, message) => {
     if (!req.session.flash) {
@@ -10,7 +12,11 @@ function flashMiddleware(req, res, next) {
     });
   };
 
-  res.locals.flashMessages = req.session.flash || [];
+  const language = req.language || 'en';
+  res.locals.flashMessages = (req.session.flash || []).map((item) => ({
+    ...item,
+    message: translateUserMessage(item.message, language),
+  }));
   delete req.session.flash;
 
   next();

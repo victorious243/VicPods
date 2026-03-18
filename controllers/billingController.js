@@ -50,9 +50,9 @@ async function openPortal(req, res, next) {
 
 function showSuccess(req, res) {
   return renderPage(res, {
-    title: 'Billing Success - VicPods',
-    pageTitle: 'Payment Received',
-    subtitle: 'Processing your subscription. Plan access updates via Stripe webhooks.',
+    title: req.t('page.billing.success.title', 'Billing Success - VicPods'),
+    pageTitle: req.t('page.billing.success.header', 'Payment Received'),
+    subtitle: req.t('page.billing.success.subtitle', 'Processing your subscription. Plan access updates via Stripe webhooks.'),
     view: 'billing/success',
     data: {
       checkoutSessionId: req.query.session_id || null,
@@ -63,9 +63,9 @@ function showSuccess(req, res) {
 
 function showCancel(req, res) {
   return renderPage(res, {
-    title: 'Billing Canceled - VicPods',
-    pageTitle: 'Checkout Canceled',
-    subtitle: 'No changes were made to your plan.',
+    title: req.t('page.billing.cancel.title', 'Billing Canceled - VicPods'),
+    pageTitle: req.t('page.billing.cancel.header', 'Checkout Canceled'),
+    subtitle: req.t('page.billing.cancel.subtitle', 'No changes were made to your plan.'),
     view: 'billing/cancel',
   });
 }

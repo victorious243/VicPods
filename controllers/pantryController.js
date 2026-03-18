@@ -7,9 +7,9 @@ async function showPantry(req, res, next) {
     const ideas = await Idea.find({ userId: req.currentUser._id }).sort({ updatedAt: -1 });
 
     return renderPage(res, {
-      title: 'Pantry - VicPods',
-      pageTitle: 'Pantry',
-      subtitle: 'Store hooks and ingredients for future episodes.',
+      title: req.t('page.pantry.title', 'Pantry - VicPods'),
+      pageTitle: req.t('page.pantry.header', 'Pantry'),
+      subtitle: req.t('page.pantry.subtitle', 'Store hooks and ingredients for future episodes.'),
       view: 'pantry/index',
       data: {
         ideas,

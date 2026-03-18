@@ -1,0 +1,119 @@
+<div class="help-page-shell landing-page-shell">
+  <section class="landing-hero card" data-help-reveal>
+    <div class="landing-copy">
+      <span class="landing-kicker"><%= t('page.landing.kicker', 'Enter the Lab') %></span>
+      <h1><%= t('page.landing.hero.title', 'Build better podcasts before you hit record.') %></h1>
+      <p class="landing-lead"><%= t('page.landing.hero.body', 'VicPods helps creators structure stronger episodes, plan continuity-driven series, and refine scripts inside one focused podcast application.') %></p>
+
+      <div class="inline-actions landing-actions">
+        <% if (currentUser) { %>
+          <a href="/kitchen" class="btn btn-primary"><%= t('page.landing.cta.primary.user', 'Open Workspace') %></a>
+          <a href="/studio" class="btn btn-secondary"><%= t('page.landing.cta.secondary.user', 'Go to Studio') %></a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary"><%= t('page.landing.cta.primary.guest', 'Create account') %></a>
+          <a href="/auth/login" class="btn btn-secondary"><%= t('page.landing.cta.secondary.guest', 'Sign in') %></a>
+        <% } %>
+        <a href="/help" class="btn btn-ghost"><%= t('page.landing.cta.help', 'See how it works') %></a>
+      </div>
+
+      <div class="landing-proof">
+        <span class="mini-label"><%= t('page.landing.proof.one', 'Structure-first workflow') %></span>
+        <span class="mini-label"><%= t('page.landing.proof.two', 'Writing intelligence') %></span>
+        <span class="mini-label"><%= t('page.landing.proof.three', 'Series planning') %></span>
+      </div>
+    </div>
+
+    <div class="landing-visual">
+      <div class="landing-orb landing-orb-back"></div>
+      <div class="landing-orb landing-orb-front"></div>
+      <div class="landing-model-shell">
+        <model-viewer
+          src="/models/vicpods-landing-mic.glb"
+          camera-controls
+          auto-rotate
+          rotation-per-second="10deg"
+          disable-pan
+          shadow-intensity="1"
+          exposure="1.05"
+          environment-image="neutral"
+          interaction-prompt="none"
+          touch-action="pan-y"
+          style="width: 100%; height: 100%; background: transparent;"
+        ></model-viewer>
+      </div>
+      <div class="landing-wave-ring landing-wave-ring-a"></div>
+      <div class="landing-wave-ring landing-wave-ring-b"></div>
+      <div class="landing-status-chip"><%= t('page.landing.status', 'Lab signal active') %></div>
+    </div>
+  </section>
+
+  <section class="help-story-stack landing-story-stack">
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">01</span>
+        <h3><%= t('page.landing.card.single.title', 'Start a single episode') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Move from one topic to a recording-ready draft with a clear hook, stronger structure, and focused talking points.') %></p>
+        <div class="inline-actions">
+          <a href="/create/single" class="btn btn-ghost"><%= t('page.landing.card.single.cta', 'Open single flow') %></a>
+        </div>
+      </div>
+    </article>
+
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">02</span>
+        <h3><%= t('page.landing.card.series.title', 'Build a full series') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.landing.card.series.body', 'Design season goals, recurring themes, continuity rules, and episode arcs before the recording even starts.') %></p>
+        <div class="inline-actions">
+          <a href="/create/series" class="btn btn-ghost"><%= t('page.landing.card.series.cta', 'Open series flow') %></a>
+        </div>
+      </div>
+    </article>
+
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">03</span>
+        <h3><%= t('page.landing.card.guide.title', 'Get guided inside the lab') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.landing.card.guide.body', 'Use Studio, Workspace, Pantry, Help Center, and onboarding together so new and returning users always know the next move.') %></p>
+        <div class="inline-actions">
+          <a href="/help" class="btn btn-ghost"><%= t('page.landing.card.guide.cta', 'Open Help Center') %></a>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="card landing-steps landing-steps-shell" data-help-reveal>
+    <div class="section-head">
+      <h3><%= t('page.landing.steps.title', 'How the VicPods lab works') %></h3>
+      <a href="/about" class="btn btn-ghost"><%= t('page.landing.steps.link', 'About VicPods') %></a>
+    </div>
+
+    <div class="landing-step-row">
+      <article>
+        <span class="landing-step-label"><%= t('page.landing.steps.one.label', 'Blueprint') %></span>
+        <p><%= t('page.landing.steps.one.body', 'Define audience, transformation, pillars, and voice rules first.') %></p>
+      </article>
+      <article>
+        <span class="landing-step-label"><%= t('page.landing.steps.two.label', 'Structure') %></span>
+        <p><%= t('page.landing.steps.two.body', 'Shape the hook, episode flow, timing, and CTA before drafting.') %></p>
+      </article>
+      <article>
+        <span class="landing-step-label"><%= t('page.landing.steps.three.label', 'Write') %></span>
+        <p><%= t('page.landing.steps.three.body', 'Generate stronger drafts, refine weak sections, and tighten clarity.') %></p>
+      </article>
+      <article>
+        <span class="landing-step-label"><%= t('page.landing.steps.four.label', 'Plan ahead') %></span>
+        <p><%= t('page.landing.steps.four.body', 'Keep continuity across themes, callbacks, and series progression.') %></p>
+      </article>
+    </div>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>

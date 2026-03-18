@@ -1,0 +1,78 @@
+<div class="help-page-shell about-page-shell">
+  <section class="card help-hero" data-help-reveal>
+    <div class="help-hero-copy">
+      <span class="landing-kicker"><%= t('page.about.link', 'About VicPods') %></span>
+      <h2><%= t('page.about.hero.heading', 'VicPods is an AI-powered podcast structuring application.') %></h2>
+      <p class="help-hero-lead"><%= t('page.about.hero.body', 'It helps creators turn rough ideas into clear episode frameworks, stronger scripts, and continuity-driven series before they record.') %></p>
+
+      <div class="inline-actions">
+        <% if (currentUser) { %>
+          <a href="/studio" class="btn btn-primary"><%= t('page.about.cta.user.primary', 'Open Studio') %></a>
+          <a href="/kitchen" class="btn btn-secondary"><%= t('page.about.cta.user.secondary', 'Open Workspace') %></a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary"><%= t('page.about.cta.guest.primary', 'Create account') %></a>
+          <a href="/auth/login" class="btn btn-secondary"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+        <% } %>
+        <a href="/auth/terms" class="btn btn-ghost"><%= t('page.about.cta.terms', 'Read terms') %></a>
+      </div>
+    </div>
+
+    <div class="help-hero-visual" aria-hidden="true">
+      <div class="help-visual-orb help-visual-orb-a"></div>
+      <div class="help-visual-orb help-visual-orb-b"></div>
+      <div class="help-visual-panel about-visual-panel">
+        <span class="mini-label"><%= t('page.about.what.title', 'What VicPods does') %></span>
+        <strong><%= t('page.about.for.title', 'Who VicPods is for') %></strong>
+        <p><%= t('page.about.textFirst.body', 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and continuity first so creators can record with more confidence and clarity.') %></p>
+        <div class="about-visual-tags">
+          <span class="mini-label"><%= t('page.about.textFirst.title', 'Why VicPods starts text-first') %></span>
+          <span class="mini-label"><%= t('page.about.vision.title', 'Where VicPods is going') %></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="help-story-stack about-story-stack">
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">01</span>
+        <h3><%= t('page.about.what.title', 'What VicPods does') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.about.what.body', 'VicPods helps you define show blueprints, shape episode flow, strengthen hooks, improve writing quality, and plan series with more consistency.') %></p>
+      </div>
+    </article>
+
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">02</span>
+        <h3><%= t('page.about.for.title', 'Who VicPods is for') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.about.for.body', 'It is built for solo creators, teams, and growing podcast brands that want better structure, clearer messaging, and less time wasted staring at a blank page.') %></p>
+      </div>
+    </article>
+
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">03</span>
+        <h3><%= t('page.about.textFirst.title', 'Why VicPods starts text-first') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.about.textFirst.body', 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and continuity first so creators can record with more confidence and clarity.') %></p>
+      </div>
+    </article>
+
+    <article class="card help-story-section" data-help-reveal>
+      <div class="help-story-aside">
+        <span class="help-story-index">04</span>
+        <h3><%= t('page.about.vision.title', 'Where VicPods is going') %></h3>
+      </div>
+      <div class="help-story-content">
+        <p class="help-story-lead"><%= t('page.about.vision.body', 'The application starts with structuring and writing because that is where it can create immediate value. As the business grows, VicPods will expand carefully with new creation, workflow, and production features.') %></p>
+      </div>
+    </article>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>

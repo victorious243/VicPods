@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 const { TONE_PRESET_NAMES } = require('../services/tone/tonePresets');
+const {
+  CTA_STYLE_VALUES,
+  FORMAT_TEMPLATE_VALUES,
+  HOOK_STYLE_VALUES,
+  VALID_EPISODE_TYPES,
+  VALID_TARGET_LENGTHS,
+} = require('../services/structure/structureService');
+const { DELIVERY_STYLE_VALUES } = require('../services/writing/writingIntelligenceService');
 
 const seriesSchema = new mongoose.Schema(
   {
@@ -59,6 +67,84 @@ const seriesSchema = new mongoose.Schema(
       default: '',
       maxlength: 400,
       trim: true,
+    },
+    showBlueprint: {
+      audienceProblem: {
+        type: String,
+        default: '',
+        maxlength: 240,
+        trim: true,
+      },
+      listenerTransformation: {
+        type: String,
+        default: '',
+        maxlength: 240,
+        trim: true,
+      },
+      contentPillars: {
+        type: [String],
+        default: [],
+      },
+      ctaStyle: {
+        type: String,
+        enum: CTA_STYLE_VALUES,
+        default: 'direct_action',
+      },
+      bannedWords: {
+        type: [String],
+        default: [],
+      },
+      brandVoiceRules: {
+        type: [String],
+        default: [],
+      },
+    },
+    seriesBible: {
+      seasonGoal: {
+        type: String,
+        default: '',
+        maxlength: 320,
+        trim: true,
+      },
+      audiencePromise: {
+        type: String,
+        default: '',
+        maxlength: 240,
+        trim: true,
+      },
+      recurringThemes: {
+        type: [String],
+        default: [],
+      },
+    },
+    defaultEpisodeType: {
+      type: String,
+      enum: VALID_EPISODE_TYPES,
+      default: 'solo',
+    },
+    defaultTargetLength: {
+      type: String,
+      enum: VALID_TARGET_LENGTHS,
+      default: '',
+    },
+    defaultIncludeFunSegment: {
+      type: Boolean,
+      default: true,
+    },
+    defaultFormatTemplate: {
+      type: String,
+      enum: FORMAT_TEMPLATE_VALUES,
+      default: 'signature_framework',
+    },
+    defaultHookStyle: {
+      type: String,
+      enum: HOOK_STYLE_VALUES,
+      default: 'problem_first',
+    },
+    defaultDeliveryStyle: {
+      type: String,
+      enum: DELIVERY_STYLE_VALUES,
+      default: 'friendly',
     },
     creationMode: {
       type: String,

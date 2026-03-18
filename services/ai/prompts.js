@@ -1,4 +1,15 @@
 const { buildToneBlock } = require('../tone/applyTone');
+const { resolveAiLanguageName } = require('../i18n/languageService');
+const {
+  getCtaStyleOption,
+  resolveEffectiveShowBlueprint,
+  resolveEffectiveStructure,
+} = require('../structure/structureService');
+const { resolveSeriesBible } = require('../series/seriesPlanningService');
+const {
+  getDeliveryStyleOption,
+  resolveEffectiveDeliveryStyle,
+} = require('../writing/writingIntelligenceService');
 
 function resolveToneInput(series, effectiveTone = {}) {
   return buildToneBlock({
@@ -10,10 +21,39 @@ function resolveToneInput(series, effectiveTone = {}) {
   });
 }
 
+function buildStructureBlock({ series, episode }) {
+  const blueprint = resolveEffectiveShowBlueprint({ series, episode });
+  const seriesBible = resolveSeriesBible(series);
+  const structure = resolveEffectiveStructure({ series, episode });
+  const ctaStyle = getCtaStyleOption(blueprint.ctaStyle);
+  const deliveryStyle = getDeliveryStyleOption(resolveEffectiveDeliveryStyle({ series, episode }));
+
+  return [
+    'VicPods Structuring Application:',
+    `Format Template: ${structure.formatTemplateMeta.label} - ${structure.formatTemplateMeta.description}`,
+    `Architected Flow: ${(structure.formatTemplateMeta.flow || []).join(' -> ')}`,
+    `Hook Style: ${structure.hookStyleMeta.label} - ${structure.hookStyleMeta.description}`,
+    `Duration Preset: ${structure.targetLengthMeta.label} - ${structure.targetLengthMeta.description}`,
+    `Timing Guide: ${(structure.targetLengthMeta.timingPlan || []).join(' | ')}`,
+    `Delivery Style: ${deliveryStyle.label} - ${deliveryStyle.promptHint}`,
+    `Season Goal: ${seriesBible.seasonGoal || series.goal || 'Advance the season toward a concrete outcome.'}`,
+    `Audience Promise: ${seriesBible.audiencePromise || blueprint.listenerTransformation || 'Leave listeners better than they arrived.'}`,
+    `Recurring Themes: ${seriesBible.recurringThemes.join(' | ') || blueprint.contentPillars.join(' | ') || 'Keep thematic continuity consistent.'}`,
+    `Audience Problem: ${blueprint.audienceProblem || series.audience || 'Creators need a clearer path from idea to strong episodes.'}`,
+    `Listener Transformation: ${blueprint.listenerTransformation || series.goal || 'Leave with one clear decision and one action.'}`,
+    `Content Pillars: ${blueprint.contentPillars.join(' | ') || 'Use the strongest available pillar and stay focused.'}`,
+    `CTA Style: ${ctaStyle.label} - ${ctaStyle.description}`,
+    `Banned Words/Phrases: ${blueprint.bannedWords.join(' | ') || 'None specified.'}`,
+    `Brand Voice Rules: ${blueprint.brandVoiceRules.join(' | ') || 'Keep the language specific, practical, and structured.'}`,
+  ].join('\n');
+}
+
 function buildEpisodeGenerationPrompt(input) {
   const {
+    language,
     series,
     theme,
+    episode,
     episodeNumberWithinTheme,
     globalEpisodeNumber,
     previousEpisodeEndState,
@@ -21,6 +61,9 @@ function buildEpisodeGenerationPrompt(input) {
     ingredientHooks,
     existingTitle,
     effectiveTone,
+    callbackSuggestions,
+    continuityWarnings,
+    seasonArcStep,
     episodeType,
     targetLength,
     includeFunSegment,
@@ -29,10 +72,14 @@ function buildEpisodeGenerationPrompt(input) {
   } = input;
 
   const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
+  const structure = resolveEffectiveStructure({ series, episode });
 
   return [
     'You are Chef AI for VicPods, an AI Podcast Director.',
     'Generate compact, production-ready episode drafts that guide creators to successful podcast outcomes.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
     'Rules:',
     '- Every episode must move the series toward a concrete success goal.',
     '- Keep output concise and structured. Never ramble.',
@@ -59,24 +106,36 @@ function buildEpisodeGenerationPrompt(input) {
     `Theme Summary: ${theme.themeSummary || 'No theme summary yet.'}`,
     `Episode Number Within Theme: ${episodeNumberWithinTheme}`,
     `Global Episode Number (series-wide): ${globalEpisodeNumber || 'N/A'}`,
-    `Episode Type: ${episodeType || 'solo'}`,
-    `Target Length: ${targetLength || 'flexible'}`,
-    `Include Fun Segment: ${includeFunSegment === false ? 'No' : 'Yes'}`,
+    `Episode Type: ${episodeType || structure.episodeType || 'solo'}`,
+    `Target Length: ${targetLength || structure.targetLength || 'flexible'}`,
+    `Include Fun Segment: ${includeFunSegment === false ? 'No' : (structure.includeFunSegment === false ? 'No' : 'Yes')}`,
     `Mode: ${isStandalone ? 'Standalone single episode' : 'Series continuity episode'}`,
     `Existing Title (optional): ${existingTitle || 'N/A'}`,
     `Previous Theme Episode End State: ${previousEpisodeEndState || 'No previous episode in this theme.'}`,
     `Already Covered Theme Episode Titles: ${(existingEpisodeTitles || []).join(', ') || 'None yet.'}`,
     `Pantry Ingredient Hooks: ${(ingredientHooks || []).join(' | ') || 'None selected.'}`,
+    `Season Arc Position: ${seasonArcStep || 'No mapped season step yet.'}`,
+    `Continuity Warnings: ${(continuityWarnings || []).join(' | ') || 'No continuity warnings.'}`,
+    `Callback Suggestions: ${(callbackSuggestions || []).join(' | ') || 'No callback suggestion yet.'}`,
     '',
     tone.toneBlock,
     '',
+    structureBlock,
+    '',
     'Goal fit requirements:',
-    '- Hook: connect audience pain to a measurable outcome.',
+    '- Hook: follow the selected hook style and connect audience pain to a measurable outcome.',
     requireTeaser === false
-      ? '- Outline: progress context -> approach -> application -> outcome -> close.'
-      : '- Outline: progress context -> approach -> application -> outcome -> teaser.',
+      ? '- Outline: follow the architected flow and timing guide, then close without teaser language.'
+      : '- Outline: follow the architected flow and timing guide, then preserve teaser momentum.',
     '- Talking points: include concrete execution and one metric checkpoint.',
     '- Host questions: force decisions, not generic brainstorming.',
+    '- Use the selected content pillars and listener transformation as the strategic spine.',
+    '- Advance the season goal and keep the audience promise visible in the draft.',
+    '- Avoid repeating angles already flagged by continuity warnings.',
+    '- If callback suggestions exist, weave one callback naturally into the outline or talking points.',
+    '- CTA and ending must follow the selected CTA style.',
+    '- Do not use banned words or phrases.',
+    '- Respect the brand voice rules in phrasing and framing.',
     includeFunSegment === false
       ? '- Fun segment: return an empty string for funSegment.'
       : '- Fun segment: keep brief and aligned to theme objective.',
@@ -103,13 +162,18 @@ function buildEpisodeGenerationPrompt(input) {
 
 function buildSpicesPrompt(input) {
   const {
+    language,
     series,
     theme,
+    episode,
     episodeNumberWithinTheme,
     currentHook,
     existingTalkingPoints,
     previousEpisodeEndState,
     effectiveTone,
+    callbackSuggestions,
+    continuityWarnings,
+    seasonArcStep,
     episodeType,
     targetLength,
     includeFunSegment,
@@ -118,9 +182,13 @@ function buildSpicesPrompt(input) {
   } = input;
 
   const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
+  const structure = resolveEffectiveStructure({ series, episode });
 
   return [
     'You are Chef AI for VicPods. Regenerate ONLY spices for this episode.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
     'Return valid JSON with keys: hook, hostQuestions, funSegment.',
     'Keep concise. Keep continuity inside this theme and avoid repetition.',
     'Ensure each spice supports the series primary goal and the intended tone behavior.',
@@ -129,16 +197,22 @@ function buildSpicesPrompt(input) {
     `Theme Name: ${theme.name}`,
     `Theme Summary: ${theme.themeSummary || 'N/A'}`,
     `Episode Number Within Theme: ${episodeNumberWithinTheme}`,
-    `Episode Type: ${episodeType || 'solo'}`,
-    `Target Length: ${targetLength || 'flexible'}`,
-    `Include Fun Segment: ${includeFunSegment === false ? 'No' : 'Yes'}`,
+    `Episode Type: ${episodeType || structure.episodeType || 'solo'}`,
+    `Target Length: ${targetLength || structure.targetLength || 'flexible'}`,
+    `Include Fun Segment: ${includeFunSegment === false ? 'No' : (structure.includeFunSegment === false ? 'No' : 'Yes')}`,
     `Mode: ${isStandalone ? 'Standalone single episode' : 'Series continuity episode'}`,
     `Current Hook: ${currentHook || 'N/A'}`,
     `Existing Talking Points: ${(existingTalkingPoints || []).join(' | ') || 'N/A'}`,
     `Previous Theme Episode End State: ${previousEpisodeEndState || 'No previous episode in theme.'}`,
+    `Season Arc Position: ${seasonArcStep || 'No mapped season step yet.'}`,
+    `Continuity Warnings: ${(continuityWarnings || []).join(' | ') || 'No continuity warnings.'}`,
+    `Callback Suggestions: ${(callbackSuggestions || []).join(' | ') || 'No callback suggestion yet.'}`,
     '',
     tone.toneBlock,
     '',
+    structureBlock,
+    '',
+    'Requirements: hook must follow the selected hook style, support the listener transformation, respect banned words, and avoid repeated angles.',
     includeFunSegment === false
       ? 'Constraints: hook 1-2 lines; hostQuestions max 8 bullets; funSegment must be empty string.'
       : 'Constraints: hook 1-2 lines; hostQuestions max 8 bullets; funSegment one short game/dilemma.',
@@ -149,8 +223,17 @@ function buildSpicesPrompt(input) {
 }
 
 function buildContinuityRefreshPrompt(input) {
-  const { series, theme, episode, priorThemeEpisodes, effectiveTone } = input;
+  const {
+    language,
+    series,
+    theme,
+    episode,
+    priorThemeEpisodes,
+    effectiveTone,
+  } = input;
   const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
 
   const priorLines = (priorThemeEpisodes || [])
     .map((item) => `E${item.episodeNumberWithinTheme}: ${item.title || 'Untitled'} | ${item.endState || item.ending || 'N/A'}`)
@@ -158,6 +241,7 @@ function buildContinuityRefreshPrompt(input) {
 
   return [
     'You are VicPods continuity editor.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
     'Return valid JSON only with keys: seriesSummary, themeSummary, endState.',
     'seriesSummary max 120 words. themeSummary max 120 words. endState max 80 words.',
     'Summaries must track progress toward a successful podcast plan and preserve tone consistency.',
@@ -177,15 +261,27 @@ function buildContinuityRefreshPrompt(input) {
     priorLines || 'No prior episodes in this theme.',
     '',
     tone.toneBlock,
+    '',
+    structureBlock,
   ].join('\n');
 }
 
 function buildToneFixPrompt(input) {
-  const { series, theme, episode, effectiveTone, requireTeaser } = input;
+  const {
+    language,
+    series,
+    theme,
+    episode,
+    effectiveTone,
+    requireTeaser,
+  } = input;
   const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
 
   return [
     'You are Chef AI Tone Director for VicPods.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
     'Adjust tone consistency WITHOUT rewriting full episode structure.',
     'Return valid JSON only with keys: hook, hostQuestions, ending.',
     'Keep episode meaning and continuity stable.',
@@ -203,10 +299,13 @@ function buildToneFixPrompt(input) {
     '',
     tone.toneBlock,
     '',
+    structureBlock,
+    '',
     'Preservation rules:',
     '- Keep the same core topic and learning objective.',
     '- Keep continuity with prior end state implied by current ending.',
     '- Improve style fit, clarity, and confidence.',
+    '- Respect hook style, CTA style, banned words, and brand voice rules.',
     requireTeaser === false
       ? '- Ending must remain standalone and not reference a next episode.'
       : '- Ending should preserve teaser momentum for the next episode.',

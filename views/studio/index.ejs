@@ -1,13 +1,21 @@
-<section class="card">
+<section id="onboarding-studio-start" class="card">
   <div class="section-head">
     <h3>Start Creating</h3>
-    <a href="/create" class="btn btn-primary">Create Episode</a>
+    <div class="inline-actions">
+      <a id="onboarding-open-settings" href="/settings?section=appearance" class="btn btn-ghost">Open Settings</a>
+      <a href="/kitchen" class="btn btn-primary">Open Workspace</a>
+    </div>
   </div>
-  <p>Single mode for speed, Series mode for continuity. Both produce compact recording-ready drafts.</p>
+  <p>Open Workspace to start single episodes fast or build a continuity-driven series arc.</p>
+
+  <div class="inline-actions">
+    <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">Start Single Podcast</a>
+    <a id="onboarding-start-series" href="/create/series" class="btn btn-secondary">Start Series</a>
+  </div>
 </section>
 
-<section class="card-grid stats-grid">
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'series' ? 'active-stat-card' : '' %>" href="/studio?inspect=series">
+<section class="card-grid stats-grid" id="onboarding-stats">
+  <a id="onboarding-stats-series" class="card stat-card stat-card-link <%= selectedInspect === 'series' ? 'active-stat-card' : '' %>" href="/studio?inspect=series">
     <p>Series</p>
     <h3><%= stats.seriesCount %></h3>
     <span class="mini-note">Open list</span>
@@ -116,10 +124,10 @@
   </section>
 <% } %>
 
-<section class="card">
+<section class="card" id="onboarding-studio-recents">
   <div class="section-head">
     <h3>Recent Episodes</h3>
-    <a href="/kitchen" class="btn btn-ghost">Open Kitchen</a>
+    <a id="onboarding-open-kitchen" href="/kitchen" class="btn btn-ghost">Open Workspace</a>
   </div>
 
   <div class="chip-wrap studio-filter-bar">
@@ -131,7 +139,7 @@
   </div>
 
   <% if (!latestEpisodes.length) { %>
-    <p class="empty-state">No episodes yet. Use Create to start your first episode.</p>
+    <p class="empty-state">No episodes yet. Open Workspace to start your first episode.</p>
   <% } else { %>
     <div class="list-stack studio-recent-list">
       <% latestEpisodes.forEach((episode) => { %>

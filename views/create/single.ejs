@@ -1,14 +1,15 @@
-<section class="card">
+<section class="card" id="onboarding-single-wizard">
   <div class="section-head">
     <h3>Single Episode Wizard</h3>
-    <a href="/create" class="btn btn-ghost">Back to Create</a>
+    <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
   </div>
 
   <div class="wizard-progress" role="list" aria-label="Single mode steps">
     <span class="step active" role="listitem">1. Topic</span>
-    <span class="step active" role="listitem">2. Tone</span>
-    <span class="step active" role="listitem">3. Format</span>
-    <span class="step active" role="listitem">4. Generate</span>
+    <span class="step active" role="listitem">2. Blueprint</span>
+    <span class="step active" role="listitem">3. Tone</span>
+    <span class="step active" role="listitem">4. Structure</span>
+    <span class="step active" role="listitem">5. Generate</span>
   </div>
 
   <form method="POST" action="/create/single" class="form-grid" data-ai-loading="true">
@@ -16,7 +17,7 @@
       <h4>Step 1 - Topic</h4>
       <label>
         Topic Title
-        <input type="text" name="title" required maxlength="160" placeholder="How to Launch Your Podcast in 30 Days" />
+        <input id="onboarding-single-topic-title" type="text" name="title" required maxlength="160" placeholder="How to Launch Your Podcast in 30 Days" />
       </label>
       <label>
         Description (optional)
@@ -55,7 +56,43 @@
     </section>
 
     <section class="wizard-step">
-      <h4>Step 2 - Tone</h4>
+      <h4>Step 2 - Show Blueprint</h4>
+      <div class="two-col">
+        <label>
+          Audience Problem
+          <input type="text" name="audienceProblem" maxlength="240" placeholder="What struggle is this episode solving?" />
+        </label>
+        <label>
+          Listener Transformation
+          <input type="text" name="listenerTransformation" maxlength="240" placeholder="What should listeners be able to do after this?" />
+        </label>
+      </div>
+      <label>
+        Content Pillars
+        <textarea name="contentPillars" rows="3" maxlength="480" placeholder="One pillar per line&#10;Audience growth&#10;Show positioning&#10;Publishing consistency"></textarea>
+      </label>
+      <div class="two-col">
+        <label>
+          CTA Style
+          <select name="ctaStyle">
+            <% ctaStyleOptions.forEach((option, index) => { %>
+              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Brand Voice Rules
+          <textarea name="brandVoiceRules" rows="3" maxlength="480" placeholder="One rule per line&#10;Keep it practical&#10;Never sound preachy&#10;Use plain language"></textarea>
+        </label>
+      </div>
+      <label>
+        Banned Words or Phrases
+        <textarea name="bannedWords" rows="2" maxlength="240" placeholder="Comma or line separated words to avoid"></textarea>
+      </label>
+    </section>
+
+    <section class="wizard-step">
+      <h4>Step 3 - Tone</h4>
       <div class="tone-grid">
         <% tonePresets.forEach((preset, index) => { %>
           <label class="tone-card">
@@ -99,35 +136,63 @@
     </section>
 
     <section class="wizard-step">
-      <h4>Step 3 - Format</h4>
+      <h4>Step 4 - Structure</h4>
+      <div class="two-col">
+        <label>
+          Format Template
+          <select name="formatTemplate">
+            <% formatTemplateOptions.forEach((option, index) => { %>
+              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Hook Style
+          <select name="hookStyle">
+            <% hookStyleOptions.forEach((option, index) => { %>
+              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <label>
+        Delivery Style
+        <select name="deliveryStyle">
+          <% deliveryStyleOptions.forEach((option, index) => { %>
+            <option value="<%= option.value %>" <%= (option.value === 'friendly' || (!index && !deliveryStyleOptions.some((item) => item.value === 'friendly'))) ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </label>
       <div class="two-col">
         <label>
           Episode Type
           <select name="episodeType">
-            <option value="solo">Solo</option>
-            <option value="interview">Interview</option>
+            <% episodeTypeOptions.forEach((option) => { %>
+              <option value="<%= option.value %>"><%= option.label %></option>
+            <% }) %>
           </select>
         </label>
         <label>
-          Target Length
+          Duration Preset
           <select name="targetLength">
-            <option value="">Flexible</option>
-            <option value="10-15">10-15 min</option>
-            <option value="20-30">20-30 min</option>
-            <option value="45+">45+ min</option>
+            <% targetLengthOptions.forEach((option) => { %>
+              <option value="<%= option.value %>"><%= option.label %></option>
+            <% }) %>
           </select>
         </label>
       </div>
       <label class="check-item">
+        <input type="hidden" name="includeFunSegment" value="off" />
         <input type="checkbox" name="includeFunSegment" checked />
         <span>Include a fun segment</span>
       </label>
+      <p class="mini-note">VicPods will follow your blueprint, hook style, and episode architecture when it generates the draft.</p>
     </section>
 
     <section class="wizard-step">
-      <h4>Step 4 - Generate</h4>
+      <h4>Step 5 - Generate</h4>
       <p class="mini-note">This creates the episode in your Single Episodes collection and opens the editor with a structured draft.</p>
-      <button type="submit" class="btn btn-primary">Generate Episode Draft</button>
+      <button id="onboarding-single-generate" type="submit" class="btn btn-primary">Generate Episode Draft</button>
     </section>
   </form>
 </section>

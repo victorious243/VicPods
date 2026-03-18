@@ -5,6 +5,11 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const CSRF_FIELD_NAME = '_csrf';
 const CSRF_HEADER_NAMES = ['x-csrf-token', 'x-xsrf-token'];
 
+function isApiRequest(req) {
+  const path = String(req.originalUrl || req.path || '');
+  return path === '/api' || path.startsWith('/api/');
+}
+
 function getExpectedOrigin(req) {
   if (process.env.APP_URL) {
     try {
@@ -67,6 +72,10 @@ function hasSameOriginHeaders(req) {
 
 function verifyCsrfToken(req, _res, next) {
   if (SAFE_METHODS.has(req.method)) {
+    return next();
+  }
+
+  if (isApiRequest(req)) {
     return next();
   }
 

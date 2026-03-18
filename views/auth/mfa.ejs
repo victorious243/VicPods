@@ -1,0 +1,31 @@
+<section class="auth-card">
+  <h3>Sign-in Security Check</h3>
+  <p>
+    Enter the 6-digit code sent to
+    <strong><%= maskedEmail || 'your email' %></strong>
+    to complete sign-in.
+  </p>
+
+  <form method="POST" action="/auth/mfa" class="form-grid">
+    <label>
+      Security Code
+      <input
+        type="text"
+        name="pin"
+        inputmode="numeric"
+        pattern="[0-9]{6}"
+        maxlength="6"
+        minlength="6"
+        required
+        placeholder="6-digit code"
+      />
+    </label>
+    <button type="submit" class="btn btn-primary">Verify and Continue</button>
+  </form>
+
+  <form method="POST" action="/auth/mfa/resend" class="form-grid">
+    <button type="submit" class="btn btn-ghost">Resend Code</button>
+  </form>
+
+  <p class="auth-foot"><a href="/auth/login">Back to sign in</a></p>
+</section>

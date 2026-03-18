@@ -6,6 +6,7 @@ async function loadCurrentUser(req, res, next) {
 
     if (!userId) {
       res.locals.currentUser = null;
+      res.locals.showOnboarding = false;
       return next();
     }
 
@@ -14,11 +15,15 @@ async function loadCurrentUser(req, res, next) {
     if (!user) {
       req.session.destroy(() => {});
       res.locals.currentUser = null;
+      res.locals.showOnboarding = false;
       return next();
     }
 
     req.currentUser = user;
     res.locals.currentUser = user;
+    res.locals.showOnboarding = Boolean(
+      user.emailVerified === true && !user.onboardingCompletedAt
+    );
     return next();
   } catch (error) {
     return next(error);

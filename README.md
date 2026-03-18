@@ -4,10 +4,10 @@ VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + Mong
 
 ## Features
 - Email/password auth with sessions (`express-session` + `bcrypt`)
-- Optional MojoAuth OpenID Connect login (Email OTP, Magic Link, Social)
 - Optional Google OpenID Connect login
 - Terms and Conditions acceptance required at registration
 - Email PIN verification required before first login
+- New-user MFA: sign-in security code (email OTP) for the first 14 days by default
 - Protected Studio, Kitchen, Pantry, Billing routes
 - Kitchen workflow for Series -> Themes -> Episodes
 - Theme-based workflow: Series -> Themes -> Episodes
@@ -63,11 +63,7 @@ SESSION_SECRET=change_this_to_a_random_32_plus_char_secret
 AI_PROVIDER=openai
 OPENAI_API_KEY=
 APP_URL=http://localhost:3000
-MOJOAUTH_ISSUER_URL=https://api.mojoauth.com
-MOJOAUTH_CLIENT_ID=
-MOJOAUTH_CLIENT_SECRET=
-MOJOAUTH_REDIRECT_URI=http://localhost:3000/callback
-MOJOAUTH_SCOPES=openid email profile
+NEW_USER_MFA_DAYS=14
 GOOGLE_OIDC_ISSUER_URL=https://accounts.google.com
 GOOGLE_OIDC_CLIENT_ID=
 GOOGLE_OIDC_CLIENT_SECRET=
@@ -96,8 +92,7 @@ BILLING_PRICE_PREMIUM=16.95
 If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically falls back to deterministic mock AI output.
 
 ## Key Routes
-- Auth: `/auth/register`, `/auth/login`, `/auth/mojo/login`, `/auth/google/login`, `/auth/logout`, `/auth/terms`, `/auth/verify`, `/auth/verify/resend`
-- OIDC callback: `/callback` (or `/auth/callback` if configured accordingly)
+- Auth: `/auth/register`, `/auth/login`, `/auth/google/login`, `/auth/logout`, `/auth/terms`, `/auth/verify`, `/auth/verify/resend`, `/auth/mfa`, `/auth/mfa/resend`
 - Google callback: `/auth/google/callback` (also supported: `/oauth2callback`)
 - Studio: `/studio`
 - Kitchen: `/kitchen`, `/kitchen/:seriesId`, `/kitchen/:seriesId/themes/:themeId/episodes/:episodeId`
@@ -112,7 +107,6 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 - Verification PINs expire after 15 minutes.
 - In non-production only, if SMTP is missing, PIN is logged server-side for local development fallback.
 - In production, SMTP must be configured and verification emails must deliver successfully.
-- MojoAuth login is enabled only when all MojoAuth env vars are configured.
 - Google login is enabled only when Google OIDC env vars are configured.
 - Stripe webhooks are the source of truth for plan activation/cancellation/expiry.
 - `/ai/continuity/refresh` is gated to Pro+ (`requirePlan('pro')`).

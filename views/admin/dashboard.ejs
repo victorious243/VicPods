@@ -1,0 +1,181 @@
+<section class="card">
+  <div class="section-head">
+    <h3><%= t('admin.section.commandCenter', 'Secret Admin Command Center') %></h3>
+    <span class="mini-label"><%= t('admin.section.restricted', 'Admin only') %></span>
+  </div>
+  <p class="mini-note">
+    <strong><%= t('admin.meta.pathLabel', 'Dashboard path') %>:</strong>
+    <code><%= dashboardPath %></code>
+  </p>
+  <p class="mini-note">
+    <strong><%= t('admin.meta.keyLabel', 'Secret key protection') %>:</strong>
+    <%= secretKeyEnabled ? t('admin.meta.enabled', 'Enabled') : t('admin.meta.devFallback', 'Disabled (development fallback)') %>
+  </p>
+</section>
+
+<section class="card-grid stats-grid">
+  <article class="card stat-card">
+    <p><%= t('admin.metric.totalUsers', 'Total users') %></p>
+    <h3><%= metrics.totalUsers %></h3>
+    <span class="mini-note">+<%= metrics.usersLast24h %> / 24h</span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.subscribers', 'Subscribers (Pro/Premium)') %></p>
+    <h3><%= metrics.totalSubscribers %></h3>
+    <span class="mini-note"><%= t('admin.metric.activePaid', 'Active paid') %>: <%= metrics.activePaidUsers %></span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.paymentRisk', 'Payment risk users') %></p>
+    <h3><%= metrics.paymentRiskUsers %></h3>
+    <span class="mini-note"><%= t('admin.metric.planHealth', 'Past due or unpaid') %></span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.aiCalls', 'AI calls today') %></p>
+    <h3><%= metrics.aiCallsToday %></h3>
+    <span class="mini-note"><%= t('admin.metric.aiActive', 'Active AI users today') %>: <%= metrics.aiActiveUsersToday %></span>
+  </article>
+</section>
+
+<section class="card-grid stats-grid">
+  <article class="card stat-card">
+    <p><%= t('admin.metric.newUsers7d', 'New users (7d)') %></p>
+    <h3><%= metrics.usersLast7d %></h3>
+    <span class="mini-note"><%= t('admin.metric.newUsers30d', 'New users (30d)') %>: <%= metrics.usersLast30d %></span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.totalSeries', 'Total series') %></p>
+    <h3><%= metrics.totalSeries %></h3>
+    <span class="mini-note">+<%= metrics.seriesLast7d %> / 7d</span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.totalEpisodes', 'Total episodes') %></p>
+    <h3><%= metrics.totalEpisodes %></h3>
+    <span class="mini-note">+<%= metrics.episodesLast7d %> / 7d · +<%= metrics.episodesLast24h %> / 24h</span>
+  </article>
+  <article class="card stat-card">
+    <p><%= t('admin.metric.totalIdeas', 'Pantry ideas') %></p>
+    <h3><%= metrics.totalIdeas %></h3>
+    <span class="mini-note">+<%= metrics.ideasLast7d %> / 7d</span>
+  </article>
+</section>
+
+<section class="split-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3><%= t('admin.section.planBreakdown', 'Plan breakdown') %></h3>
+    </div>
+    <div class="list-stack">
+      <div class="list-item">
+        <div>
+          <h4>Free</h4>
+        </div>
+        <span class="mini-label"><%= breakdown.plans.free %></span>
+      </div>
+      <div class="list-item">
+        <div>
+          <h4>Pro</h4>
+        </div>
+        <span class="mini-label"><%= breakdown.plans.pro %></span>
+      </div>
+      <div class="list-item">
+        <div>
+          <h4>Premium</h4>
+        </div>
+        <span class="mini-label"><%= breakdown.plans.premium %></span>
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3><%= t('admin.section.episodeStatus', 'Episode status distribution') %></h3>
+    </div>
+    <div class="list-stack">
+      <% ['Planned', 'Draft', 'Ready', 'Served'].forEach((status) => { %>
+        <div class="list-item">
+          <div>
+            <h4><%= status %></h4>
+          </div>
+          <div class="inline-actions">
+            <span class="badge badge-<%= status.toLowerCase() %>"><%= status %></span>
+            <span class="mini-label"><%= breakdown.episodeStatus[status] || 0 %></span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3><%= t('admin.section.recentSignups', 'Recent signups') %></h3>
+  </div>
+  <% if (!recentUsers.length) { %>
+    <p class="empty-state"><%= t('admin.empty.recentUsers', 'No users yet.') %></p>
+  <% } else { %>
+    <div class="list-stack">
+      <% recentUsers.forEach((user) => { %>
+        <div class="list-item">
+          <div>
+            <h4><%= user.name || user.email %></h4>
+            <p><%= user.email %></p>
+            <p class="mini-note"><%= new Date(user.createdAt).toLocaleString() %></p>
+          </div>
+          <div class="inline-actions">
+            <span class="mini-label"><%= user.plan %></span>
+            <span class="mini-label"><%= user.planStatus %></span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="split-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3><%= t('admin.section.recentEpisodes', 'Recent episode activity') %></h3>
+    </div>
+    <% if (!recentEpisodes.length) { %>
+      <p class="empty-state"><%= t('admin.empty.recentEpisodes', 'No episode activity yet.') %></p>
+    <% } else { %>
+      <div class="list-stack">
+        <% recentEpisodes.forEach((episode) => { %>
+          <div class="list-item">
+            <div>
+              <h4><%= episode.title || `${t('common.episode', 'Episode')} ${episode.episodeNumberWithinTheme || '?'}` %></h4>
+              <p><%= episode.seriesId?.name || 'N/A' %> · <%= episode.userId?.name || episode.userId?.email || t('generic.user', 'User') %></p>
+              <p class="mini-note"><%= new Date(episode.updatedAt).toLocaleString() %></p>
+            </div>
+            <div class="inline-actions">
+              <span class="mini-label"><%= episode.isSingle ? 'Single' : 'Series' %></span>
+              <span class="badge badge-<%= String(episode.status || '').toLowerCase() %>"><%= episode.status %></span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3><%= t('admin.section.recentIdeas', 'Recent pantry activity') %></h3>
+    </div>
+    <% if (!recentIdeas.length) { %>
+      <p class="empty-state"><%= t('admin.empty.recentIdeas', 'No pantry activity yet.') %></p>
+    <% } else { %>
+      <div class="list-stack">
+        <% recentIdeas.forEach((idea) => { %>
+          <div class="list-item">
+            <div>
+              <h4><%= idea.hook %></h4>
+              <p><%= idea.userId?.name || idea.userId?.email || t('generic.user', 'User') %></p>
+              <p class="mini-note"><%= new Date(idea.updatedAt).toLocaleString() %></p>
+            </div>
+            <span class="mini-label"><%= idea.tag || 'general' %></span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+</section>

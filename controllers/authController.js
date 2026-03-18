@@ -5,17 +5,18 @@ const {
   verifyEmailPin,
 } = require('../services/authService');
 const {
-  isOidcEnabled,
-  getOidcStatus,
-  buildAuthorizationUrl,
-  handleCallback,
-} = require('../services/auth/oidcService');
-const {
   isGoogleOidcEnabled,
   getGoogleOidcStatus,
   buildGoogleAuthorizationUrl,
   handleGoogleCallback,
 } = require('../services/auth/googleOidcService');
+const {
+  shouldRequireNewUserMfa,
+  issueMfaPin,
+  verifyMfaPin,
+  resendMfaPin,
+  maskEmail,
+} = require('../services/auth/mfaService');
 const { renderPage } = require('../utils/render');
 
 function getProviderErrorMessage(error, fallbackMessage) {
@@ -43,12 +44,59 @@ function establishUserSession(req, userId) {
   });
 }
 
+function establishPendingMfaSession(req, userId, email) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((error) => {
+      if (error) {
+        return reject(error);
+      }
+
+      req.session.pendingMfaUserId = userId;
+      req.session.pendingMfaEmail = String(email || '').trim().toLowerCase();
+      return resolve();
+    });
+  });
+}
+
+function getPendingMfaUserId(req) {
+  return String(req.session?.pendingMfaUserId || '').trim();
+}
+
+function clearPendingMfaSession(req) {
+  if (req.session) {
+    delete req.session.pendingMfaUserId;
+    delete req.session.pendingMfaEmail;
+  }
+}
+
+async function finalizeLoginWithMfa(req, user, welcomeMessage) {
+  const userId = user._id.toString();
+
+  if (shouldRequireNewUserMfa(user)) {
+    const issueResult = await issueMfaPin(user);
+    await establishPendingMfaSession(req, userId, user.email);
+    req.flash(
+      'success',
+      `Security check required. Enter the 6-digit code sent to ${issueResult.maskedEmail}.`
+    );
+    return {
+      mfaRequired: true,
+    };
+  }
+
+  await establishUserSession(req, userId);
+  req.flash('success', welcomeMessage);
+  return {
+    mfaRequired: false,
+  };
+}
+
 function showRegister(req, res) {
   const googleOidcStatus = getGoogleOidcStatus();
   return renderPage(res, {
-    title: 'Create Account - VicPods',
-    pageTitle: 'Create your VicPods account',
-    subtitle: 'Start building premium podcast workflows in minutes.',
+    title: req.t('page.auth.register.title', 'Create Account - VicPods'),
+    pageTitle: req.t('page.auth.register.header', 'Create your VicPods account'),
+    subtitle: req.t('page.auth.register.subtitle', 'Start building premium podcast workflows in minutes.'),
     view: 'auth/register',
     authPage: true,
     data: {
@@ -60,9 +108,9 @@ function showRegister(req, res) {
 
 function showTerms(req, res) {
   return renderPage(res, {
-    title: 'Terms and Conditions - VicPods',
-    pageTitle: 'VicPods Terms and Conditions',
-    subtitle: 'Rules, responsibilities, and subscription terms for using VicPods.',
+    title: req.t('page.auth.terms.title', 'Terms and Conditions - VicPods'),
+    pageTitle: req.t('page.auth.terms.header', 'VicPods Terms and Conditions'),
+    subtitle: req.t('page.auth.terms.subtitle', 'Rules, responsibilities, and subscription terms for using VicPods.'),
     view: 'auth/terms',
     authPage: true,
     data: {
@@ -72,17 +120,14 @@ function showTerms(req, res) {
 }
 
 function showLogin(req, res) {
-  const oidcStatus = getOidcStatus();
   const googleOidcStatus = getGoogleOidcStatus();
   return renderPage(res, {
-    title: 'Login - VicPods',
-    pageTitle: 'Welcome back to VicPods',
-    subtitle: 'Sign in to enter your Studio.',
+    title: req.t('page.auth.login.title', 'Login - VicPods'),
+    pageTitle: req.t('page.auth.login.header', 'Welcome back to VicPods'),
+    subtitle: req.t('page.auth.login.subtitle', 'Sign in to enter your Studio.'),
     view: 'auth/login',
     authPage: true,
     data: {
-      mojoAuthEnabled: oidcStatus.enabled,
-      mojoAuthMissing: oidcStatus.missing,
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
     },
@@ -91,13 +136,33 @@ function showLogin(req, res) {
 
 function showVerify(req, res) {
   return renderPage(res, {
-    title: 'Verify Email - VicPods',
-    pageTitle: 'Verify your email',
-    subtitle: 'Enter the 6-digit PIN sent to your email to activate your account.',
+    title: req.t('page.auth.verify.title', 'Verify Email - VicPods'),
+    pageTitle: req.t('page.auth.verify.header', 'Verify your email'),
+    subtitle: req.t('page.auth.verify.subtitle', 'Enter the 6-digit PIN sent to your email to activate your account.'),
     view: 'auth/verify',
     authPage: true,
     data: {
       email: String(req.query.email || '').trim(),
+    },
+  });
+}
+
+function showMfa(req, res) {
+  const pendingMfaUserId = getPendingMfaUserId(req);
+  if (!pendingMfaUserId) {
+    clearPendingMfaSession(req);
+    req.flash('error', 'Your sign-in security session expired. Please sign in again.');
+    return res.redirect('/auth/login');
+  }
+
+  return renderPage(res, {
+    title: req.t('page.auth.mfa.title', 'Security Check - VicPods'),
+    pageTitle: req.t('page.auth.mfa.header', 'Complete sign-in security check'),
+    subtitle: req.t('page.auth.mfa.subtitle', 'Enter the 6-digit code we sent to your email.'),
+    view: 'auth/mfa',
+    authPage: true,
+    data: {
+      maskedEmail: maskEmail(String(req.session.pendingMfaEmail || req.query.email || '').trim()),
     },
   });
 }
@@ -130,8 +195,10 @@ async function register(req, res, next) {
 async function login(req, res, next) {
   try {
     const user = await authenticateUser(req.body);
-    await establishUserSession(req, user._id.toString());
-    req.flash('success', `Welcome back, ${user.name}.`);
+    const loginResult = await finalizeLoginWithMfa(req, user, `Welcome back, ${user.name}.`);
+    if (loginResult.mfaRequired) {
+      return res.redirect(`/auth/mfa?email=${encodeURIComponent(user.email)}`);
+    }
     return res.redirect('/studio');
   } catch (error) {
     if (error.statusCode) {
@@ -191,48 +258,6 @@ async function resendPin(req, res, next) {
   }
 }
 
-async function loginWithMojo(req, res, next) {
-  try {
-    if (!isOidcEnabled()) {
-      const oidcStatus = getOidcStatus();
-      req.flash('error', `MojoAuth is not configured yet. Missing: ${oidcStatus.missing.join(', ')}`);
-      return res.redirect('/auth/login');
-    }
-
-    const authorizationUrl = await buildAuthorizationUrl(req);
-    return res.redirect(authorizationUrl);
-  } catch (error) {
-    req.flash('error', error.statusCode ? error.message : 'Unable to start MojoAuth login right now.');
-    if (error.statusCode) {
-      return res.redirect('/auth/login');
-    }
-    return next(error);
-  }
-}
-
-async function mojoCallback(req, res, next) {
-  try {
-    if (req.query && req.query.error) {
-      const providerError = String(req.query.error_description || req.query.error || 'Authentication failed.');
-      req.flash('error', providerError);
-      return res.redirect('/auth/login');
-    }
-
-    const user = await handleCallback(req);
-    await establishUserSession(req, user._id.toString());
-    req.flash('success', `Welcome, ${user.name}.`);
-    return res.redirect('/studio');
-  } catch (error) {
-    const message = error.statusCode
-      ? error.message
-      : getProviderErrorMessage(error, 'MojoAuth callback failed. Please try again.');
-    req.flash('error', message);
-    // eslint-disable-next-line no-console
-    console.error(`[MojoAuth Callback Error] ${message}`);
-    return res.redirect('/auth/login');
-  }
-}
-
 async function loginWithGoogle(req, res, next) {
   try {
     if (!isGoogleOidcEnabled()) {
@@ -261,8 +286,10 @@ async function googleCallback(req, res, next) {
     }
 
     const user = await handleGoogleCallback(req);
-    await establishUserSession(req, user._id.toString());
-    req.flash('success', `Welcome, ${user.name}.`);
+    const loginResult = await finalizeLoginWithMfa(req, user, `Welcome, ${user.name}.`);
+    if (loginResult.mfaRequired) {
+      return res.redirect(`/auth/mfa?email=${encodeURIComponent(user.email)}`);
+    }
     return res.redirect('/studio');
   } catch (error) {
     const message = error.statusCode
@@ -272,6 +299,61 @@ async function googleCallback(req, res, next) {
     // eslint-disable-next-line no-console
     console.error(`[Google Callback Error] ${message}`);
     return res.redirect('/auth/login');
+  }
+}
+
+async function verifyMfa(req, res, next) {
+  try {
+    const pendingMfaUserId = getPendingMfaUserId(req);
+    if (!pendingMfaUserId) {
+      clearPendingMfaSession(req);
+      req.flash('error', 'Your sign-in security session expired. Please sign in again.');
+      return res.redirect('/auth/login');
+    }
+
+    const user = await verifyMfaPin({
+      userId: pendingMfaUserId,
+      pin: req.body.pin,
+    });
+
+    await establishUserSession(req, user._id.toString());
+    req.flash('success', `Welcome, ${user.name}.`);
+    return res.redirect('/studio');
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      if (error.message.includes('expired') || error.message.includes('Please log in again')) {
+        clearPendingMfaSession(req);
+        return res.redirect('/auth/login');
+      }
+      return res.redirect('/auth/mfa');
+    }
+    return next(error);
+  }
+}
+
+async function resendMfa(req, res, next) {
+  try {
+    const pendingMfaUserId = getPendingMfaUserId(req);
+    const result = await resendMfaPin({
+      userId: pendingMfaUserId,
+    });
+
+    req.flash('success', `A new 6-digit security code was sent to ${result.maskedEmail}.`);
+    return res.redirect(`/auth/mfa?email=${encodeURIComponent(result.user.email)}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      if (
+        error.message.includes('expired')
+        || error.message.includes('not required')
+      ) {
+        clearPendingMfaSession(req);
+        return res.redirect('/auth/login');
+      }
+      return res.redirect('/auth/mfa');
+    }
+    return next(error);
   }
 }
 
@@ -291,13 +373,14 @@ module.exports = {
   showTerms,
   showLogin,
   showVerify,
+  showMfa,
   register,
   login,
   verify,
   resendPin,
-  loginWithMojo,
-  mojoCallback,
   loginWithGoogle,
   googleCallback,
+  verifyMfa,
+  resendMfa,
   logout,
 };

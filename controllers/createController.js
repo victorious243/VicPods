@@ -15,21 +15,29 @@ const {
   normalizeSeriesToneInput,
   resolveEffectiveTone,
 } = require('../services/tone/toneService');
+const {
+  CTA_STYLE_OPTIONS,
+  EPISODE_TYPE_OPTIONS,
+  FORMAT_TEMPLATE_OPTIONS,
+  HOOK_STYLE_OPTIONS,
+  TARGET_LENGTH_OPTIONS,
+  normalizeEpisodeStructureInput,
+  normalizeSeriesStructureInput,
+  normalizeShowBlueprintInput,
+} = require('../services/structure/structureService');
+const {
+  DELIVERY_STYLE_OPTIONS,
+  normalizeEpisodeWritingSettings,
+  normalizeSeriesWritingSettings,
+  refreshEpisodeWritingIntelligence,
+} = require('../services/writing/writingIntelligenceService');
+const {
+  normalizeSeriesBibleInput,
+} = require('../services/series/seriesPlanningService');
 const { computeToneConsistencyScore } = require('../services/tone/consistencyScore');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 const { renderPage } = require('../utils/render');
-
-const VALID_EPISODE_TYPES = ['solo', 'interview'];
-const VALID_TARGET_LENGTHS = ['10-15', '20-30', '45+', ''];
-
-function normalizeEpisodeType(value) {
-  return VALID_EPISODE_TYPES.includes(value) ? value : 'solo';
-}
-
-function normalizeTargetLength(value) {
-  return VALID_TARGET_LENGTHS.includes(value) ? value : '';
-}
 
 function parseThemeNames(rawValue) {
   return String(rawValue || '')
@@ -67,21 +75,9 @@ function buildSingleSeriesContext({ systemSeries, body, toneInput }) {
   };
 }
 
-function getIncludeFunSegment(value) {
-  return value === 'on' || value === 'true' || value === true;
-}
-
 async function showCreateHub(req, res, next) {
   try {
-    return renderPage(res, {
-      title: 'Create - VicPods',
-      pageTitle: 'Create',
-      subtitle: 'Pick your mode and generate structured, recording-ready episodes fast.',
-      view: 'create/index',
-      data: {
-        effectivePlan: req.effectivePlan || 'free',
-      },
-    });
+    return res.redirect('/kitchen');
   } catch (error) {
     return next(error);
   }
@@ -92,14 +88,20 @@ async function showSingleWizard(req, res, next) {
     const effectivePlan = req.effectivePlan || 'free';
 
     return renderPage(res, {
-      title: 'Create Single Episode - VicPods',
-      pageTitle: 'Create: Single Episode',
-      subtitle: 'Fast path for standalone, high-quality episodes.',
+      title: req.t('page.create.single.title', 'Create Single Episode - VicPods'),
+      pageTitle: req.t('page.create.single.header', 'Create: Single Episode'),
+      subtitle: req.t('page.create.single.subtitle', 'Fast path for standalone, high-quality episodes.'),
       view: 'create/single',
       data: {
         tonePresets: TONE_PRESETS,
         intentOptions: INTENT_OPTIONS,
         audienceTypes: AUDIENCE_TYPES,
+        ctaStyleOptions: CTA_STYLE_OPTIONS,
+        episodeTypeOptions: EPISODE_TYPE_OPTIONS,
+        formatTemplateOptions: FORMAT_TEMPLATE_OPTIONS,
+        hookStyleOptions: HOOK_STYLE_OPTIONS,
+        targetLengthOptions: TARGET_LENGTH_OPTIONS,
+        deliveryStyleOptions: DELIVERY_STYLE_OPTIONS,
         maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
         effectivePlan,
       },
@@ -120,9 +122,12 @@ async function createSingleEpisode(req, res, next) {
     }
 
     const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
-    const includeFunSegment = getIncludeFunSegment(req.body.includeFunSegment);
-    const episodeType = normalizeEpisodeType(req.body.episodeType);
-    const targetLength = normalizeTargetLength(req.body.targetLength);
+    const showBlueprint = normalizeShowBlueprintInput(req.body);
+    const episodeStructure = normalizeEpisodeStructureInput(req.body);
+    const writingSettings = normalizeEpisodeWritingSettings(req.body);
+    const includeFunSegment = episodeStructure.includeFunSegment;
+    const episodeType = episodeStructure.episodeType;
+    const targetLength = episodeStructure.targetLength;
 
     const { series, theme } = await getOrCreateSingleCollection(userId);
 
@@ -146,6 +151,10 @@ async function createSingleEpisode(req, res, next) {
       includeFunSegment,
       toneOverridePreset: toneInput.tonePreset,
       toneOverrideIntensity: toneInput.toneIntensity,
+      formatTemplate: episodeStructure.formatTemplate,
+      hookStyle: episodeStructure.hookStyle,
+      deliveryStyle: writingSettings.deliveryStyle,
+      showBlueprint,
     });
 
     const seriesContext = buildSingleSeriesContext({
@@ -153,6 +162,13 @@ async function createSingleEpisode(req, res, next) {
       body: req.body,
       toneInput,
     });
+    seriesContext.showBlueprint = showBlueprint;
+    seriesContext.defaultEpisodeType = episodeStructure.episodeType;
+    seriesContext.defaultTargetLength = episodeStructure.targetLength;
+    seriesContext.defaultIncludeFunSegment = episodeStructure.includeFunSegment;
+    seriesContext.defaultFormatTemplate = episodeStructure.formatTemplate;
+    seriesContext.defaultHookStyle = episodeStructure.hookStyle;
+    seriesContext.defaultDeliveryStyle = writingSettings.deliveryStyle;
 
     const effectiveTone = resolveEffectiveTone({
       series: seriesContext,
@@ -161,8 +177,10 @@ async function createSingleEpisode(req, res, next) {
     });
 
     const generated = await aiService.generateEpisodeDraft({
+      language: req.language,
       series: seriesContext,
       theme,
+      episode,
       episodeNumberWithinTheme,
       globalEpisodeNumber,
       previousEpisodeEndState: null,
@@ -193,6 +211,7 @@ async function createSingleEpisode(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();
 
@@ -217,14 +236,20 @@ async function showSeriesWizard(req, res, next) {
     const effectivePlan = req.effectivePlan || 'free';
 
     return renderPage(res, {
-      title: 'Create Series - VicPods',
-      pageTitle: 'Create: Series',
-      subtitle: 'Set up a continuity-driven multi-episode arc in minutes.',
+      title: req.t('page.create.series.title', 'Create Series - VicPods'),
+      pageTitle: req.t('page.create.series.header', 'Create: Series'),
+      subtitle: req.t('page.create.series.subtitle', 'Set up a continuity-driven multi-episode arc in minutes.'),
       view: 'create/series',
       data: {
         tonePresets: TONE_PRESETS,
         intentOptions: INTENT_OPTIONS,
         audienceTypes: AUDIENCE_TYPES,
+        ctaStyleOptions: CTA_STYLE_OPTIONS,
+        episodeTypeOptions: EPISODE_TYPE_OPTIONS,
+        formatTemplateOptions: FORMAT_TEMPLATE_OPTIONS,
+        hookStyleOptions: HOOK_STYLE_OPTIONS,
+        targetLengthOptions: TARGET_LENGTH_OPTIONS,
+        deliveryStyleOptions: DELIVERY_STYLE_OPTIONS,
         maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
         effectivePlan,
         canSuggestThemes: effectivePlan === 'pro' || effectivePlan === 'premium',
@@ -246,11 +271,18 @@ async function createSeriesFlow(req, res, next) {
     }
 
     const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
+    const showBlueprint = normalizeShowBlueprintInput(req.body);
+    const seriesBible = normalizeSeriesBibleInput(req.body, {
+      goal: req.body.goal,
+      showBlueprint,
+    });
+    const structureDefaults = normalizeSeriesStructureInput(req.body);
+    const writingSettings = normalizeSeriesWritingSettings(req.body);
     const themeNames = parseThemeNames(req.body.themeNames);
     const episodesPerTheme = Number.parseInt(req.body.episodesPerTheme, 10);
-    const includeFunSegment = getIncludeFunSegment(req.body.includeFunSegment);
-    const episodeType = normalizeEpisodeType(req.body.episodeType);
-    const targetLength = normalizeTargetLength(req.body.targetLength);
+    const includeFunSegment = structureDefaults.defaultIncludeFunSegment;
+    const episodeType = structureDefaults.defaultEpisodeType;
+    const targetLength = structureDefaults.defaultTargetLength;
 
     const series = await Series.create({
       userId,
@@ -263,6 +295,14 @@ async function createSeriesFlow(req, res, next) {
       tonePreset: toneInput.tonePreset,
       toneIntensity: toneInput.toneIntensity,
       voicePersona: toneInput.voicePersona,
+      showBlueprint,
+      seriesBible,
+      defaultEpisodeType: structureDefaults.defaultEpisodeType,
+      defaultTargetLength: structureDefaults.defaultTargetLength,
+      defaultIncludeFunSegment: structureDefaults.defaultIncludeFunSegment,
+      defaultFormatTemplate: structureDefaults.defaultFormatTemplate,
+      defaultHookStyle: structureDefaults.defaultHookStyle,
+      defaultDeliveryStyle: writingSettings.defaultDeliveryStyle,
       creationMode: 'series',
       isSystem: false,
       plannedEpisodeCount: Number.isInteger(episodesPerTheme) && episodesPerTheme > 0
@@ -308,6 +348,9 @@ async function createSeriesFlow(req, res, next) {
           episodeType,
           targetLength,
           includeFunSegment,
+          formatTemplate: structureDefaults.defaultFormatTemplate,
+          hookStyle: structureDefaults.defaultHookStyle,
+          deliveryStyle: writingSettings.defaultDeliveryStyle,
         });
 
         globalCounter += 1;
@@ -326,8 +369,10 @@ async function createSeriesFlow(req, res, next) {
       });
 
       const generated = await aiService.generateEpisodeDraft({
+        language: req.language,
         series,
         theme: first.theme,
+        episode: first.episode,
         episodeNumberWithinTheme: first.episode.episodeNumberWithinTheme,
         globalEpisodeNumber: first.episode.globalEpisodeNumber,
         previousEpisodeEndState: null,
@@ -359,6 +404,7 @@ async function createSeriesFlow(req, res, next) {
       });
       first.episode.toneScore = toneCheck.toneScore;
       first.episode.toneWarnings = toneCheck.warnings;
+      refreshEpisodeWritingIntelligence(first.episode, req.language);
 
       if (generated.seriesSummary) {
         series.seriesSummary = generated.seriesSummary;

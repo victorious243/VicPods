@@ -1,6 +1,6 @@
 <section class="auth-card">
   <h3>Login</h3>
-  <p>Step into your Studio.</p>
+  <p>Step into your Studio. New accounts require a quick email security code at sign-in.</p>
   <% if (googleAuthEnabled) { %>
     <a href="/auth/google/login" class="btn btn-google">
       <span class="google-mark" aria-hidden="true">
@@ -24,16 +24,6 @@
       <%= (googleAuthMissing && googleAuthMissing.length) ? googleAuthMissing.join(', ') : 'configuration required' %>
     </p>
   <% } %>
-  <% if (mojoAuthEnabled) { %>
-    <a href="/auth/mojo/login" class="btn btn-secondary">Continue with MojoAuth (OTP, Magic Link, Social)</a>
-    <p class="mini-note">Use Email OTP, Magic Link, Google, or Facebook from the secure hosted login page.</p>
-  <% } else { %>
-    <button type="button" class="btn btn-secondary" disabled>MojoAuth Not Configured</button>
-    <p class="mini-note">
-      Missing env vars:
-      <%= (mojoAuthMissing && mojoAuthMissing.length) ? mojoAuthMissing.join(', ') : 'configuration required' %>
-    </p>
-  <% } %>
   <form method="POST" action="/auth/login" class="form-grid">
     <label>
       Email
@@ -52,5 +42,5 @@
     </label>
     <button type="submit" class="btn btn-ghost">Enter verification PIN</button>
   </form>
-  <p class="auth-foot">No account yet? <a href="/auth/register">Create one</a></p>
+  <p class="auth-foot">No account yet? <a href="/auth/register">Create one</a> · <a href="/about"><%= t('page.about.link', 'About VicPods') %></a></p>
 </section>

@@ -1,32 +1,65 @@
 <header class="topbar">
-  <div>
-    <h2><%= pageTitle || 'VicPods' %></h2>
-    <% if (subtitle) { %>
-      <p><%= subtitle %></p>
+  <% const isPublicShell = (typeof publicShell !== 'undefined') && publicShell; %>
+  <div class="topbar-intro">
+    <% if (isPublicShell) { %>
+      <a href="/" class="topbar-brand" aria-label="VicPods">
+        <span class="topbar-brand-mark">
+          <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-dark.svg" alt="VicPods" />
+          <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-light.svg" alt="VicPods" />
+        </span>
+        <span class="topbar-brand-copy">
+          <strong>VicPods</strong>
+          <small><%= subtitle || t('sidebar.tagline', 'AI Podcast Structuring App') %></small>
+        </span>
+      </a>
+    <% } else { %>
+      <div class="topbar-title-block">
+        <h2><%= pageTitle || 'VicPods' %></h2>
+        <% if (subtitle) { %>
+          <p><%= subtitle %></p>
+        <% } %>
+      </div>
     <% } %>
   </div>
 
   <div class="topbar-actions">
-    <span class="plan-chip"><%= effectivePlan || currentUser?.plan || 'free' %> plan</span>
-    <a href="/create" class="btn btn-primary">Create Episode</a>
-    <button id="theme-toggle" type="button" class="btn btn-ghost theme-toggle" aria-label="Toggle theme" title="Toggle theme">
-      <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
-      <span class="theme-toggle-label">Dark</span>
-    </button>
-    <% const userDisplayName = (currentUser?.name || currentUser?.email || 'User').trim(); %>
-    <% const userInitials = userDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
-    <a href="/settings?section=profile" class="topbar-user" aria-label="Open profile settings">
-      <span class="topbar-avatar">
-        <% if (currentUser?.avatarUrl) { %>
-          <img src="<%= currentUser.avatarUrl %>" alt="<%= userDisplayName %> avatar" />
-        <% } else { %>
-          <span><%= userInitials %></span>
-        <% } %>
-      </span>
-      <span class="topbar-user-name"><%= currentUser?.name || 'Profile' %></span>
-    </a>
-    <form method="POST" action="/auth/logout">
-      <button type="submit" class="btn btn-secondary">Logout</button>
-    </form>
+    <% if (currentUser) { %>
+      <div class="topbar-action-rail topbar-action-rail--primary">
+        <span class="plan-chip"><%= effectivePlan || currentUser?.plan || 'free' %> <%= t('topbar.plan', 'plan') %></span>
+        <a href="/create/single" id="onboarding-topbar-create" class="btn btn-primary topbar-create-btn"><%= t('topbar.create', 'New Episode') %></a>
+      </div>
+      <div class="topbar-action-rail topbar-action-rail--account">
+        <button id="theme-toggle" type="button" class="btn btn-ghost theme-toggle" aria-label="<%= t('topbar.toggleTheme', 'Toggle theme') %>" title="<%= t('topbar.toggleTheme', 'Toggle theme') %>">
+          <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+          <span class="theme-toggle-label"><%= t('theme.dark', 'Dark') %></span>
+        </button>
+        <% const userDisplayName = (currentUser?.name || currentUser?.email || t('generic.user', 'User')).trim(); %>
+        <% const userInitials = userDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
+        <a href="/settings?section=profile" class="topbar-user" aria-label="<%= t('topbar.profile.aria', 'Open profile settings') %>">
+          <span class="topbar-avatar">
+            <% if (currentUser?.avatarUrl) { %>
+              <img src="<%= currentUser.avatarUrl %>" alt="<%= userDisplayName %> avatar" />
+            <% } else { %>
+              <span><%= userInitials %></span>
+            <% } %>
+          </span>
+          <span class="topbar-user-name"><%= currentUser?.name || t('topbar.profile', 'Profile') %></span>
+        </a>
+        <form method="POST" action="/auth/logout" class="topbar-logout-form">
+          <button type="submit" class="btn btn-secondary topbar-logout-btn"><%= t('topbar.logout', 'Logout') %></button>
+        </form>
+      </div>
+    <% } else { %>
+      <div class="topbar-action-rail topbar-action-rail--guest">
+        <button id="theme-toggle" type="button" class="btn btn-ghost theme-toggle" aria-label="<%= t('topbar.toggleTheme', 'Toggle theme') %>" title="<%= t('topbar.toggleTheme', 'Toggle theme') %>">
+          <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+          <span class="theme-toggle-label"><%= t('theme.dark', 'Dark') %></span>
+        </button>
+        <a href="/about" class="btn btn-ghost"><%= t('page.about.link', 'About VicPods') %></a>
+        <a href="/help" class="btn btn-ghost"><%= t('page.help.link', 'Help Center') %></a>
+        <a href="/auth/login" class="btn btn-ghost"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+        <a href="/auth/register" class="btn btn-primary topbar-create-btn"><%= t('page.about.cta.guest.primary', 'Create account') %></a>
+      </div>
+    <% } %>
   </div>
 </header>

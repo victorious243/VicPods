@@ -20,7 +20,7 @@ function getEpisodeInspectQuery(userId, inspectKey) {
   return query;
 }
 
-async function getInspectPanel({ userId, inspectKey }) {
+async function getInspectPanel({ userId, inspectKey, t = (key, fallback) => fallback }) {
   if (!INSPECT_KEYS.has(inspectKey)) {
     return null;
   }
@@ -33,7 +33,7 @@ async function getInspectPanel({ userId, inspectKey }) {
 
     return {
       key: inspectKey,
-      title: 'Series List',
+      title: t('studio.inspect.series', 'Series List'),
       items,
     };
   }
@@ -46,7 +46,7 @@ async function getInspectPanel({ userId, inspectKey }) {
 
     return {
       key: inspectKey,
-      title: 'Ideas List',
+      title: t('studio.inspect.ideas', 'Ideas List'),
       items,
     };
   }
@@ -54,7 +54,7 @@ async function getInspectPanel({ userId, inspectKey }) {
   if (inspectKey === 'ai') {
     return {
       key: inspectKey,
-      title: 'Chef AI Usage',
+      title: t('studio.inspect.ai', 'Chef AI Usage'),
       items: [],
     };
   }
@@ -66,15 +66,15 @@ async function getInspectPanel({ userId, inspectKey }) {
     .populate('themeId');
 
   const titleByKey = {
-    episodes: 'All Episodes',
-    single: 'Single Episodes',
-    ready: 'Ready Episodes',
-    served: 'Served Episodes',
+    episodes: t('studio.inspect.episodes', 'All Episodes'),
+    single: t('studio.inspect.single', 'Single Episodes'),
+    ready: t('studio.inspect.ready', 'Ready Episodes'),
+    served: t('studio.inspect.served', 'Served Episodes'),
   };
 
   return {
     key: inspectKey,
-    title: titleByKey[inspectKey] || 'Episodes',
+    title: titleByKey[inspectKey] || t('studio.inspect.default', 'Episodes'),
     items,
   };
 }
@@ -119,13 +119,13 @@ async function showStudio(req, res, next) {
         .limit(5)
         .populate('seriesId')
         .populate('themeId'),
-      getInspectPanel({ userId, inspectKey: selectedInspect }),
+      getInspectPanel({ userId, inspectKey: selectedInspect, t: req.t }),
     ]);
 
     return renderPage(res, {
-      title: 'Studio - VicPods',
-      pageTitle: 'Studio',
-      subtitle: 'Your podcast command center.',
+      title: req.t('page.studio.title', 'Studio - VicPods'),
+      pageTitle: req.t('page.studio.header', 'Studio'),
+      subtitle: req.t('page.studio.subtitle', 'Your podcast command center.'),
       view: 'studio/index',
       data: {
         stats: {
@@ -136,7 +136,7 @@ async function showStudio(req, res, next) {
           singleEpisodeCount,
           ideaCount,
           aiRemaining: planLimit === Infinity
-            ? 'Unlimited'
+            ? req.t('studio.ai.unlimited', 'Unlimited')
             : Math.max(planLimit - req.currentUser.aiDailyCount, 0),
         },
         latestEpisodes,

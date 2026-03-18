@@ -1,11 +1,11 @@
 <aside class="sidebar">
   <div class="brand-block">
-    <a href="/studio" class="brand-link" aria-label="VicPods Studio">
+    <a href="/studio" class="brand-link" aria-label="<%= t('sidebar.brand.aria', 'VicPods Studio') %>">
       <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-dark.svg" alt="VicPods" />
       <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-light.svg" alt="VicPods" />
       <div>
         <h1>VicPods</h1>
-        <p>AI Podcast OS</p>
+        <p><%= t('sidebar.tagline', 'AI Podcast Structuring App') %></p>
       </div>
     </a>
   </div>
@@ -13,7 +13,9 @@
   <nav class="sidebar-nav" aria-label="Primary">
     <% const normalizedPath = (currentPath || '').split('?')[0]; %>
     <% (navItems || []).forEach((item) => { %>
-      <% const active = normalizedPath && normalizedPath.startsWith(item.href); %>
+      <% const active = item.href === '/kitchen'
+        ? normalizedPath && (normalizedPath.startsWith('/kitchen') || normalizedPath.startsWith('/create'))
+        : normalizedPath && normalizedPath.startsWith(item.href); %>
       <a href="<%= item.href %>" class="nav-link <%= active ? 'active' : '' %>">
         <span class="nav-icon" aria-hidden="true"><%= item.icon %></span>
         <span><%= item.label %></span>
@@ -22,7 +24,7 @@
   </nav>
 
   <% if (currentUser) { %>
-    <% const sidebarName = (currentUser.name || currentUser.email || 'User').trim(); %>
+    <% const sidebarName = (currentUser.name || currentUser.email || t('generic.user', 'User')).trim(); %>
     <% const sidebarInitials = sidebarName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
     <a href="/settings?section=profile" class="sidebar-user-card">
       <span class="sidebar-user-avatar">
@@ -40,8 +42,8 @@
   <% } %>
 
   <div class="upgrade-card">
-    <h3>Upgrade Ready</h3>
-    <p>Unlock higher AI volume, faster generation, and advanced continuity controls.</p>
-    <a href="/settings?section=billing" class="btn btn-secondary">See Plans</a>
+    <h3><%= t('sidebar.upgrade.title', 'Upgrade Ready') %></h3>
+    <p><%= t('sidebar.upgrade.body', 'Unlock higher AI volume, faster generation, and advanced continuity controls.') %></p>
+    <a href="/settings?section=billing" class="btn btn-secondary"><%= t('sidebar.upgrade.cta', 'See Plans') %></a>
   </div>
 </aside>

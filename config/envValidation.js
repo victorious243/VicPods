@@ -33,15 +33,12 @@ function validateEnvironment({ isProduction }) {
   const stripeWebhookSecret = String(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
   const stripePricePro = String(process.env.STRIPE_PRICE_PRO || '').trim();
   const stripePricePremium = String(process.env.STRIPE_PRICE_PREMIUM || '').trim();
+  const newUserMfaDaysRaw = String(process.env.NEW_USER_MFA_DAYS || '').trim();
   const smtpHost = String(process.env.SMTP_HOST || '').trim();
   const smtpPort = String(process.env.SMTP_PORT || '').trim();
   const smtpUser = String(process.env.SMTP_USER || '').trim();
   const smtpPass = String(process.env.SMTP_PASS || '').trim();
   const smtpFrom = String(process.env.SMTP_FROM || '').trim();
-  const mojoIssuerUrl = String(process.env.MOJOAUTH_ISSUER_URL || '').trim();
-  const mojoClientId = String(process.env.MOJOAUTH_CLIENT_ID || '').trim();
-  const mojoClientSecret = String(process.env.MOJOAUTH_CLIENT_SECRET || '').trim();
-  const mojoRedirectUri = String(process.env.MOJOAUTH_REDIRECT_URI || '').trim();
   const googleIssuerUrl = String(process.env.GOOGLE_OIDC_ISSUER_URL || '').trim();
   const googleClientId = String(process.env.GOOGLE_OIDC_CLIENT_ID || '').trim();
   const googleClientSecret = String(process.env.GOOGLE_OIDC_CLIENT_SECRET || '').trim();
@@ -73,6 +70,13 @@ function validateEnvironment({ isProduction }) {
     errors.push('APP_URL must be a valid http(s) URL.');
   } else if (isProduction && appUrl.startsWith('http://')) {
     warnings.push('APP_URL uses http:// in production. Prefer https://.');
+  }
+
+  if (newUserMfaDaysRaw) {
+    const newUserMfaDays = Number.parseInt(newUserMfaDaysRaw, 10);
+    if (!Number.isInteger(newUserMfaDays) || newUserMfaDays < 1 || newUserMfaDays > 180) {
+      errors.push('NEW_USER_MFA_DAYS must be an integer between 1 and 180.');
+    }
   }
 
   const stripeEnabled = Boolean(stripeSecret || stripePublic || stripePricePro || stripePricePremium || stripeWebhookSecret);
@@ -113,20 +117,6 @@ function validateEnvironment({ isProduction }) {
     warnings.push('SMTP is partially configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM for email verification delivery.');
   } else if (!isProduction && !smtpConfigured) {
     warnings.push('SMTP is not configured. Verification emails will not be delivered in local development.');
-  }
-
-  const mojoEnabled = Boolean(mojoIssuerUrl || mojoClientId || mojoClientSecret || mojoRedirectUri);
-  const mojoConfigured = Boolean(mojoIssuerUrl && mojoClientId && mojoClientSecret && mojoRedirectUri);
-  if (mojoEnabled && !mojoConfigured) {
-    warnings.push('MojoAuth is partially configured. Set MOJOAUTH_ISSUER_URL, MOJOAUTH_CLIENT_ID, MOJOAUTH_CLIENT_SECRET, and MOJOAUTH_REDIRECT_URI.');
-  }
-  if (mojoConfigured) {
-    if (!isValidHttpUrl(mojoIssuerUrl)) {
-      errors.push('MOJOAUTH_ISSUER_URL must be a valid http(s) URL.');
-    }
-    if (!isValidHttpUrl(mojoRedirectUri)) {
-      errors.push('MOJOAUTH_REDIRECT_URI must be a valid http(s) URL.');
-    }
   }
 
   const googleEnabled = Boolean(googleIssuerUrl || googleClientId || googleClientSecret || googleRedirectUri);

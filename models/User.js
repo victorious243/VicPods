@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['local', 'mojoauth', 'google'],
       default: 'local',
+      trim: true,
+      maxlength: 40,
     },
     oidcSubject: {
       type: String,
@@ -41,6 +43,27 @@ const userSchema = new mongoose.Schema(
       maxlength: 128,
     },
     emailVerificationPinExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    onboardingCompletedAt: {
+      type: Date,
+      default: null,
+    },
+    mfaEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    mfaPinHash: {
+      type: String,
+      default: '',
+      maxlength: 128,
+    },
+    mfaPinExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    mfaLastVerifiedAt: {
       type: Date,
       default: null,
     },
@@ -68,6 +91,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['dark', 'light'],
       default: 'dark',
+    },
+    languagePreference: {
+      type: String,
+      enum: ['en', 'es', 'pt'],
+      default: 'en',
     },
     plan: {
       type: String,

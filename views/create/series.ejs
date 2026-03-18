@@ -1,13 +1,16 @@
-<section class="card">
+<section class="card" id="onboarding-series-wizard">
   <div class="section-head">
     <h3>Series Wizard</h3>
-    <a href="/create" class="btn btn-ghost">Back to Create</a>
+    <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
   </div>
 
   <div class="wizard-progress" role="list" aria-label="Series mode steps">
     <span class="step active" role="listitem">1. Series Setup</span>
-    <span class="step active" role="listitem">2. Themes</span>
-    <span class="step active" role="listitem">3. Episodes</span>
+    <span class="step active" role="listitem">2. Series Bible</span>
+    <span class="step active" role="listitem">3. Blueprint</span>
+    <span class="step active" role="listitem">4. Tone</span>
+    <span class="step active" role="listitem">5. Themes</span>
+    <span class="step active" role="listitem">6. Episodes</span>
   </div>
 
   <form
@@ -22,7 +25,7 @@
       <h4>Step 1 - Series Setup</h4>
       <label>
         Series Name
-        <input type="text" name="name" required maxlength="120" placeholder="Creator Growth Blueprint" />
+        <input id="onboarding-series-name" type="text" name="name" required maxlength="120" placeholder="Creator Growth Blueprint" />
       </label>
       <label>
         Description
@@ -63,7 +66,67 @@
 
       <div class="tone-section">
         <div class="section-head">
-          <h4>Tone</h4>
+          <h4>Step 2 - Series Bible</h4>
+          <span class="mini-label">Season Planning</span>
+        </div>
+        <div class="two-col">
+          <label>
+            Season Goal
+            <input type="text" name="seasonGoal" maxlength="320" placeholder="What should this whole season accomplish?" />
+          </label>
+          <label>
+            Audience Promise
+            <input type="text" name="audiencePromise" maxlength="240" placeholder="What does every episode promise to deliver?" />
+          </label>
+        </div>
+        <label>
+          Recurring Themes
+          <textarea name="recurringThemes" rows="3" maxlength="480" placeholder="One recurring theme per line&#10;Positioning&#10;Audience growth&#10;Publishing rhythm"></textarea>
+        </label>
+      </div>
+
+      <div class="tone-section">
+        <div class="section-head">
+          <h4>Step 3 - Show Blueprint</h4>
+          <span class="mini-label">Structuring App</span>
+        </div>
+        <div class="two-col">
+          <label>
+            Audience Problem
+            <input type="text" name="audienceProblem" maxlength="240" placeholder="What struggle is this series solving?" />
+          </label>
+          <label>
+            Listener Transformation
+            <input type="text" name="listenerTransformation" maxlength="240" placeholder="What will listeners be able to do by the end?" />
+          </label>
+        </div>
+        <label>
+          Content Pillars
+          <textarea name="contentPillars" rows="3" maxlength="480" placeholder="One pillar per line&#10;Positioning&#10;Episode frameworks&#10;Audience growth"></textarea>
+        </label>
+        <div class="two-col">
+          <label>
+            CTA Style
+            <select name="ctaStyle">
+              <% ctaStyleOptions.forEach((option, index) => { %>
+                <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>
+            Brand Voice Rules
+            <textarea name="brandVoiceRules" rows="3" maxlength="480" placeholder="One rule per line&#10;Be concise&#10;Teach with examples&#10;Avoid vague language"></textarea>
+          </label>
+        </div>
+        <label>
+          Banned Words or Phrases
+          <textarea name="bannedWords" rows="2" maxlength="240" placeholder="Comma or line separated words to avoid"></textarea>
+        </label>
+      </div>
+
+      <div class="tone-section">
+        <div class="section-head">
+          <h4>Step 4 - Tone</h4>
           <span class="mini-label"><%= effectivePlan === 'free' ? 'Free max 3/5' : 'Full intensity unlocked' %></span>
         </div>
         <div class="tone-grid">
@@ -107,7 +170,7 @@
 
     <section class="wizard-step">
       <div class="section-head">
-        <h4>Step 2 - Themes</h4>
+        <h4>Step 5 - Themes</h4>
         <% if (canSuggestThemes) { %>
           <button type="button" class="btn btn-secondary" data-suggest-themes>Auto-generate theme suggestions</button>
         <% } else { %>
@@ -117,35 +180,62 @@
 
       <label>
         Theme List (one per line)
-        <textarea name="themeNames" rows="5" data-theme-target placeholder="Foundations&#10;Monetization Experiments&#10;Audience Retention"></textarea>
+        <textarea id="onboarding-series-themes" name="themeNames" rows="5" data-theme-target placeholder="Foundations&#10;Monetization Experiments&#10;Audience Retention"></textarea>
       </label>
     </section>
 
     <section class="wizard-step">
-      <h4>Step 3 - Episodes</h4>
+      <h4>Step 6 - Episodes</h4>
       <label>
         Episodes per Theme (optional)
         <input type="number" name="episodesPerTheme" min="0" max="30" placeholder="e.g. 4" />
       </label>
       <div class="two-col">
         <label>
-          Default Episode Type
-          <select name="episodeType">
-            <option value="solo">Solo</option>
-            <option value="interview">Interview</option>
+          Format Template
+          <select name="formatTemplate">
+            <% formatTemplateOptions.forEach((option, index) => { %>
+              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
           </select>
         </label>
         <label>
-          Default Target Length
+          Hook Style
+          <select name="hookStyle">
+            <% hookStyleOptions.forEach((option, index) => { %>
+              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <label>
+        Default Delivery Style
+        <select name="defaultDeliveryStyle">
+          <% deliveryStyleOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= option.value === 'friendly' ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="two-col">
+        <label>
+          Default Episode Type
+          <select name="episodeType">
+            <% episodeTypeOptions.forEach((option) => { %>
+              <option value="<%= option.value %>"><%= option.label %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Duration Preset
           <select name="targetLength">
-            <option value="">Flexible</option>
-            <option value="10-15">10-15 min</option>
-            <option value="20-30">20-30 min</option>
-            <option value="45+">45+ min</option>
+            <% targetLengthOptions.forEach((option) => { %>
+              <option value="<%= option.value %>"><%= option.label %></option>
+            <% }) %>
           </select>
         </label>
       </div>
       <label class="check-item">
+        <input type="hidden" name="includeFunSegment" value="off" />
         <input type="checkbox" name="includeFunSegment" checked />
         <span>Include fun segment by default</span>
       </label>
@@ -153,7 +243,7 @@
         <input type="checkbox" name="generateFirstDraft" checked />
         <span>Generate Episode 1 draft now</span>
       </label>
-      <button type="submit" class="btn btn-primary">Create Series Workspace</button>
+      <button id="onboarding-series-create" type="submit" class="btn btn-primary">Create Series Workspace</button>
     </section>
   </form>
 </section>

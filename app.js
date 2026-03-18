@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const { connectDatabase } = require('./config/database');
 const { validateEnvironment } = require('./config/envValidation');
 const { loadCurrentUser, requireAuth } = require('./middleware/auth');
+const { applyLanguageContext } = require('./middleware/i18n');
 const { syncPlanStatus } = require('./middleware/requirePlan');
 const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtection');
 const { flashMiddleware } = require('./middleware/flash');
@@ -26,10 +27,16 @@ const pantryRouter = require('./routes/pantry');
 const aiRouter = require('./routes/ai');
 const billingRouter = require('./routes/billing');
 const settingsRouter = require('./routes/settings');
+const onboardingRouter = require('./routes/onboarding');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = String(process.env.SESSION_SECRET || '').trim();
+const adminDashboardPath = (() => {
+  const configuredPath = String(process.env.ADMIN_DASHBOARD_PATH || '/control-room-ops').trim();
+  return configuredPath.startsWith('/') ? configuredPath : '/control-room-ops';
+})();
 const envValidation = validateEnvironment({ isProduction });
 
 if (envValidation.warnings.length) {
@@ -104,6 +111,7 @@ app.use(session({
 }));
 
 app.use(loadCurrentUser);
+app.use(applyLanguageContext);
 app.use(syncPlanStatus);
 app.use(flashMiddleware);
 app.use(ensureCsrfToken);
@@ -114,13 +122,6 @@ app.use((req, res, next) => {
 });
 
 app.locals.appName = 'VicPods';
-app.locals.navItems = [
-  { label: 'Studio', icon: '🎙', href: '/studio' },
-  { label: 'Create', icon: '✨', href: '/create' },
-  { label: 'Kitchen', icon: '🍳', href: '/kitchen' },
-  { label: 'Pantry', icon: '🧺', href: '/pantry' },
-  { label: 'Settings', icon: '⚙️', href: '/settings' },
-];
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
@@ -131,7 +132,9 @@ app.use('/kitchen', requireAuth, kitchenRouter);
 app.use('/pantry', requireAuth, pantryRouter);
 app.use('/ai', requireAuth, aiRouter);
 app.use('/billing', requireAuth, billingRouter);
+app.use('/onboarding', requireAuth, onboardingRouter);
 app.use('/settings', requireAuth, settingsRouter);
+app.use(adminDashboardPath, requireAuth, adminRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

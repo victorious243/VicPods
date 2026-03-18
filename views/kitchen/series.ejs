@@ -1,7 +1,7 @@
 <section class="card">
   <div class="section-head">
     <h3>Series Brief</h3>
-    <a href="/kitchen" class="btn btn-ghost">Back to Kitchen</a>
+    <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
   </div>
   <p>
     <strong>Mode:</strong> <%= isSystemSingleCollection ? 'Single Collection' : 'Series' %>
@@ -12,6 +12,37 @@
   </p>
   <% if (series.goal) { %>
     <p><strong>Primary Goal:</strong> <%= series.goal %></p>
+  <% } %>
+  <% if (resolvedSeriesBible.seasonGoal) { %>
+    <p><strong>Season Goal:</strong> <%= resolvedSeriesBible.seasonGoal %></p>
+  <% } %>
+  <% if (resolvedSeriesBible.audiencePromise) { %>
+    <p><strong>Audience Promise:</strong> <%= resolvedSeriesBible.audiencePromise %></p>
+  <% } %>
+  <% if (resolvedSeriesBible.recurringThemes.length) { %>
+    <p><strong>Recurring Themes:</strong> <%= resolvedSeriesBible.recurringThemes.join(' · ') %></p>
+  <% } %>
+  <% if (resolvedSeriesBlueprint.audienceProblem) { %>
+    <p><strong>Audience Problem:</strong> <%= resolvedSeriesBlueprint.audienceProblem %></p>
+  <% } %>
+  <% if (resolvedSeriesBlueprint.listenerTransformation) { %>
+    <p><strong>Listener Transformation:</strong> <%= resolvedSeriesBlueprint.listenerTransformation %></p>
+  <% } %>
+  <% if (resolvedSeriesBlueprint.contentPillars.length) { %>
+    <p><strong>Content Pillars:</strong> <%= resolvedSeriesBlueprint.contentPillars.join(' · ') %></p>
+  <% } %>
+  <p>
+    <strong>Episode Architect:</strong>
+    <%= formatTemplateOptions.find((option) => option.value === resolvedSeriesStructure.defaultFormatTemplate)?.label || 'Signature Framework' %>
+    · <%= hookStyleOptions.find((option) => option.value === resolvedSeriesStructure.defaultHookStyle)?.label || 'Problem First' %>
+    · <%= targetLengthOptions.find((option) => option.value === resolvedSeriesStructure.defaultTargetLength)?.presetLabel || 'Flexible' %>
+    · <%= deliveryStyleOptions.find((option) => option.value === (series.defaultDeliveryStyle || 'friendly'))?.label || 'Friendly' %>
+  </p>
+  <% if (resolvedSeriesBlueprint.brandVoiceRules.length) { %>
+    <p><strong>Brand Voice Rules:</strong> <%= resolvedSeriesBlueprint.brandVoiceRules.join(' · ') %></p>
+  <% } %>
+  <% if (resolvedSeriesBlueprint.bannedWords.length) { %>
+    <p><strong>Banned Words:</strong> <%= resolvedSeriesBlueprint.bannedWords.join(', ') %></p>
   <% } %>
   <p><%= series.description || (isSystemSingleCollection ? 'System-managed standalone episodes collection.' : 'No series description yet.') %></p>
   <% if (series.seriesSummary) { %>
@@ -26,11 +57,11 @@
   <section class="card">
     <div class="section-head">
       <h3>Single Episodes</h3>
-      <a href="/create/single" class="btn btn-primary">Create Single Episode</a>
+      <a href="/create/single" class="btn btn-primary">New Single Episode</a>
     </div>
 
     <% if (!flatEpisodes.length) { %>
-      <p class="empty-state">No standalone episodes yet. Start one from Create.</p>
+      <p class="empty-state">No standalone episodes yet. Start one from Workspace.</p>
     <% } else { %>
       <div class="episode-divider-stack">
         <% flatEpisodes.forEach((episode) => { %>
@@ -49,8 +80,9 @@
             <div class="inline-actions">
               <span class="mini-label"><%= episode.episodeType || 'solo' %></span>
               <% if (episode.targetLength) { %>
-                <span class="mini-label"><%= episode.targetLength %> min</span>
+                <span class="mini-label"><%= targetLengthOptions.find((option) => option.value === episode.targetLength)?.presetLabel || episode.targetLength %></span>
               <% } %>
+              <span class="mini-label"><%= formatTemplateOptions.find((option) => option.value === episode.formatTemplate)?.label || 'Signature Framework' %></span>
             </div>
             <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= episode.themeId %>/episodes/<%= episode._id %>">
               Edit Episode
@@ -117,6 +149,133 @@
               value="<%= Math.min(series.toneIntensity || 3, maxToneIntensity || 3) %>"
               data-range-source="tone-intensity-series"
             />
+          </label>
+        </div>
+
+        <div class="tone-section">
+          <div class="section-head">
+            <h4>Series Bible</h4>
+            <span class="mini-label">Season Planning</span>
+          </div>
+
+          <div class="two-col">
+            <label>
+              Season Goal
+              <input type="text" name="seasonGoal" maxlength="320" value="<%= resolvedSeriesBible.seasonGoal %>" />
+            </label>
+            <label>
+              Audience Promise
+              <input type="text" name="audiencePromise" maxlength="240" value="<%= resolvedSeriesBible.audiencePromise %>" />
+            </label>
+          </div>
+
+          <label>
+            Recurring Themes
+            <textarea name="recurringThemes" rows="3" maxlength="480"><%= resolvedSeriesBible.recurringThemes.join('\n') %></textarea>
+          </label>
+        </div>
+
+        <div class="tone-section">
+          <div class="section-head">
+            <h4>Show Blueprint</h4>
+            <span class="mini-label">Structuring App</span>
+          </div>
+
+          <div class="two-col">
+            <label>
+              Audience Problem
+              <input type="text" name="audienceProblem" maxlength="240" value="<%= resolvedSeriesBlueprint.audienceProblem %>" />
+            </label>
+            <label>
+              Listener Transformation
+              <input type="text" name="listenerTransformation" maxlength="240" value="<%= resolvedSeriesBlueprint.listenerTransformation %>" />
+            </label>
+          </div>
+
+          <label>
+            Content Pillars
+            <textarea name="contentPillars" rows="3" maxlength="480"><%= resolvedSeriesBlueprint.contentPillars.join('\n') %></textarea>
+          </label>
+
+          <div class="two-col">
+            <label>
+              CTA Style
+              <select name="ctaStyle">
+                <% ctaStyleOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedSeriesBlueprint.ctaStyle === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Brand Voice Rules
+              <textarea name="brandVoiceRules" rows="3" maxlength="480"><%= resolvedSeriesBlueprint.brandVoiceRules.join('\n') %></textarea>
+            </label>
+          </div>
+
+          <label>
+            Banned Words or Phrases
+            <textarea name="bannedWords" rows="2" maxlength="240"><%= resolvedSeriesBlueprint.bannedWords.join('\n') %></textarea>
+          </label>
+        </div>
+
+        <div class="tone-section">
+          <div class="section-head">
+            <h4>Episode Architect Defaults</h4>
+            <span class="mini-label">Inherited by new episodes</span>
+          </div>
+
+          <div class="two-col">
+            <label>
+              Default Format Template
+              <select name="defaultFormatTemplate">
+                <% formatTemplateOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedSeriesStructure.defaultFormatTemplate === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Default Hook Style
+              <select name="defaultHookStyle">
+                <% hookStyleOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedSeriesStructure.defaultHookStyle === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+          </div>
+
+          <div class="two-col">
+            <label>
+              Default Episode Type
+              <select name="defaultEpisodeType">
+                <% episodeTypeOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedSeriesStructure.defaultEpisodeType === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+
+            <label>
+              Duration Preset
+              <select name="defaultTargetLength">
+                <% targetLengthOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= resolvedSeriesStructure.defaultTargetLength === option.value ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Default Delivery Style
+            <select name="defaultDeliveryStyle">
+              <% deliveryStyleOptions.forEach((option) => { %>
+                <option value="<%= option.value %>" <%= (series.defaultDeliveryStyle || 'friendly') === option.value ? 'selected' : '' %>><%= option.label %></option>
+              <% }) %>
+            </select>
+          </label>
+
+          <label class="check-item">
+            <input type="hidden" name="defaultIncludeFunSegment" value="off" />
+            <input type="checkbox" name="defaultIncludeFunSegment" <%= resolvedSeriesStructure.defaultIncludeFunSegment !== false ? 'checked' : '' %> />
+            <span>Include fun segment by default</span>
           </label>
         </div>
 
@@ -189,6 +348,47 @@
 
   <section class="card">
     <div class="section-head">
+      <h3>Series Planning</h3>
+      <span class="mini-label">Phase 3</span>
+    </div>
+
+    <p><strong>Continuity Health:</strong> <%= seriesPlanningSnapshot.continuityHealthScore %>/100</p>
+
+    <% if (seriesPlanningSnapshot.seasonArc.length) { %>
+      <p><strong>Season Arc:</strong></p>
+      <div class="list-stack">
+        <% seriesPlanningSnapshot.seasonArc.forEach((entry) => { %>
+          <article class="list-item">
+            <div>
+              <h4>Arc Step</h4>
+              <p><%= entry %></p>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (seriesPlanningSnapshot.continuityWarnings.length) { %>
+      <p><strong>Continuity Checker:</strong> <%= seriesPlanningSnapshot.continuityWarnings.join(' · ') %></p>
+    <% } else { %>
+      <p class="mini-note">Continuity Checker does not see any major repeats or contradictions right now.</p>
+    <% } %>
+
+    <% if (seriesPlanningSnapshot.topicGapSuggestions.length) { %>
+      <p><strong>Topic Gap Finder:</strong> <%= seriesPlanningSnapshot.topicGapSuggestions.join(' · ') %></p>
+    <% } else { %>
+      <p class="mini-note">Topic Gap Finder does not see any obvious missing series topics yet.</p>
+    <% } %>
+
+    <% if (seriesPlanningSnapshot.callbackPlan.length) { %>
+      <p><strong>Callback Planner:</strong> <%= seriesPlanningSnapshot.callbackPlan.join(' · ') %></p>
+    <% } else { %>
+      <p class="mini-note">Add more published or drafted episodes to unlock stronger callback planning.</p>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
       <h3>Themes & Episodes</h3>
       <span class="mini-label">Nested workflow</span>
     </div>
@@ -249,6 +449,13 @@
                         <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
                       </header>
                       <p><%= episode.hook || 'No hook yet.' %></p>
+                      <p class="mini-note">
+                        <%= formatTemplateOptions.find((option) => option.value === episode.formatTemplate)?.label || 'Signature Framework' %>
+                        · <%= hookStyleOptions.find((option) => option.value === episode.hookStyle)?.label || 'Problem First' %>
+                        <% if (episode.targetLength) { %>
+                          · <%= targetLengthOptions.find((option) => option.value === episode.targetLength)?.presetLabel || episode.targetLength %>
+                        <% } %>
+                      </p>
                       <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>">
                         Edit Theme Episode <%= episode.episodeNumberWithinTheme %>
                       </a>

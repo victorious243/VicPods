@@ -4,6 +4,7 @@ const { renderPage } = require('../utils/render');
 const { AppError } = require('../utils/errors');
 const { resolveEffectivePlan } = require('../middleware/requirePlan');
 const { getPricingDisplay } = require('../services/billing/pricing');
+const { normalizeLanguage } = require('../services/i18n/languageService');
 
 const SALT_ROUNDS = 12;
 const VALID_SECTIONS = new Set(['profile', 'appearance', 'security', 'billing']);
@@ -80,9 +81,9 @@ function showSettings(req, res) {
   const selectedSection = resolveSection(req.query.section);
 
   return renderPage(res, {
-    title: 'Settings - VicPods',
-    pageTitle: 'Settings',
-    subtitle: 'Profile, appearance, security, and billing controls in one place.',
+    title: req.t('page.settings.title', 'Settings - VicPods'),
+    pageTitle: req.t('page.settings.header', 'Settings'),
+    subtitle: req.t('page.settings.subtitle', 'Profile, appearance, security, and billing controls in one place.'),
     view: 'settings/index',
     data: {
       effectivePlan,
@@ -138,9 +139,10 @@ async function updateAppearance(req, res, next) {
   try {
     const user = req.currentUser;
     user.themePreference = normalizeTheme(req.body.themePreference);
+    user.languagePreference = normalizeLanguage(req.body.languagePreference);
     await user.save();
 
-    req.flash('success', 'Appearance preference updated.');
+    req.flash('success', req.t('settings.appearance.updated', 'Appearance and language preferences updated.'));
     return res.redirect('/settings?section=appearance');
   } catch (error) {
     return next(error);
@@ -186,9 +188,23 @@ async function updatePassword(req, res, next) {
   }
 }
 
+async function resetOnboarding(req, res, next) {
+  try {
+    req.currentUser.onboardingCompletedAt = null;
+    await req.currentUser.save();
+
+    req.flash('success', 'Tutorial has been reset. Re-open Studio to launch the welcome walkthrough.');
+    return res.redirect('/settings?section=profile');
+  } catch (error) {
+    req.flash('error', 'Unable to reset the onboarding walkthrough right now.');
+    return res.redirect('/settings?section=profile');
+  }
+}
+
 module.exports = {
   showSettings,
   updateProfile,
   updateAppearance,
   updatePassword,
+  resetOnboarding,
 };

@@ -7,5 +7,6 @@ router.get('/', settingsController.showSettings);
 router.post('/profile', settingsController.updateProfile);
 router.post('/appearance', settingsController.updateAppearance);
 router.post('/security/password', settingsController.updatePassword);
+router.post('/onboarding/reset', settingsController.resetOnboarding);
 
 module.exports = router;

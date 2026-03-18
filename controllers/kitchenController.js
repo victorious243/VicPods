@@ -18,6 +18,33 @@ const {
   resolveEffectiveTone,
   ensureSeriesToneDefaults,
 } = require('../services/tone/toneService');
+const {
+  CTA_STYLE_OPTIONS,
+  EPISODE_TYPE_OPTIONS,
+  FORMAT_TEMPLATE_OPTIONS,
+  HOOK_STYLE_OPTIONS,
+  TARGET_LENGTH_OPTIONS,
+  normalizeEpisodeStructureInput,
+  normalizeSeriesStructureInput,
+  normalizeShowBlueprintInput,
+  resolveEffectiveShowBlueprint,
+  resolveEffectiveStructure,
+  resolveSeriesStructureDefaults,
+  resolveShowBlueprint,
+} = require('../services/structure/structureService');
+const {
+  DELIVERY_STYLE_OPTIONS,
+  normalizeEpisodeWritingSettings,
+  normalizeSeriesWritingSettings,
+  refreshEpisodeWritingIntelligence,
+  resolveEffectiveDeliveryStyle,
+} = require('../services/writing/writingIntelligenceService');
+const {
+  buildEpisodeContinuityContext,
+  buildSeriesPlanningSnapshot,
+  normalizeSeriesBibleInput,
+  resolveSeriesBible,
+} = require('../services/series/seriesPlanningService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 const { renderPage } = require('../utils/render');
@@ -97,9 +124,9 @@ async function listSeries(req, res, next) {
     const regularSeries = seriesList.filter((series) => String(series._id) !== String(singleCollectionSeries?._id));
 
     return renderPage(res, {
-      title: 'Kitchen - VicPods',
-      pageTitle: 'Kitchen',
-      subtitle: 'Series library and advanced management workspace.',
+      title: req.t('page.kitchen.list.title', 'Workspace - VicPods'),
+      pageTitle: req.t('page.kitchen.list.header', 'Workspace'),
+      subtitle: req.t('page.kitchen.list.subtitle', 'Start new episodes and manage every series from one workspace.'),
       view: 'kitchen/index',
       data: {
         regularSeries,
@@ -128,6 +155,13 @@ async function createSeries(req, res, next) {
     }
 
     const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
+    const showBlueprint = normalizeShowBlueprintInput(req.body);
+    const seriesBible = normalizeSeriesBibleInput(req.body, {
+      goal: req.body.goal,
+      showBlueprint,
+    });
+    const structureDefaults = normalizeSeriesStructureInput(req.body);
+    const writingSettings = normalizeSeriesWritingSettings(req.body);
 
     await Series.create({
       userId: req.currentUser._id,
@@ -140,6 +174,14 @@ async function createSeries(req, res, next) {
       audienceType: toneInput.audienceType,
       intent: toneInput.intent,
       voicePersona: toneInput.voicePersona,
+      showBlueprint,
+      seriesBible,
+      defaultEpisodeType: structureDefaults.defaultEpisodeType,
+      defaultTargetLength: structureDefaults.defaultTargetLength,
+      defaultIncludeFunSegment: structureDefaults.defaultIncludeFunSegment,
+      defaultFormatTemplate: structureDefaults.defaultFormatTemplate,
+      defaultHookStyle: structureDefaults.defaultHookStyle,
+      defaultDeliveryStyle: writingSettings.defaultDeliveryStyle,
       creationMode: 'series',
       isSystem: false,
       goal: String(req.body.goal || '').trim(),
@@ -173,6 +215,15 @@ async function showSeries(req, res, next) {
       Episode.find({ seriesId: series._id, userId }).sort({ themeId: 1, episodeNumberWithinTheme: 1, createdAt: 1 }),
       Idea.find({ userId }).sort({ updatedAt: -1 }).limit(20),
     ]);
+    const resolvedSeriesBlueprint = resolveShowBlueprint(series);
+    const resolvedSeriesBible = resolveSeriesBible(series);
+    const resolvedSeriesStructure = resolveSeriesStructureDefaults(series);
+    const seriesPlanningSnapshot = buildSeriesPlanningSnapshot({
+      series,
+      themes,
+      episodes,
+      language: req.language,
+    });
     const isSystemSingleCollection = series.creationMode === 'single_collection' || series.isSystem;
 
     const episodesByTheme = new Map();
@@ -198,9 +249,9 @@ async function showSeries(req, res, next) {
     });
 
     return renderPage(res, {
-      title: `${series.name} - Kitchen - VicPods`,
+      title: `${series.name} - Workspace - VicPods`,
       pageTitle: series.name,
-      subtitle: 'Series workspace with nested themes and episodes.',
+      subtitle: req.t('page.kitchen.series.subtitle', 'Series workspace with nested themes and episodes.'),
       view: 'kitchen/series',
       data: {
         series,
@@ -215,6 +266,16 @@ async function showSeries(req, res, next) {
         intensityLabels: INTENSITY_LABELS,
         isPremiumPlan: effectivePlan === 'premium',
         effectivePlan,
+        resolvedSeriesBlueprint,
+        resolvedSeriesBible,
+        resolvedSeriesStructure,
+        seriesPlanningSnapshot,
+        ctaStyleOptions: CTA_STYLE_OPTIONS,
+        deliveryStyleOptions: DELIVERY_STYLE_OPTIONS,
+        episodeTypeOptions: EPISODE_TYPE_OPTIONS,
+        formatTemplateOptions: FORMAT_TEMPLATE_OPTIONS,
+        hookStyleOptions: HOOK_STYLE_OPTIONS,
+        targetLengthOptions: TARGET_LENGTH_OPTIONS,
       },
     });
   } catch (error) {
@@ -229,6 +290,14 @@ async function updateSeriesSettings(req, res, next) {
     const effectivePlan = req.effectivePlan || req.currentUser?.plan || 'free';
     const plannedEpisodeCount = Number.parseInt(req.body.plannedEpisodeCount, 10);
     const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
+    const showBlueprint = normalizeShowBlueprintInput(req.body, series);
+    const seriesBible = normalizeSeriesBibleInput(req.body, {
+      seriesBible: series.seriesBible,
+      goal: req.body.goal || series.goal,
+      showBlueprint,
+    });
+    const structureDefaults = normalizeSeriesStructureInput(req.body, series);
+    const writingSettings = normalizeSeriesWritingSettings(req.body, series);
 
     series.name = String(req.body.name || series.name || '').trim() || series.name;
     series.description = String(req.body.description || '').trim();
@@ -243,6 +312,14 @@ async function updateSeriesSettings(req, res, next) {
     series.audienceType = toneInput.audienceType;
     series.intent = toneInput.intent;
     series.voicePersona = toneInput.voicePersona;
+    series.showBlueprint = showBlueprint;
+    series.seriesBible = seriesBible;
+    series.defaultEpisodeType = structureDefaults.defaultEpisodeType;
+    series.defaultTargetLength = structureDefaults.defaultTargetLength;
+    series.defaultIncludeFunSegment = structureDefaults.defaultIncludeFunSegment;
+    series.defaultFormatTemplate = structureDefaults.defaultFormatTemplate;
+    series.defaultHookStyle = structureDefaults.defaultHookStyle;
+    series.defaultDeliveryStyle = writingSettings.defaultDeliveryStyle;
 
     await series.save();
 
@@ -344,6 +421,7 @@ async function createEpisodeInTheme(req, res, next) {
       userId,
       seriesId: series._id,
     });
+    const structureDefaults = resolveSeriesStructureDefaults(series);
 
     const createdEpisode = await Episode.create({
       userId,
@@ -354,6 +432,12 @@ async function createEpisodeInTheme(req, res, next) {
       globalEpisodeNumber,
       status: 'Planned',
       title: String(req.body.title || `Episode ${episodeNumberWithinTheme}`).trim(),
+      episodeType: structureDefaults.defaultEpisodeType,
+      targetLength: structureDefaults.defaultTargetLength,
+      includeFunSegment: structureDefaults.defaultIncludeFunSegment,
+      formatTemplate: structureDefaults.defaultFormatTemplate,
+      hookStyle: structureDefaults.defaultHookStyle,
+      deliveryStyle: series.defaultDeliveryStyle || 'friendly',
     });
 
     req.flash('success', `Episode ${episodeNumberWithinTheme} created in ${theme.name}.`);
@@ -379,7 +463,7 @@ async function showEpisodeEditor(req, res, next) {
     const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
     const effectivePlan = req.effectivePlan || 'free';
 
-    const [episode, allIdeas] = await Promise.all([
+    const [episode, allIdeas, seriesEpisodes, seriesThemes] = await Promise.all([
       Episode.findOne({
         _id: req.params.episodeId,
         userId,
@@ -387,6 +471,14 @@ async function showEpisodeEditor(req, res, next) {
         themeId: theme._id,
       }).populate('ideaIds'),
       Idea.find({ userId }).sort({ updatedAt: -1 }),
+      Episode.find({
+        userId,
+        seriesId: series._id,
+      }).sort({ globalEpisodeNumber: 1, createdAt: 1 }),
+      Theme.find({
+        userId,
+        seriesId: series._id,
+      }).sort({ orderIndex: 1, createdAt: 1 }),
     ]);
 
     if (!episode) {
@@ -405,11 +497,22 @@ async function showEpisodeEditor(req, res, next) {
       episode,
       plan: effectivePlan,
     });
+    const resolvedBlueprint = resolveEffectiveShowBlueprint({ series, episode });
+    const resolvedStructure = resolveEffectiveStructure({ series, episode });
+    const effectiveDeliveryStyle = resolveEffectiveDeliveryStyle({ series, episode });
+    const episodeContinuityContext = buildEpisodeContinuityContext({
+      series,
+      theme,
+      episode,
+      episodes: seriesEpisodes,
+      themes: seriesThemes,
+      language: req.language,
+    });
 
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
-      pageTitle: `Kitchen: ${series.name} / ${theme.name} / Episode ${episode.episodeNumberWithinTheme}`,
-      subtitle: 'Edit structure, continuity, and recording readiness.',
+      pageTitle: `${req.t('nav.kitchen', 'Workspace')}: ${series.name} / ${theme.name} / ${req.t('common.episode', 'Episode')} ${episode.episodeNumberWithinTheme}`,
+      subtitle: req.t('page.kitchen.episode.subtitle', 'Edit structure, continuity, and recording readiness.'),
       view: 'kitchen/episode',
       data: {
         series,
@@ -425,6 +528,15 @@ async function showEpisodeEditor(req, res, next) {
         effectiveTone,
         showToneScore: effectivePlan === 'pro' || effectivePlan === 'premium',
         toneFixAvailable: effectivePlan === 'premium',
+        resolvedBlueprint,
+        resolvedStructure,
+        ctaStyleOptions: CTA_STYLE_OPTIONS,
+        deliveryStyleOptions: DELIVERY_STYLE_OPTIONS,
+        formatTemplateOptions: FORMAT_TEMPLATE_OPTIONS,
+        hookStyleOptions: HOOK_STYLE_OPTIONS,
+        targetLengthOptions: TARGET_LENGTH_OPTIONS,
+        effectiveDeliveryStyle,
+        episodeContinuityContext,
       },
     });
   } catch (error) {
@@ -450,11 +562,17 @@ async function saveEpisode(req, res, next) {
       throw new AppError('Episode not found.', 404);
     }
 
+    const episodeStructure = normalizeEpisodeStructureInput(req.body, episode);
+    const writingSettings = normalizeEpisodeWritingSettings(req.body, episode);
+
     episode.title = String(req.body.title || '').trim();
     episode.status = VALID_STATUSES.includes(req.body.status) ? req.body.status : 'Draft';
-    episode.episodeType = ['solo', 'interview'].includes(req.body.episodeType) ? req.body.episodeType : 'solo';
-    episode.targetLength = ['10-15', '20-30', '45+', ''].includes(req.body.targetLength) ? req.body.targetLength : '';
-    episode.includeFunSegment = req.body.includeFunSegment === 'on';
+    episode.episodeType = episodeStructure.episodeType;
+    episode.targetLength = episodeStructure.targetLength;
+    episode.includeFunSegment = episodeStructure.includeFunSegment;
+    episode.formatTemplate = episodeStructure.formatTemplate;
+    episode.hookStyle = episodeStructure.hookStyle;
+    episode.deliveryStyle = writingSettings.deliveryStyle;
     episode.hook = clampWords(req.body.hook, 42);
     episode.outline = toLines(req.body.outline, 7).map((line) => clampWords(line, 24));
     episode.talkingPoints = toLines(req.body.talkingPoints, 7).map((line) => clampWords(line, 24));
@@ -463,6 +581,10 @@ async function saveEpisode(req, res, next) {
     episode.funSegment = clampWords(episode.funSegment, 120);
     episode.ending = clampWords(req.body.ending, 45);
     episode.endState = clampWords(req.body.endState, 80);
+
+    if (episode.isSingle) {
+      episode.showBlueprint = normalizeShowBlueprintInput(req.body, episode);
+    }
 
     if (episode.isSingle) {
       episode.ending = normalizeText(episode.ending).replace(/\s+Teaser:.*$/i, '').trim();
@@ -497,6 +619,7 @@ async function saveEpisode(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();
 
