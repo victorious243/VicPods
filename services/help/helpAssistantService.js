@@ -148,7 +148,7 @@ const COPY = {
     sections: {
       about: {
         title: 'About VicPods',
-        answer: 'VicPods is an AI-powered podcast structuring application for creators, teams, and growing podcast brands. It helps users turn rough ideas into clearer episode frameworks, stronger scripts, and more consistent series planning before they record.',
+        answer: 'VicPods is a ready-to-record podcast planning and launch-prep application for creators and lean podcast teams. It helps users turn rough ideas into clearer episode frameworks, show notes, episode briefs, and more consistent series planning before they record.',
       },
       gettingStarted: {
         title: 'Getting started',
@@ -172,7 +172,7 @@ const COPY = {
       },
       features: {
         title: 'Feature set',
-        answer: 'VicPods currently focuses on structuring and writing. Key features include Show Blueprint, Episode Architect, Hook Generator, Script Doctor, Section Rewrite Tools, Time Estimator, tone and delivery controls, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder, and Callback Planner.',
+        answer: 'VicPods currently focuses on planning, writing, and launch prep. Key features include Show Blueprint, Episode Architect, Hook Generator, Script Doctor, Section Rewrite Tools, Time Estimator, Release Readiness Score, Show Notes Pack, Episode Brief exports, tone and delivery controls, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder, and Callback Planner.',
       },
       settings: {
         title: 'Settings',
@@ -180,7 +180,7 @@ const COPY = {
       },
       pricing: {
         title: 'Plans and billing',
-        answer: 'VicPods currently has three plans. Free includes core Studio + Workspace + Pantry access, 5 generations per day, and TXT transcript export only. Pro includes 50 generations per day, continuity tools, faster workflow, and TXT + PDF transcript exports. Premium includes unlimited generations, highest continuity access, and TXT + PDF + DOCX transcript exports.',
+        answer: 'VicPods currently has three plans. Founding launch pricing runs through March 31, 2026. Free includes core Studio + Workspace + Pantry access, 5 generations per day, Release Readiness Score, Show Notes Pack, and TXT episode brief export. Pro includes 50 generations per day, continuity refresh, tone scoring, and TXT + PDF episode brief exports. Premium includes unlimited generations, tone fix, voice persona controls, and TXT + PDF + DOCX episode brief exports.',
       },
       onboarding: {
         title: 'Onboarding',
@@ -201,7 +201,7 @@ const COPY = {
     sections: {
       about: {
         title: 'Acerca de VicPods',
-        answer: 'VicPods es una aplicacion de estructuracion de podcasts impulsada por IA para creadores, equipos y marcas de podcast en crecimiento. Ayuda a convertir ideas iniciales en estructuras mas claras, guiones mas fuertes y una planificacion de series mas consistente antes de grabar.',
+        answer: 'VicPods es una aplicacion de planificacion de podcasts y preparacion de lanzamiento lista para grabar para creadores y equipos pequenos. Ayuda a convertir ideas iniciales en estructuras mas claras, show notes, briefs de episodio y una planificacion de series mas consistente antes de grabar.',
       },
       gettingStarted: {
         title: 'Primeros pasos',
@@ -225,7 +225,7 @@ const COPY = {
       },
       features: {
         title: 'Funciones',
-        answer: 'VicPods se enfoca actualmente en estructuracion y escritura. Las funciones clave incluyen Show Blueprint, Episode Architect, Hook Generator, Script Doctor, herramientas de reescritura por seccion, Time Estimator, controles de tono y entrega, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder y Callback Planner.',
+        answer: 'VicPods se enfoca actualmente en planificacion, escritura y preparacion de lanzamiento. Las funciones clave incluyen Show Blueprint, Episode Architect, Hook Generator, Script Doctor, herramientas de reescritura por seccion, Time Estimator, Release Readiness Score, Show Notes Pack, exportaciones de Episode Brief, controles de tono y entrega, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder y Callback Planner.',
       },
       settings: {
         title: 'Configuracion',
@@ -233,7 +233,7 @@ const COPY = {
       },
       pricing: {
         title: 'Planes y facturacion',
-        answer: 'VicPods tiene actualmente tres planes. Free incluye acceso base a Studio + Workspace + Pantry, 5 generaciones por dia y solo exportacion TXT de transcripciones. Pro incluye 50 generaciones por dia, herramientas de continuidad, flujo mas rapido y exportaciones TXT + PDF. Premium incluye generaciones ilimitadas, el nivel mas alto de continuidad y exportaciones TXT + PDF + DOCX.',
+        answer: 'VicPods tiene actualmente tres planes. El precio founding de lanzamiento dura hasta el 31 de marzo de 2026. Free incluye acceso base a Studio + Workspace + Pantry, 5 generaciones por dia, Release Readiness Score, Show Notes Pack y exportacion TXT de Episode Brief. Pro incluye 50 generaciones por dia, refresh de continuidad, puntuacion de tono y exportaciones TXT + PDF de Episode Brief. Premium incluye generaciones ilimitadas, tone fix, controles de voice persona y exportaciones TXT + PDF + DOCX de Episode Brief.',
       },
       onboarding: {
         title: 'Onboarding',
@@ -254,7 +254,7 @@ const COPY = {
     sections: {
       about: {
         title: 'Sobre o VicPods',
-        answer: 'VicPods e um aplicativo de estruturacao de podcasts com IA para criadores, equipes e marcas de podcast em crescimento. Ele ajuda a transformar ideias iniciais em estruturas mais claras, roteiros mais fortes e planejamento de series mais consistente antes da gravacao.',
+        answer: 'VicPods e um aplicativo de planejamento de podcasts e preparacao de lancamento pronto para gravar para criadores e equipes pequenas. Ele ajuda a transformar ideias iniciais em estruturas mais claras, show notes, briefs de episodio e planejamento de series mais consistente antes da gravacao.',
       },
       gettingStarted: {
         title: 'Primeiros passos',
@@ -278,7 +278,7 @@ const COPY = {
       },
       features: {
         title: 'Recursos',
-        answer: 'O VicPods hoje foca em estruturacao e escrita. Os principais recursos incluem Show Blueprint, Episode Architect, Hook Generator, Script Doctor, ferramentas de reescrita por secao, Time Estimator, controles de tom e entrega, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder e Callback Planner.',
+        answer: 'O VicPods hoje foca em planejamento, escrita e preparacao de lancamento. Os principais recursos incluem Show Blueprint, Episode Architect, Hook Generator, Script Doctor, ferramentas de reescrita por secao, Time Estimator, Release Readiness Score, Show Notes Pack, exportacoes de Episode Brief, controles de tom e entrega, Series Bible, Season Arc Planner, Continuity Checker, Topic Gap Finder e Callback Planner.',
       },
       settings: {
         title: 'Configuracoes',
@@ -286,7 +286,7 @@ const COPY = {
       },
       pricing: {
         title: 'Planos e cobranca',
-        answer: 'O VicPods atualmente tem tres planos. Free inclui acesso basico a Studio + Workspace + Pantry, 5 geracoes por dia e apenas exportacao TXT de transcricoes. Pro inclui 50 geracoes por dia, ferramentas de continuidade, fluxo mais rapido e exportacoes TXT + PDF. Premium inclui geracoes ilimitadas, o nivel mais alto de continuidade e exportacoes TXT + PDF + DOCX.',
+        answer: 'O VicPods atualmente tem tres planos. O preco founding de lancamento vai ate 31 de marco de 2026. Free inclui acesso basico a Studio + Workspace + Pantry, 5 geracoes por dia, Release Readiness Score, Show Notes Pack e exportacao TXT de Episode Brief. Pro inclui 50 geracoes por dia, refresh de continuidade, pontuacao de tom e exportacoes TXT + PDF de Episode Brief. Premium inclui geracoes ilimitadas, tone fix, controles de voice persona e exportacoes TXT + PDF + DOCX de Episode Brief.',
       },
       onboarding: {
         title: 'Onboarding',

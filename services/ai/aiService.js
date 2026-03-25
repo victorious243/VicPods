@@ -4,6 +4,7 @@ const {
   sanitizeSpicesPayload,
   sanitizeContinuityPayload,
   sanitizeToneFixPayload,
+  sanitizeShowNotesPayload,
 } = require('./responseSanitizer');
 
 async function callProviderWithFallback(methodName, input) {
@@ -42,9 +43,15 @@ async function fixTone(input) {
   return sanitizeToneFixPayload(raw, { requireTeaser: input.requireTeaser !== false });
 }
 
+async function generateShowNotes(input) {
+  const raw = await callProviderWithFallback('generateShowNotes', input);
+  return sanitizeShowNotesPayload(raw);
+}
+
 module.exports = {
   generateEpisodeDraft,
   generateSpices,
   refreshContinuity,
   fixTone,
+  generateShowNotes,
 };

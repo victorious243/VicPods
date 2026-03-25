@@ -1,9 +1,9 @@
 <div class="help-page-shell landing-page-shell">
   <section class="landing-hero card" data-help-reveal>
     <div class="landing-copy">
-      <span class="landing-kicker"><%= t('page.landing.kicker', 'Enter the Lab') %></span>
-      <h1><%= t('page.landing.hero.title', 'Build better podcasts before you hit record.') %></h1>
-      <p class="landing-lead"><%= t('page.landing.hero.body', 'VicPods helps creators structure stronger episodes, plan continuity-driven series, and refine scripts inside one focused podcast application.') %></p>
+      <span class="landing-kicker"><%= t('page.landing.kicker', 'Ready before you record') %></span>
+      <h1><%= t('page.landing.hero.title', 'Go from podcast idea to ready-to-record episode.') %></h1>
+      <p class="landing-lead"><%= t('page.landing.hero.body', 'VicPods helps creators turn rough ideas into structured episodes, launch-ready show notes, and episode briefs inside one focused workflow.') %></p>
 
       <div class="inline-actions landing-actions">
         <% if (currentUser) { %>
@@ -16,10 +16,12 @@
         <a href="/help" class="btn btn-ghost"><%= t('page.landing.cta.help', 'See how it works') %></a>
       </div>
 
+      <p class="mini-note"><%= t('page.landing.launch.note', 'Founding launch pricing runs through March 31, 2026.') %></p>
+
       <div class="landing-proof">
-        <span class="mini-label"><%= t('page.landing.proof.one', 'Structure-first workflow') %></span>
-        <span class="mini-label"><%= t('page.landing.proof.two', 'Writing intelligence') %></span>
-        <span class="mini-label"><%= t('page.landing.proof.three', 'Series planning') %></span>
+        <span class="mini-label"><%= t('page.landing.proof.one', 'Ready-to-record workflow') %></span>
+        <span class="mini-label"><%= t('page.landing.proof.two', 'Show notes + episode briefs') %></span>
+        <span class="mini-label"><%= t('page.landing.proof.three', 'Series continuity') %></span>
       </div>
     </div>
 
@@ -43,7 +45,7 @@
       </div>
       <div class="landing-wave-ring landing-wave-ring-a"></div>
       <div class="landing-wave-ring landing-wave-ring-b"></div>
-      <div class="landing-status-chip"><%= t('page.landing.status', 'Lab signal active') %></div>
+      <div class="landing-status-chip"><%= t('page.landing.status', 'March 25 launch') %></div>
     </div>
   </section>
 
@@ -54,7 +56,7 @@
         <h3><%= t('page.landing.card.single.title', 'Start a single episode') %></h3>
       </div>
       <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Move from one topic to a recording-ready draft with a clear hook, stronger structure, and focused talking points.') %></p>
+        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Move from one topic to a ready-to-record draft with a clear hook, stronger structure, show notes, and an episode brief.') %></p>
         <div class="inline-actions">
           <a href="/create/single" class="btn btn-ghost"><%= t('page.landing.card.single.cta', 'Open single flow') %></a>
         </div>
@@ -67,7 +69,7 @@
         <h3><%= t('page.landing.card.series.title', 'Build a full series') %></h3>
       </div>
       <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.series.body', 'Design season goals, recurring themes, continuity rules, and episode arcs before the recording even starts.') %></p>
+        <p class="help-story-lead"><%= t('page.landing.card.series.body', 'Plan season goals, recurring themes, continuity rules, and episode arcs so every recording starts with a clearer brief.') %></p>
         <div class="inline-actions">
           <a href="/create/series" class="btn btn-ghost"><%= t('page.landing.card.series.cta', 'Open series flow') %></a>
         </div>
@@ -80,7 +82,7 @@
         <h3><%= t('page.landing.card.guide.title', 'Get guided inside the lab') %></h3>
       </div>
       <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.guide.body', 'Use Studio, Workspace, Pantry, Help Center, and onboarding together so new and returning users always know the next move.') %></p>
+        <p class="help-story-lead"><%= t('page.landing.card.guide.body', 'Use Studio, Workspace, Pantry, and Help Center together to move from draft to launch-ready prep without losing the next step.') %></p>
         <div class="inline-actions">
           <a href="/help" class="btn btn-ghost"><%= t('page.landing.card.guide.cta', 'Open Help Center') %></a>
         </div>
@@ -90,7 +92,7 @@
 
   <section class="card landing-steps landing-steps-shell" data-help-reveal>
     <div class="section-head">
-      <h3><%= t('page.landing.steps.title', 'How the VicPods lab works') %></h3>
+      <h3><%= t('page.landing.steps.title', 'How VicPods gets episodes launch-ready') %></h3>
       <a href="/about" class="btn btn-ghost"><%= t('page.landing.steps.link', 'About VicPods') %></a>
     </div>
 
@@ -101,15 +103,15 @@
       </article>
       <article>
         <span class="landing-step-label"><%= t('page.landing.steps.two.label', 'Structure') %></span>
-        <p><%= t('page.landing.steps.two.body', 'Shape the hook, episode flow, timing, and CTA before drafting.') %></p>
+        <p><%= t('page.landing.steps.two.body', 'Shape the hook, episode flow, CTA, and talking points before drafting.') %></p>
       </article>
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.three.label', 'Write') %></span>
-        <p><%= t('page.landing.steps.three.body', 'Generate stronger drafts, refine weak sections, and tighten clarity.') %></p>
+        <span class="landing-step-label"><%= t('page.landing.steps.three.label', 'Draft') %></span>
+        <p><%= t('page.landing.steps.three.body', 'Generate stronger drafts, refine weak sections, and package show notes for launch.') %></p>
       </article>
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.four.label', 'Plan ahead') %></span>
-        <p><%= t('page.landing.steps.four.body', 'Keep continuity across themes, callbacks, and series progression.') %></p>
+        <span class="landing-step-label"><%= t('page.landing.steps.four.label', 'Release prep') %></span>
+        <p><%= t('page.landing.steps.four.body', 'Check readiness, export the episode brief, and record with less prep friction.') %></p>
       </article>
     </div>
   </section>

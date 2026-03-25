@@ -75,6 +75,39 @@
 
 <section class="card">
   <div class="section-head">
+    <h3>Release Readiness</h3>
+    <span class="mini-label"><%= releaseReadiness?.stateLabel || 'Needs Work' %></span>
+  </div>
+
+  <p>
+    <strong>Score:</strong> <%= releaseReadiness?.overallScore || 0 %>/100
+    · completeness <%= releaseReadiness?.subscores?.completenessScore || 0 %>
+    · quality <%= releaseReadiness?.subscores?.qualityScore || 0 %>
+    · continuity <%= releaseReadiness?.subscores?.continuityScore || 0 %>
+    · workflow <%= releaseReadiness?.subscores?.workflowScore || 0 %>
+  </p>
+
+  <% if (releaseReadiness?.briefEligible) { %>
+    <p class="mini-note">This episode is eligible for Episode Brief export once the draft is locked.</p>
+  <% } else { %>
+    <p class="mini-note">Move the status to <strong>Ready</strong> or <strong>Served</strong> to unlock Episode Brief export.</p>
+  <% } %>
+
+  <% if (releaseReadiness?.blockers?.length) { %>
+    <p><strong>Blockers:</strong> <%= releaseReadiness.blockers.join(' · ') %></p>
+  <% } %>
+
+  <% if (releaseReadiness?.strengths?.length) { %>
+    <p><strong>Strengths:</strong> <%= releaseReadiness.strengths.join(' · ') %></p>
+  <% } %>
+
+  <% if (releaseReadiness?.nextActions?.length) { %>
+    <p><strong>Next Actions:</strong> <%= releaseReadiness.nextActions.join(' · ') %></p>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="section-head">
     <h3>Episode Editor</h3>
     <a href="/kitchen/<%= series._id %>#theme-<%= theme._id %>" class="btn btn-ghost">Back to Theme</a>
   </div>
@@ -337,6 +370,81 @@
 
 <section class="card">
   <div class="section-head">
+    <h3>Show Notes Pack</h3>
+    <span class="mini-label">Launch Assets</span>
+  </div>
+
+  <div class="inline-actions">
+    <form method="POST" action="/ai/show-notes/generate">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <button class="btn btn-primary" type="submit"><%= episode.showNotesPack?.updatedAt ? 'Refresh Show Notes Pack' : 'Generate Show Notes Pack' %></button>
+    </form>
+    <% if (episode.showNotesPack?.updatedAt) { %>
+      <button class="btn btn-ghost" type="button" data-copy-trigger="show-notes-pack" data-copy-label="Copy Show Notes Pack">Copy Show Notes Pack</button>
+    <% } %>
+  </div>
+
+  <% if (episode.showNotesPack?.updatedAt) { %>
+    <p>
+      Show Notes Pack ready.
+      Last updated: <%= new Date(episode.showNotesPack.updatedAt).toLocaleString() %>
+      <% if (episode.showNotesPack?.stale) { %>
+        · refresh recommended after recent draft edits
+      <% } %>
+    </p>
+
+    <% if (episode.showNotesPack.summary) { %>
+      <p><strong>Summary:</strong> <%= episode.showNotesPack.summary %></p>
+    <% } %>
+    <% if (episode.showNotesPack.description) { %>
+      <p><strong>Description:</strong> <%= episode.showNotesPack.description %></p>
+    <% } %>
+    <% if (episode.showNotesPack.keyTakeaways?.length) { %>
+      <p><strong>Key Takeaways:</strong> <%= episode.showNotesPack.keyTakeaways.join(' · ') %></p>
+    <% } %>
+    <% if (episode.showNotesPack.listenerCTA) { %>
+      <p><strong>Listener CTA:</strong> <%= episode.showNotesPack.listenerCTA %></p>
+    <% } %>
+    <% if (episode.showNotesPack.socialPosts?.length) { %>
+      <div class="list-stack">
+        <% episode.showNotesPack.socialPosts.forEach((post, index) => { %>
+          <article class="list-item">
+            <div>
+              <h4>Social Post <%= index + 1 %></h4>
+              <p><%= post %></p>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  <% } else { %>
+    <p class="mini-note">Generate a pack with summary, description, key takeaways, CTA, and social-ready copy.</p>
+  <% } %>
+
+  <% if (episode.showNotesPack?.updatedAt) { %>
+    <textarea hidden readonly data-copy-source="show-notes-pack">SHOW NOTES PACK
+
+SUMMARY
+<%= episode.showNotesPack.summary || '' %>
+
+DESCRIPTION
+<%= episode.showNotesPack.description || '' %>
+
+KEY TAKEAWAYS
+<%= (episode.showNotesPack.keyTakeaways || []).map((takeaway, index) => `${index + 1}. ${takeaway}`).join('\n') %>
+
+LISTENER CTA
+<%= episode.showNotesPack.listenerCTA || '' %>
+
+SOCIAL POSTS
+<%= (episode.showNotesPack.socialPosts || []).map((post, index) => `Post ${index + 1}: ${post}`).join('\n\n') %></textarea>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="section-head">
     <h3>Writing Intelligence</h3>
     <span class="mini-label">Phase 2</span>
   </div>
@@ -448,26 +556,26 @@
 
 <section class="card">
   <div class="section-head">
-    <h3>Transcript Export</h3>
+    <h3>Episode Brief Export</h3>
     <span class="mini-label">TXT · PDF · DOCX</span>
   </div>
 
-  <% const isServed = episode.status === 'Served'; %>
+  <% const canGenerateBrief = ['Ready', 'Served'].includes(episode.status); %>
   <% const hasTranscript = Boolean(episode.transcript && episode.transcript.trim()); %>
 
-  <% if (!isServed) { %>
+  <% if (!canGenerateBrief) { %>
     <div class="transcript-locked">
-      <p><strong>Serve to unlock transcript export.</strong></p>
-      <p class="mini-note">Set episode status to <strong>Served</strong>, save, then generate and download transcripts.</p>
+      <p><strong>Set this episode to Ready or Served to unlock Episode Brief export.</strong></p>
+      <p class="mini-note">Save the episode with status <strong>Ready</strong> or <strong>Served</strong>, then generate and download the brief.</p>
       <div class="inline-actions">
-        <button class="btn btn-muted" type="button" disabled>Generate Transcript</button>
+        <button class="btn btn-muted" type="button" disabled>Generate Episode Brief</button>
         <form method="GET" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/download">
           <select name="format" disabled>
             <option value="pdf">PDF</option>
             <option value="docx">DOCX</option>
             <option value="txt">TXT</option>
           </select>
-          <button class="btn btn-muted" type="button" disabled>Download Transcript</button>
+          <button class="btn btn-muted" type="button" disabled>Download Episode Brief</button>
         </form>
       </div>
     </div>
@@ -475,24 +583,26 @@
     <div class="transcript-ready">
       <% if (hasTranscript) { %>
         <p>
-          Transcript ready.
+          Episode brief ready.
           <% if (episode.transcriptUpdatedAt) { %>
             Last updated: <%= new Date(episode.transcriptUpdatedAt).toLocaleString() %>
           <% } %>
         </p>
       <% } else { %>
-        <p>No transcript generated yet. Generate once, then export in any format.</p>
+        <p>No brief generated yet. Generate once, then export in any format.</p>
       <% } %>
+
+      <p class="mini-note">The brief includes structure, host prompts, close, and any generated show notes summary or takeaways.</p>
 
       <div class="inline-actions">
         <% if (!hasTranscript) { %>
           <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/generate">
-            <button class="btn btn-primary" type="submit">Generate Transcript</button>
+            <button class="btn btn-primary" type="submit">Generate Episode Brief</button>
           </form>
         <% } %>
 
         <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/generate">
-          <button class="btn btn-ghost" type="submit">Refresh Transcript</button>
+          <button class="btn btn-ghost" type="submit">Refresh Episode Brief</button>
         </form>
 
         <form method="GET" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/transcript/download" class="download-form">
@@ -501,12 +611,19 @@
               <option value="<%= format %>"><%= format.toUpperCase() %></option>
             <% }) %>
           </select>
-          <button class="btn btn-primary" type="submit">Download Transcript</button>
+          <button class="btn btn-primary" type="submit">Download Episode Brief</button>
         </form>
+        <% if (hasTranscript) { %>
+          <button class="btn btn-ghost" type="button" data-copy-trigger="episode-brief" data-copy-label="Copy Episode Brief">Copy Episode Brief</button>
+        <% } %>
       </div>
       <% if ((allowedTranscriptFormats || ['txt']).length < 3) { %>
         <p class="mini-note">Need more formats? Upgrade in Billing to unlock higher export tiers.</p>
       <% } %>
     </div>
+  <% } %>
+
+  <% if (hasTranscript) { %>
+    <textarea hidden readonly data-copy-source="episode-brief"><%= episode.transcript %></textarea>
   <% } %>
 </section>

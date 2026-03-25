@@ -43,6 +43,13 @@ function buildSections({ series, theme, episode }) {
       themeName: cleanLine(theme.name),
       episodeNumberWithinTheme: episode.episodeNumberWithinTheme,
       globalEpisodeNumber: episode.globalEpisodeNumber,
+      status: cleanLine(episode.status || 'Draft'),
+    },
+    showNotes: {
+      summary: cleanLine(episode.showNotesPack?.summary || ''),
+      description: cleanLine(episode.showNotesPack?.description || ''),
+      keyTakeaways: (episode.showNotesPack?.keyTakeaways || []).map(cleanLine).filter(Boolean),
+      listenerCTA: cleanLine(episode.showNotesPack?.listenerCTA || ''),
     },
     hook: cleanLine(episode.hook || 'Hook unavailable.'),
     intro: buildIntro(episode),
@@ -59,12 +66,41 @@ function buildTranscript({ series, theme, episode }) {
   const sections = buildSections({ series, theme, episode });
 
   const lines = [
-    'VICPODS TRANSCRIPT',
+    'VICPODS EPISODE BRIEF',
     `${sections.meta.seriesName} - ${sections.meta.themeName}`,
-    `Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''}`,
+    `Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''} - ${sections.meta.status}`,
     '',
     `TITLE: ${sections.title}`,
     '',
+  ];
+
+  if (sections.showNotes.summary) {
+    lines.push('SUMMARY');
+    lines.push(sections.showNotes.summary);
+    lines.push('');
+  }
+
+  if (sections.showNotes.description) {
+    lines.push('DESCRIPTION');
+    lines.push(sections.showNotes.description);
+    lines.push('');
+  }
+
+  if (sections.showNotes.keyTakeaways.length) {
+    lines.push('KEY TAKEAWAYS');
+    sections.showNotes.keyTakeaways.forEach((takeaway, index) => {
+      lines.push(`${index + 1}. ${takeaway}`);
+    });
+    lines.push('');
+  }
+
+  if (sections.showNotes.listenerCTA) {
+    lines.push('LISTENER CTA');
+    lines.push(sections.showNotes.listenerCTA);
+    lines.push('');
+  }
+
+  lines.push(
     'HOOK',
     sections.hook,
     '',
@@ -72,7 +108,7 @@ function buildTranscript({ series, theme, episode }) {
     sections.intro,
     '',
     'MAIN SEGMENTS',
-  ];
+  );
 
   sections.segments.forEach((segment) => {
     lines.push(segment.heading);

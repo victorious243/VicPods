@@ -1,6 +1,6 @@
 # VicPods MVP
 
-VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + MongoDB.
+VicPods is a subscription-ready podcast planning and launch-prep SaaS MVP built with Express + EJS + MongoDB.
 
 ## Features
 - Email/password auth with sessions (`express-session` + `bcrypt`)
@@ -15,7 +15,9 @@ VicPods is a subscription-ready podcast SaaS MVP built with Express + EJS + Mong
 - Chef AI endpoints with provider abstraction (`openai` or deterministic `mock`)
 - Continuity guard (`seriesSummary` + `endState` flow)
 - Theme continuity guard (`themeSummary` + theme-local episode `endState`)
-- Served-only transcript generation + export (`txt`, `pdf`, `docx`)
+- Release Readiness Score with blockers, strengths, and next actions
+- Show Notes Pack generation for summary, takeaways, CTA, and social copy
+- Ready/Served Episode Brief generation + export (`txt`, `pdf`, `docx`)
 - Stripe subscription billing (Checkout + Customer Portal + Webhooks)
 - Plan gating middleware (`requirePlan`) with auto-expiry downgrade logic
 - Security hardening: Helmet headers, CSRF protection, auth rate limiting, Mongo-backed sessions
@@ -84,9 +86,12 @@ STRIPE_PRICE_PRO=price_...
 STRIPE_PRICE_PREMIUM=price_...
 BILLING_CURRENCY_SYMBOL=€
 BILLING_INTERVAL_LABEL=/mo
+BILLING_FOUNDING_DEADLINE_LABEL=March 31, 2026
 BILLING_PRICE_FREE=0
-BILLING_PRICE_PRO=12.95
-BILLING_PRICE_PREMIUM=16.95
+BILLING_PRICE_PRO=19
+BILLING_PRICE_PREMIUM=39
+BILLING_PRICE_PRO_STANDARD=29
+BILLING_PRICE_PREMIUM_STANDARD=59
 ```
 
 If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically falls back to deterministic mock AI output.
@@ -96,7 +101,7 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 - Google callback: `/auth/google/callback` (also supported: `/oauth2callback`)
 - Studio: `/studio`
 - Kitchen: `/kitchen`, `/kitchen/:seriesId`, `/kitchen/:seriesId/themes/:themeId/episodes/:episodeId`
-- Transcript: `POST /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/generate`, `GET /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/download?format=pdf|docx|txt`
+- Episode brief: `POST /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/generate`, `GET /kitchen/:seriesId/themes/:themeId/episodes/:episodeId/transcript/download?format=pdf|docx|txt`
 - Pantry: `/pantry`
 - AI: `/ai/episode/generate`, `/ai/spices/generate`, `/ai/continuity/refresh`
 - Billing: `/billing`, `POST /billing/checkout`, `POST /billing/portal`, `/billing/success`, `/billing/cancel`
@@ -111,7 +116,8 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 - Stripe webhooks are the source of truth for plan activation/cancellation/expiry.
 - `/ai/continuity/refresh` is gated to Pro+ (`requirePlan('pro')`).
 - Daily generation limits: Free `5/day`, Pro `50/day`, Premium `unlimited`.
-- Transcript export tiers: Free `TXT`, Pro `TXT+PDF`, Premium `TXT+PDF+DOCX`.
+- Episode Brief export tiers: Free `TXT`, Pro `TXT+PDF`, Premium `TXT+PDF+DOCX`.
+- Founding launch pricing defaults are Free `€0`, Pro `€19/mo`, and Premium `€39/mo` through `March 31, 2026`.
 - Legacy series episodes are auto-migrated into a `General` theme when first opened.
 
 ## Stripe Webhook Dev

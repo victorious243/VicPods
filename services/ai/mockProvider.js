@@ -105,6 +105,13 @@ function getMockCopy(language) {
         community_invite: 'Cierra invitando a responder, comentar o compartir su version.',
         soft_pitch: 'Cierra apuntando de forma natural al siguiente recurso u oferta.',
       },
+      showNotesSummaryTemplate: '{title} ayuda a la audiencia a pasar de {problem} hacia {transformation} con una estructura mas clara en {theme}.',
+      showNotesDescriptionTemplate: '{title} convierte {theme} en una secuencia mas grabable y mas util para la audiencia. En este episodio, el host enfoca el problema central, ordena los puntos mas importantes y deja una accion clara para avanzar.',
+      socialTemplates: [
+        'Nuevo episodio: {title}. {takeaway}',
+        'Si {problem}, este episodio te da una via mas clara hacia {transformation}.',
+        'Tema de hoy: {theme}. Punto clave: {takeaway}',
+      ],
     };
   }
 
@@ -168,6 +175,13 @@ function getMockCopy(language) {
         community_invite: 'Feche convidando o publico a responder, comentar ou compartilhar a propria versao.',
         soft_pitch: 'Feche apontando de forma natural para o proximo recurso ou oferta.',
       },
+      showNotesSummaryTemplate: '{title} ajuda o publico a sair de {problem} em direcao a {transformation} com uma estrutura mais clara em {theme}.',
+      showNotesDescriptionTemplate: '{title} transforma {theme} em uma sequencia mais gravavel e mais util para o publico. Neste episodio, o host foca o problema central, organiza os pontos mais importantes e fecha com uma acao clara para seguir em frente.',
+      socialTemplates: [
+        'Novo episodio: {title}. {takeaway}',
+        'Se {problem}, este episodio te entrega um caminho mais claro para {transformation}.',
+        'Tema de hoje: {theme}. Ponto-chave: {takeaway}',
+      ],
     };
   }
 
@@ -230,6 +244,13 @@ function getMockCopy(language) {
       community_invite: 'End by inviting listeners to reply, comment, or share their version.',
       soft_pitch: 'End by naturally pointing to the next resource or offer.',
     },
+    showNotesSummaryTemplate: '{title} helps listeners move from {problem} toward {transformation} with a clearer plan around {theme}.',
+    showNotesDescriptionTemplate: '{title} turns {theme} into a more recordable and more useful episode path. This episode sharpens the main problem, organizes the strongest points, and closes with one practical action listeners can take next.',
+    socialTemplates: [
+      'New episode: {title}. {takeaway}',
+      'If {problem}, this episode gives you a clearer path to {transformation}.',
+      'Today\'s focus: {theme}. Key takeaway: {takeaway}',
+    ],
   };
 }
 
@@ -400,6 +421,51 @@ class MockProvider {
       ending: input.requireTeaser === false
         ? (input.episode.ending || copy.toneEndingStandalone)
         : `${input.episode.ending || copy.toneEndingSeries}`,
+    };
+  }
+
+  async generateShowNotes(input) {
+    const { series, theme, episode, effectiveTone, seasonArcStep } = input;
+    const copy = getMockCopy(input.language);
+    const blueprint = resolveEffectiveShowBlueprint({ series, episode });
+    const structure = resolveEffectiveStructure({ series, episode });
+    const ctaStyle = getCtaStyleOption(blueprint.ctaStyle);
+    const audienceProblem = blueprint.audienceProblem || series.audience || theme.name;
+    const transformation = blueprint.listenerTransformation || series.goal || theme.name;
+    const title = episode.title || `${theme.name} Episode`;
+    const keyTakeawaysSource = (episode.talkingPoints || []).filter(Boolean).slice(0, 5);
+    const fallbackTakeaways = (episode.outline || []).filter(Boolean).slice(0, 5);
+    const keyTakeaways = keyTakeawaysSource.length ? keyTakeawaysSource : fallbackTakeaways;
+    const normalizedTakeaways = keyTakeaways.length
+      ? keyTakeaways
+      : [
+        `Clarify the main friction around ${theme.name}.`,
+        `Use ${structure.formatTemplateMeta.label} to tighten the delivery.`,
+        'Close with one action listeners can execute this week.',
+      ];
+
+    return {
+      summary: formatTemplate(copy.showNotesSummaryTemplate, {
+        title,
+        problem: audienceProblem,
+        transformation,
+        theme: theme.name,
+      }),
+      description: `${formatTemplate(copy.showNotesDescriptionTemplate, {
+        title,
+        theme: theme.name,
+        transformation,
+      })} ${seasonArcStep ? `Season position: ${seasonArcStep}` : ''}`.trim(),
+      keyTakeaways: normalizedTakeaways,
+      listenerCTA: episode.ending || copy.ctaEndings[ctaStyle.value] || copy.ctaEndings.direct_action,
+      socialPosts: copy.socialTemplates.map((template) => formatTemplate(template, {
+        title,
+        theme: theme.name,
+        problem: audienceProblem,
+        transformation,
+        takeaway: normalizedTakeaways[0],
+        tonePreset: effectiveTone?.tonePreset || series.tonePreset || 'Conversational & Casual',
+      })).slice(0, 3),
     };
   }
 }

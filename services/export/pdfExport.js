@@ -19,9 +19,31 @@ function sendPdfExport({ res, filename, series, theme, episode }) {
   doc.font('Helvetica-Bold').fontSize(20).text(sections.title, { align: 'left' });
   doc.moveDown(0.2);
   doc.font('Helvetica').fontSize(10).fillColor('#555').text(
-    `${sections.meta.seriesName}  |  ${sections.meta.themeName}  |  Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''}`
+    `${sections.meta.seriesName}  |  ${sections.meta.themeName}  |  Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''}  |  ${sections.meta.status}`
   );
   doc.fillColor('#000');
+
+  if (sections.showNotes.summary) {
+    addHeading(doc, 'Summary');
+    doc.font('Helvetica').fontSize(11).text(sections.showNotes.summary);
+  }
+
+  if (sections.showNotes.description) {
+    addHeading(doc, 'Description');
+    doc.font('Helvetica').fontSize(11).text(sections.showNotes.description);
+  }
+
+  if (sections.showNotes.keyTakeaways.length) {
+    addHeading(doc, 'Key Takeaways');
+    sections.showNotes.keyTakeaways.forEach((takeaway) => {
+      doc.text(`- ${takeaway}`, { indent: 12 });
+    });
+  }
+
+  if (sections.showNotes.listenerCTA) {
+    addHeading(doc, 'Listener CTA');
+    doc.font('Helvetica').fontSize(11).text(sections.showNotes.listenerCTA);
+  }
 
   addHeading(doc, 'Hook');
   doc.font('Helvetica').fontSize(11).text(sections.hook);
@@ -45,8 +67,10 @@ function sendPdfExport({ res, filename, series, theme, episode }) {
     doc.text('- What is one practical move listeners can try immediately?', { indent: 12 });
   }
 
-  addHeading(doc, 'Fun Segment');
-  doc.text(sections.funSegment);
+  if (sections.funSegment) {
+    addHeading(doc, 'Fun Segment');
+    doc.text(sections.funSegment);
+  }
 
   addHeading(doc, 'Outro');
   doc.text(sections.outro);

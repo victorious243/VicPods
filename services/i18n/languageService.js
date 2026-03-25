@@ -47,15 +47,30 @@ const TRANSLATIONS = {
     es: 'Episodio',
     pt: 'Episodio',
   },
+  'plan.free': {
+    en: 'Free',
+    es: 'Free',
+    pt: 'Free',
+  },
+  'plan.pro': {
+    en: 'Pro',
+    es: 'Pro',
+    pt: 'Pro',
+  },
+  'plan.premium': {
+    en: 'Premium',
+    es: 'Premium',
+    pt: 'Premium',
+  },
   'sidebar.brand.aria': {
     en: 'VicPods Studio',
     es: 'VicPods Estudio',
     pt: 'VicPods Estudio',
   },
   'sidebar.tagline': {
-    en: 'AI Podcast Structuring App',
-    es: 'App de estructuracion de podcasts con IA',
-    pt: 'App de estruturacao de podcasts com IA',
+    en: 'Podcast Planning + Launch Prep',
+    es: 'Planificacion de podcasts + preparacion de lanzamiento',
+    pt: 'Planejamento de podcasts + preparacao de lancamento',
   },
   'sidebar.upgrade.title': {
     en: 'Upgrade Ready',
@@ -63,9 +78,9 @@ const TRANSLATIONS = {
     pt: 'Pronto para evoluir',
   },
   'sidebar.upgrade.body': {
-    en: 'Unlock higher AI volume, faster generation, and advanced continuity controls.',
-    es: 'Activa mas volumen de IA, generacion mas rapida y controles avanzados de continuidad.',
-    pt: 'Ative mais volume de IA, geracao mais rapida e controles avancados de continuidade.',
+    en: 'Unlock higher AI volume, continuity controls, tone scoring, and richer episode brief exports.',
+    es: 'Activa mas volumen de IA, controles de continuidad, puntuacion de tono y exportaciones mas completas del brief del episodio.',
+    pt: 'Ative mais volume de IA, controles de continuidade, pontuacao de tom e exportacoes mais completas do brief do episodio.',
   },
   'sidebar.upgrade.cta': {
     en: 'See Plans',
@@ -118,19 +133,19 @@ const TRANSLATIONS = {
     pt: 'Sobre o VicPods',
   },
   'page.about.subtitle': {
-    en: 'What VicPods is, who it serves, and where the application is going.',
-    es: 'Que es VicPods, a quien sirve y hacia donde va la aplicacion.',
-    pt: 'O que e o VicPods, para quem ele serve e para onde o aplicativo esta indo.',
+    en: 'What VicPods is, who it serves, and why it starts before recording.',
+    es: 'Que es VicPods, a quien sirve y por que empieza antes de grabar.',
+    pt: 'O que e o VicPods, para quem ele serve e por que comeca antes da gravacao.',
   },
   'page.about.hero.heading': {
-    en: 'VicPods is an AI-powered podcast structuring application.',
-    es: 'VicPods es una aplicacion de estructuracion de podcasts impulsada por IA.',
-    pt: 'VicPods e um aplicativo de estruturacao de podcasts com IA.',
+    en: 'VicPods is a ready-to-record podcast planning and launch-prep app.',
+    es: 'VicPods es una app de planificacion de podcasts y preparacion de lanzamiento lista para grabar.',
+    pt: 'VicPods e um app de planejamento de podcasts e preparacao de lancamento pronto para gravar.',
   },
   'page.about.hero.body': {
-    en: 'It helps creators turn rough ideas into clear episode frameworks, stronger scripts, and continuity-driven series before they record.',
-    es: 'Ayuda a los creadores a convertir ideas iniciales en estructuras claras de episodios, guiones mas fuertes y series guiadas por continuidad antes de grabar.',
-    pt: 'Ele ajuda criadores a transformar ideias iniciais em estruturas claras de episodio, roteiros mais fortes e series guiadas por continuidade antes de gravar.',
+    en: 'It helps creators turn rough ideas into clear episode frameworks, show notes, and episode briefs before they record.',
+    es: 'Ayuda a los creadores a convertir ideas iniciales en estructuras claras de episodios, show notes y briefs de episodio antes de grabar.',
+    pt: 'Ele ajuda criadores a transformar ideias iniciais em estruturas claras de episodio, show notes e briefs de episodio antes de gravar.',
   },
   'page.about.what.title': {
     en: 'What VicPods does',
@@ -138,9 +153,9 @@ const TRANSLATIONS = {
     pt: 'O que o VicPods faz',
   },
   'page.about.what.body': {
-    en: 'VicPods helps you define show blueprints, shape episode flow, strengthen hooks, improve writing quality, and plan series with more consistency.',
-    es: 'VicPods te ayuda a definir blueprints del programa, dar forma al flujo del episodio, fortalecer hooks, mejorar la calidad de escritura y planificar series con mas consistencia.',
-    pt: 'O VicPods ajuda voce a definir blueprints do programa, moldar o fluxo do episodio, fortalecer hooks, melhorar a qualidade da escrita e planejar series com mais consistencia.',
+    en: 'VicPods helps you define show blueprints, shape episode flow, strengthen hooks, generate show notes, and export recording-ready episode briefs.',
+    es: 'VicPods te ayuda a definir blueprints del programa, dar forma al flujo del episodio, fortalecer hooks, generar show notes y exportar briefs listos para grabar.',
+    pt: 'O VicPods ajuda voce a definir blueprints do programa, moldar o fluxo do episodio, fortalecer hooks, gerar show notes e exportar briefs prontos para gravar.',
   },
   'page.about.for.title': {
     en: 'Who VicPods is for',
@@ -148,9 +163,9 @@ const TRANSLATIONS = {
     pt: 'Para quem o VicPods e feito',
   },
   'page.about.for.body': {
-    en: 'It is built for solo creators, teams, and growing podcast brands that want better structure, clearer messaging, and less time wasted staring at a blank page.',
-    es: 'Esta hecho para creadores solitarios, equipos y marcas de podcast en crecimiento que quieren mejor estructura, mensajes mas claros y menos tiempo perdido frente a una pagina en blanco.',
-    pt: 'Foi criado para criadores solo, equipes e marcas de podcast em crescimento que querem melhor estrutura, mensagens mais claras e menos tempo perdido diante de uma pagina em branco.',
+    en: 'It is built for solo podcasters, business creators, and lean producers who want clearer messaging and faster weekly prep.',
+    es: 'Esta hecho para podcasters solitarios, creadores de negocio y productores pequenos que quieren mensajes mas claros y una preparacion semanal mas rapida.',
+    pt: 'Foi criado para podcasters solo, criadores de negocio e produtores enxutos que querem mensagens mais claras e uma preparacao semanal mais rapida.',
   },
   'page.about.textFirst.title': {
     en: 'Why VicPods starts text-first',
@@ -158,9 +173,9 @@ const TRANSLATIONS = {
     pt: 'Por que o VicPods comeca pelo texto',
   },
   'page.about.textFirst.body': {
-    en: 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and continuity first so creators can record with more confidence and clarity.',
-    es: 'Los podcasts fuertes se construyen antes de encender el microfono. VicPods se enfoca primero en planificacion, guion y continuidad para que los creadores graben con mas confianza y claridad.',
-    pt: 'Podcasts fortes sao construidos antes de ligar o microfone. O VicPods foca primeiro em planejamento, roteiro e continuidade para que criadores gravem com mais confianca e clareza.',
+    en: 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and launch prep first so creators can record with more confidence and less wasted time.',
+    es: 'Los podcasts fuertes se construyen antes de encender el microfono. VicPods se enfoca primero en planificacion, guion y preparacion de lanzamiento para que los creadores graben con mas confianza y menos tiempo perdido.',
+    pt: 'Podcasts fortes sao construidos antes de ligar o microfone. O VicPods foca primeiro em planejamento, roteiro e preparacao de lancamento para que criadores gravem com mais confianca e menos tempo perdido.',
   },
   'page.about.vision.title': {
     en: 'Where VicPods is going',
@@ -168,9 +183,9 @@ const TRANSLATIONS = {
     pt: 'Para onde o VicPods esta indo',
   },
   'page.about.vision.body': {
-    en: 'The application starts with structuring and writing because that is where it can create immediate value. As the business grows, VicPods will expand carefully with new creation, workflow, and production features.',
-    es: 'La aplicacion comienza con estructuracion y escritura porque ahi puede crear valor inmediato. A medida que el negocio crezca, VicPods se expandira con cuidado con nuevas funciones de creacion, flujo de trabajo y produccion.',
-    pt: 'O aplicativo comeca com estruturacao e escrita porque e ai que ele cria valor imediato. Conforme o negocio crescer, o VicPods vai expandir com cuidado com novos recursos de criacao, fluxo de trabalho e producao.',
+    en: 'VicPods starts with planning, readiness, and launch assets because that is where it can create immediate value. As the business grows, it can expand carefully into deeper workflow and production features.',
+    es: 'VicPods empieza con planificacion, readiness y activos de lanzamiento porque ahi crea valor inmediato. A medida que el negocio crezca, podra expandirse con cuidado hacia funciones mas profundas de flujo de trabajo y produccion.',
+    pt: 'O VicPods comeca com planejamento, readiness e ativos de lancamento porque e ai que cria valor imediato. Conforme o negocio crescer, podera expandir com cuidado para recursos mais profundos de fluxo de trabalho e producao.',
   },
   'page.about.cta.guest.primary': {
     en: 'Create account',
@@ -203,34 +218,34 @@ const TRANSLATIONS = {
     pt: 'Sobre o VicPods',
   },
   'page.landing.title': {
-    en: 'VicPods Lab - VicPods',
-    es: 'Laboratorio VicPods - VicPods',
-    pt: 'Lab VicPods - VicPods',
+    en: 'VicPods - Podcast Planning + Launch Prep',
+    es: 'VicPods - Planificacion de podcasts + preparacion de lanzamiento',
+    pt: 'VicPods - Planejamento de podcasts + preparacao de lancamento',
   },
   'page.landing.header': {
-    en: 'VicPods Lab',
-    es: 'Laboratorio VicPods',
-    pt: 'Lab VicPods',
+    en: 'VicPods',
+    es: 'VicPods',
+    pt: 'VicPods',
   },
   'page.landing.subtitle': {
-    en: 'Build better podcasts before you hit record.',
-    es: 'Construye mejores podcasts antes de presionar grabar.',
-    pt: 'Construa podcasts melhores antes de apertar gravar.',
+    en: 'Go from podcast idea to ready-to-record episode.',
+    es: 'Pasa de idea de podcast a episodio listo para grabar.',
+    pt: 'Va da ideia do podcast ao episodio pronto para gravar.',
   },
   'page.landing.kicker': {
-    en: 'Enter the Lab',
-    es: 'Entra al laboratorio',
-    pt: 'Entre no lab',
+    en: 'Ready before you record',
+    es: 'Listo antes de grabar',
+    pt: 'Pronto antes de gravar',
   },
   'page.landing.hero.title': {
-    en: 'Build better podcasts before you hit record.',
-    es: 'Construye mejores podcasts antes de presionar grabar.',
-    pt: 'Construa podcasts melhores antes de apertar gravar.',
+    en: 'Go from podcast idea to ready-to-record episode.',
+    es: 'Pasa de idea de podcast a episodio listo para grabar.',
+    pt: 'Va da ideia do podcast ao episodio pronto para gravar.',
   },
   'page.landing.hero.body': {
-    en: 'VicPods helps creators structure stronger episodes, plan continuity-driven series, and refine scripts inside one focused podcast application.',
-    es: 'VicPods ayuda a los creadores a estructurar episodios mas fuertes, planificar series guiadas por continuidad y refinar guiones dentro de una aplicacion de podcast enfocada.',
-    pt: 'O VicPods ajuda criadores a estruturar episodios mais fortes, planejar series guiadas por continuidade e refinar roteiros dentro de um aplicativo de podcast focado.',
+    en: 'VicPods helps creators turn rough ideas into structured episodes, launch-ready show notes, and episode briefs inside one focused workflow.',
+    es: 'VicPods ayuda a los creadores a convertir ideas iniciales en episodios estructurados, show notes listos para lanzar y briefs de episodio dentro de un flujo enfocado.',
+    pt: 'O VicPods ajuda criadores a transformar ideias iniciais em episodios estruturados, show notes prontos para lancar e briefs de episodio dentro de um fluxo focado.',
   },
   'page.landing.cta.primary.user': {
     en: 'Open Workspace',
@@ -258,24 +273,24 @@ const TRANSLATIONS = {
     pt: 'Ver como funciona',
   },
   'page.landing.proof.one': {
-    en: 'Structure-first workflow',
-    es: 'Flujo centrado en estructura',
-    pt: 'Fluxo focado em estrutura',
+    en: 'Ready-to-record workflow',
+    es: 'Flujo listo para grabar',
+    pt: 'Fluxo pronto para gravar',
   },
   'page.landing.proof.two': {
-    en: 'Writing intelligence',
-    es: 'Inteligencia de escritura',
-    pt: 'Inteligencia de escrita',
+    en: 'Show notes + episode briefs',
+    es: 'Show notes + briefs de episodio',
+    pt: 'Show notes + briefs de episodio',
   },
   'page.landing.proof.three': {
-    en: 'Series planning',
-    es: 'Planificacion de series',
-    pt: 'Planejamento de series',
+    en: 'Series continuity',
+    es: 'Continuidad de series',
+    pt: 'Continuidade de series',
   },
   'page.landing.status': {
-    en: 'Lab signal active',
-    es: 'Senal del laboratorio activa',
-    pt: 'Sinal do lab ativo',
+    en: 'March 25 launch',
+    es: 'Lanzamiento 25 de marzo',
+    pt: 'Lancamento em 25 de marco',
   },
   'page.landing.card.single.title': {
     en: 'Start a single episode',
@@ -283,9 +298,9 @@ const TRANSLATIONS = {
     pt: 'Inicie um episodio unico',
   },
   'page.landing.card.single.body': {
-    en: 'Move from one topic to a recording-ready draft with a clear hook, stronger structure, and focused talking points.',
-    es: 'Pasa de un tema a un borrador listo para grabar con un hook claro, mejor estructura y puntos enfocados.',
-    pt: 'Va de um unico tema para um rascunho pronto para gravacao com hook claro, estrutura melhor e pontos focados.',
+    en: 'Move from one topic to a ready-to-record draft with a clear hook, stronger structure, show notes, and an episode brief.',
+    es: 'Pasa de un tema a un borrador listo para grabar con hook claro, mejor estructura, show notes y un brief del episodio.',
+    pt: 'Va de um tema para um rascunho pronto para gravar com hook claro, estrutura melhor, show notes e um brief do episodio.',
   },
   'page.landing.card.single.cta': {
     en: 'Open single flow',
@@ -298,9 +313,9 @@ const TRANSLATIONS = {
     pt: 'Construa uma serie completa',
   },
   'page.landing.card.series.body': {
-    en: 'Design season goals, recurring themes, continuity rules, and episode arcs before the recording even starts.',
-    es: 'Disena objetivos de temporada, temas recurrentes, reglas de continuidad y arcos de episodios antes de empezar a grabar.',
-    pt: 'Desenhe objetivos de temporada, temas recorrentes, regras de continuidade e arcos de episodio antes mesmo de comecar a gravar.',
+    en: 'Plan season goals, recurring themes, continuity rules, and episode arcs so every recording starts with a clearer brief.',
+    es: 'Planifica objetivos de temporada, temas recurrentes, reglas de continuidad y arcos para que cada grabacion empiece con un brief mas claro.',
+    pt: 'Planeje objetivos de temporada, temas recorrentes, regras de continuidade e arcos para que cada gravacao comece com um brief mais claro.',
   },
   'page.landing.card.series.cta': {
     en: 'Open series flow',
@@ -313,9 +328,9 @@ const TRANSLATIONS = {
     pt: 'Receba orientacao dentro do lab',
   },
   'page.landing.card.guide.body': {
-    en: 'Use Studio, Workspace, Pantry, Help Center, and onboarding together so new and returning users always know the next move.',
-    es: 'Usa Studio, Workspace, Pantry, Centro de ayuda y onboarding juntos para que los usuarios nuevos y recurrentes siempre sepan el siguiente paso.',
-    pt: 'Use Studio, Workspace, Pantry, Central de ajuda e onboarding juntos para que usuarios novos e recorrentes sempre saibam o proximo passo.',
+    en: 'Use Studio, Workspace, Pantry, and Help Center together to move from draft to launch-ready prep without losing the next step.',
+    es: 'Usa Studio, Workspace, Pantry y el Centro de ayuda juntos para pasar del borrador a la preparacion de lanzamiento sin perder el siguiente paso.',
+    pt: 'Use Studio, Workspace, Pantry e a Central de ajuda juntos para sair do rascunho para a preparacao de lancamento sem perder o proximo passo.',
   },
   'page.landing.card.guide.cta': {
     en: 'Open Help Center',
@@ -323,9 +338,9 @@ const TRANSLATIONS = {
     pt: 'Abrir Central de ajuda',
   },
   'page.landing.steps.title': {
-    en: 'How the VicPods lab works',
-    es: 'Como funciona el laboratorio de VicPods',
-    pt: 'Como o lab do VicPods funciona',
+    en: 'How VicPods gets episodes launch-ready',
+    es: 'Como VicPods deja episodios listos para lanzamiento',
+    pt: 'Como o VicPods deixa episodios prontos para lancamento',
   },
   'page.landing.steps.link': {
     en: 'About VicPods',
@@ -348,29 +363,34 @@ const TRANSLATIONS = {
     pt: 'Estrutura',
   },
   'page.landing.steps.two.body': {
-    en: 'Shape the hook, episode flow, timing, and CTA before drafting.',
-    es: 'Da forma al hook, flujo del episodio, tiempo y CTA antes de escribir el borrador.',
-    pt: 'Modele o hook, fluxo do episodio, tempo e CTA antes de escrever o rascunho.',
+    en: 'Shape the hook, episode flow, CTA, and talking points before drafting.',
+    es: 'Da forma al hook, flujo del episodio, CTA y puntos clave antes de escribir el borrador.',
+    pt: 'Modele o hook, fluxo do episodio, CTA e pontos principais antes de escrever o rascunho.',
   },
   'page.landing.steps.three.label': {
-    en: 'Write',
-    es: 'Escribe',
-    pt: 'Escreva',
+    en: 'Draft',
+    es: 'Borrador',
+    pt: 'Rascunho',
   },
   'page.landing.steps.three.body': {
-    en: 'Generate stronger drafts, refine weak sections, and tighten clarity.',
-    es: 'Genera borradores mas fuertes, refina secciones debiles y mejora la claridad.',
-    pt: 'Gere rascunhos mais fortes, refine secoes fracas e melhore a clareza.',
+    en: 'Generate stronger drafts, refine weak sections, and package show notes for launch.',
+    es: 'Genera borradores mas fuertes, refina secciones debiles y prepara show notes para el lanzamiento.',
+    pt: 'Gere rascunhos mais fortes, refine secoes fracas e prepare show notes para o lancamento.',
   },
   'page.landing.steps.four.label': {
-    en: 'Plan ahead',
-    es: 'Planifica adelante',
-    pt: 'Planeje a frente',
+    en: 'Release prep',
+    es: 'Preparacion de lanzamiento',
+    pt: 'Preparacao de lancamento',
   },
   'page.landing.steps.four.body': {
-    en: 'Keep continuity across themes, callbacks, and series progression.',
-    es: 'Mantiene continuidad entre temas, callbacks y progresion de la serie.',
-    pt: 'Mantenha continuidade entre temas, callbacks e progressao da serie.',
+    en: 'Check readiness, export the episode brief, and record with less prep friction.',
+    es: 'Revisa readiness, exporta el brief del episodio y graba con menos friccion de preparacion.',
+    pt: 'Revise readiness, exporte o brief do episodio e grave com menos friccao de preparacao.',
+  },
+  'page.landing.launch.note': {
+    en: 'Founding launch pricing runs through March 31, 2026.',
+    es: 'El precio founding de lanzamiento dura hasta el 31 de marzo de 2026.',
+    pt: 'O preco founding de lancamento vai ate 31 de marco de 2026.',
   },
   'page.help.title': {
     en: 'Help Center - VicPods',
@@ -383,9 +403,9 @@ const TRANSLATIONS = {
     pt: 'Central de ajuda',
   },
   'page.help.subtitle': {
-    en: 'Official VicPods guidance for setup, creation flows, workspace usage, and account help.',
-    es: 'Guia oficial de VicPods para configuracion, flujos de creacion, uso del espacio de trabajo y ayuda de cuenta.',
-    pt: 'Guia oficial do VicPods para configuracao, fluxos de criacao, uso do espaco de trabalho e ajuda da conta.',
+    en: 'Official VicPods guidance for setup, creation flows, launch prep, and account help.',
+    es: 'Guia oficial de VicPods para configuracion, flujos de creacion, preparacion de lanzamiento y ayuda de cuenta.',
+    pt: 'Guia oficial do VicPods para configuracao, fluxos de criacao, preparacao de lancamento e ajuda da conta.',
   },
   'page.help.link': {
     en: 'Help Center',
@@ -398,9 +418,9 @@ const TRANSLATIONS = {
     pt: 'Central de ajuda do VicPods',
   },
   'page.help.hero.body': {
-    en: 'This is the official knowledge source for how VicPods works. It covers setup, episode creation, series planning, workspace usage, Pantry usage, and account settings.',
-    es: 'Esta es la fuente oficial de conocimiento sobre como funciona VicPods. Cubre configuracion, creacion de episodios, planificacion de series, uso del espacio de trabajo, uso de Pantry y ajustes de cuenta.',
-    pt: 'Esta e a fonte oficial de conhecimento sobre como o VicPods funciona. Ela cobre configuracao, criacao de episodios, planejamento de series, uso do espaco de trabalho, uso do Pantry e configuracoes da conta.',
+    en: 'This is the official knowledge source for how VicPods works. It covers setup, episode creation, series planning, show notes, release readiness, episode briefs, and account settings.',
+    es: 'Esta es la fuente oficial de conocimiento sobre como funciona VicPods. Cubre configuracion, creacion de episodios, planificacion de series, show notes, readiness, briefs de episodio y ajustes de cuenta.',
+    pt: 'Esta e a fonte oficial de conhecimento sobre como o VicPods funciona. Ela cobre configuracao, criacao de episodios, planejamento de series, show notes, readiness, briefs de episodio e configuracoes da conta.',
   },
   'page.help.cta.workspace': {
     en: 'Open Workspace',
@@ -483,9 +503,9 @@ const TRANSLATIONS = {
     pt: 'Abra o Workspace e escolha entre um novo episodio unico ou uma nova serie.',
   },
   'page.help.start.step4': {
-    en: 'Use Pantry later to save reusable ideas, hooks, and ingredients.',
-    es: 'Usa Pantry despues para guardar ideas, hooks e ingredientes reutilizables.',
-    pt: 'Use o Pantry depois para salvar ideias, hooks e ingredientes reutilizaveis.',
+    en: 'Use Pantry for reusable ideas, then generate show notes and export the episode brief when the draft is ready.',
+    es: 'Usa Pantry para ideas reutilizables y luego genera show notes y exporta el brief del episodio cuando el borrador este listo.',
+    pt: 'Use o Pantry para ideias reutilizaveis e depois gere show notes e exporte o brief do episodio quando o rascunho estiver pronto.',
   },
   'page.help.single.title': {
     en: 'How to create a single episode',
@@ -568,9 +588,9 @@ const TRANSLATIONS = {
     pt: 'Use a visao da serie para gerenciar temas, continuidade, configuracoes e planejamento.',
   },
   'page.help.workspace.item3': {
-    en: 'Use the episode editor to refine structure, writing quality, and readiness before recording.',
-    es: 'Usa el editor de episodios para refinar estructura, calidad de escritura y preparacion antes de grabar.',
-    pt: 'Use o editor de episodios para refinar estrutura, qualidade da escrita e prontidao antes da gravacao.',
+    en: 'Use the episode editor to refine structure, check release readiness, generate show notes, and prep the episode brief before recording.',
+    es: 'Usa el editor de episodios para refinar estructura, revisar readiness, generar show notes y preparar el brief antes de grabar.',
+    pt: 'Use o editor de episodios para refinar estrutura, revisar readiness, gerar show notes e preparar o brief antes de gravar.',
   },
   'page.help.pantry.title': {
     en: 'How Pantry works',
@@ -603,9 +623,9 @@ const TRANSLATIONS = {
     pt: 'Ajuda sobre idioma, configuracoes e cobranca',
   },
   'page.help.settings.body': {
-    en: 'Settings controls your profile, app language, theme preference, password, and subscription details. Billing and plan access are managed there as well.',
-    es: 'Configuracion controla tu perfil, idioma de la app, preferencia de tema, contrasena y detalles de suscripcion. La facturacion y el acceso al plan tambien se gestionan ahi.',
-    pt: 'Configuracoes controla seu perfil, idioma do app, preferencia de tema, senha e detalhes da assinatura. A cobranca e o acesso ao plano tambem sao gerenciados ali.',
+    en: 'Settings controls your profile, app language, theme preference, password, subscription details, and billing access.',
+    es: 'Configuracion controla tu perfil, idioma de la app, preferencia de tema, contrasena, detalles de suscripcion y acceso de facturacion.',
+    pt: 'Configuracoes controla seu perfil, idioma do app, preferencia de tema, senha, detalhes da assinatura e acesso de cobranca.',
   },
   'page.help.settings.item1': {
     en: 'Change app language in Settings > Appearance.',
@@ -623,9 +643,9 @@ const TRANSLATIONS = {
     pt: 'Altere a senha em Configuracoes > Seguranca.',
   },
   'page.help.settings.item4': {
-    en: 'Review plan, invoices, and upgrades in Settings > Billing.',
-    es: 'Revisa plan, facturas y mejoras en Configuracion > Facturacion.',
-    pt: 'Revise plano, faturas e upgrades em Configuracoes > Cobranca.',
+    en: 'Review founding launch pricing, invoices, and upgrades in Settings > Billing.',
+    es: 'Revisa el precio founding de lanzamiento, facturas y mejoras en Configuracion > Facturacion.',
+    pt: 'Revise o preco founding de lancamento, faturas e upgrades em Configuracoes > Cobranca.',
   },
   'page.help.faq.title': {
     en: 'Common questions',
@@ -673,14 +693,14 @@ const TRANSLATIONS = {
     pt: 'Salve no Pantry. O Pantry serve para armazenar hooks, notas e ingredientes reutilizaveis para futuros rascunhos de episodios.',
   },
   'footer.tagline': {
-    en: 'AI-powered podcast structuring application.',
-    es: 'Aplicacion de estructuracion de podcasts impulsada por IA.',
-    pt: 'Aplicativo de estruturacao de podcasts com IA.',
+    en: 'Ready-to-record podcast planning and launch prep.',
+    es: 'Planificacion de podcasts y preparacion de lanzamiento listas para grabar.',
+    pt: 'Planejamento de podcasts e preparacao de lancamento prontos para gravar.',
   },
   'footer.note': {
-    en: 'Built to help creators plan stronger episodes before they record.',
-    es: 'Creada para ayudar a los creadores a planificar episodios mas fuertes antes de grabar.',
-    pt: 'Criado para ajudar criadores a planejar episodios mais fortes antes de gravar.',
+    en: 'Built to help creators shape stronger episodes, show notes, and briefs before they record.',
+    es: 'Creada para ayudar a los creadores a dar forma a mejores episodios, show notes y briefs antes de grabar.',
+    pt: 'Criado para ajudar criadores a moldar episodios, show notes e briefs melhores antes de gravar.',
   },
   'footer.terms': {
     en: 'Terms',
@@ -888,9 +908,9 @@ const TRANSLATIONS = {
     pt: 'Criar: serie',
   },
   'page.create.series.subtitle': {
-    en: 'Set up a continuity-driven multi-episode arc in minutes.',
-    es: 'Configura un arco multi-episodio guiado por continuidad en minutos.',
-    pt: 'Configure um arco multi-episodio guiado por continuidade em minutos.',
+    en: 'Set up a continuity-driven multi-episode workflow in minutes.',
+    es: 'Configura un flujo multi-episodio guiado por continuidad en minutos.',
+    pt: 'Configure um fluxo multi-episodio guiado por continuidade em minutos.',
   },
   'page.kitchen.list.title': {
     en: 'Kitchen - VicPods',
@@ -913,9 +933,9 @@ const TRANSLATIONS = {
     pt: 'Espaco de serie com temas e episodios aninhados.',
   },
   'page.kitchen.episode.subtitle': {
-    en: 'Edit structure, continuity, and recording readiness.',
-    es: 'Edita estructura, continuidad y estado para grabacion.',
-    pt: 'Edite estrutura, continuidade e estado de gravacao.',
+    en: 'Edit structure, launch assets, and recording readiness.',
+    es: 'Edita estructura, activos de lanzamiento y estado para grabacion.',
+    pt: 'Edite estrutura, ativos de lancamento e estado de gravacao.',
   },
   'page.pantry.title': {
     en: 'Pantry - VicPods',
@@ -1415,13 +1435,25 @@ const MESSAGE_TRANSLATIONS = {
     es: 'Transcripcion generada y lista para exportar.',
     pt: 'Transcricao gerada e pronta para exportacao.',
   },
+  'Episode brief generated and ready for export.': {
+    es: 'Brief del episodio generado y listo para exportar.',
+    pt: 'Brief do episodio gerado e pronto para exportacao.',
+  },
   'Invalid transcript format. Use pdf, docx, or txt.': {
     es: 'Formato de transcripcion invalido. Usa pdf, docx o txt.',
     pt: 'Formato de transcricao invalido. Use pdf, docx ou txt.',
   },
+  'Invalid episode brief format. Use pdf, docx, or txt.': {
+    es: 'Formato de brief del episodio invalido. Usa pdf, docx o txt.',
+    pt: 'Formato de brief do episodio invalido. Use pdf, docx ou txt.',
+  },
   'Serve this episode to unlock transcript export.': {
     es: 'Marca este episodio como Served para desbloquear exportacion de transcripcion.',
     pt: 'Marque este episodio como Served para liberar exportacao da transcricao.',
+  },
+  'Set this episode to Ready or Served to unlock episode brief export.': {
+    es: 'Pon este episodio en Ready o Served para desbloquear la exportacion del brief.',
+    pt: 'Coloque este episodio em Ready ou Served para liberar a exportacao do brief.',
   },
   'Google auth is not configured.': {
     es: 'La autenticacion de Google no esta configurada.',

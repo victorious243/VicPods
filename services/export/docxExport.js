@@ -24,15 +24,42 @@ async function sendDocxExport({ res, filename, series, theme, episode }) {
       spacing: { after: 180 },
     }),
     new Paragraph({
-      text: `${sections.meta.seriesName} | ${sections.meta.themeName} | Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''}`,
+      text: `${sections.meta.seriesName} | ${sections.meta.themeName} | Theme Episode ${sections.meta.episodeNumberWithinTheme}${sections.meta.globalEpisodeNumber ? ` (Global ${sections.meta.globalEpisodeNumber})` : ''} | ${sections.meta.status}`,
       spacing: { after: 280 },
     }),
-    new Paragraph({ text: 'Hook', heading: HeadingLevel.HEADING_2 }),
-    normalParagraph(sections.hook),
-    new Paragraph({ text: 'Intro', heading: HeadingLevel.HEADING_2 }),
-    normalParagraph(sections.intro),
-    new Paragraph({ text: 'Main Segments', heading: HeadingLevel.HEADING_2 }),
   ];
+
+  if (sections.showNotes.summary) {
+    children.push(new Paragraph({ text: 'Summary', heading: HeadingLevel.HEADING_2 }));
+    children.push(normalParagraph(sections.showNotes.summary));
+  }
+
+  if (sections.showNotes.description) {
+    children.push(new Paragraph({ text: 'Description', heading: HeadingLevel.HEADING_2 }));
+    children.push(normalParagraph(sections.showNotes.description));
+  }
+
+  if (sections.showNotes.keyTakeaways.length) {
+    children.push(new Paragraph({ text: 'Key Takeaways', heading: HeadingLevel.HEADING_2 }));
+    sections.showNotes.keyTakeaways.forEach((takeaway) => {
+      children.push(new Paragraph({
+        text: takeaway,
+        bullet: { level: 0 },
+        spacing: { after: 120 },
+      }));
+    });
+  }
+
+  if (sections.showNotes.listenerCTA) {
+    children.push(new Paragraph({ text: 'Listener CTA', heading: HeadingLevel.HEADING_2 }));
+    children.push(normalParagraph(sections.showNotes.listenerCTA));
+  }
+
+  children.push(new Paragraph({ text: 'Hook', heading: HeadingLevel.HEADING_2 }));
+  children.push(normalParagraph(sections.hook));
+  children.push(new Paragraph({ text: 'Intro', heading: HeadingLevel.HEADING_2 }));
+  children.push(normalParagraph(sections.intro));
+  children.push(new Paragraph({ text: 'Main Segments', heading: HeadingLevel.HEADING_2 }));
 
   sections.segments.forEach((segment) => {
     children.push(new Paragraph({ text: segment.heading, heading: HeadingLevel.HEADING_3 }));
@@ -56,8 +83,10 @@ async function sendDocxExport({ res, filename, series, theme, episode }) {
     }));
   }
 
-  children.push(new Paragraph({ text: 'Fun Segment', heading: HeadingLevel.HEADING_2 }));
-  children.push(normalParagraph(sections.funSegment));
+  if (sections.funSegment) {
+    children.push(new Paragraph({ text: 'Fun Segment', heading: HeadingLevel.HEADING_2 }));
+    children.push(normalParagraph(sections.funSegment));
+  }
   children.push(new Paragraph({ text: 'Outro', heading: HeadingLevel.HEADING_2 }));
   children.push(normalParagraph(sections.outro));
 

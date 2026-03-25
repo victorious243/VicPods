@@ -9,7 +9,7 @@
         </span>
         <span class="topbar-brand-copy">
           <strong>VicPods</strong>
-          <small><%= subtitle || t('sidebar.tagline', 'AI Podcast Structuring App') %></small>
+          <small><%= subtitle || t('sidebar.tagline', 'Podcast Planning + Launch Prep') %></small>
         </span>
       </a>
     <% } else { %>
@@ -24,8 +24,10 @@
 
   <div class="topbar-actions">
     <% if (currentUser) { %>
+      <% const topbarPlanKey = effectivePlan || currentUser?.plan || 'free'; %>
+      <% const topbarPlanLabel = t(`plan.${topbarPlanKey}`, topbarPlanKey.charAt(0).toUpperCase() + topbarPlanKey.slice(1)); %>
       <div class="topbar-action-rail topbar-action-rail--primary">
-        <span class="plan-chip"><%= effectivePlan || currentUser?.plan || 'free' %> <%= t('topbar.plan', 'plan') %></span>
+        <span class="plan-chip"><%= topbarPlanLabel %> <%= t('topbar.plan', 'plan') %></span>
         <a href="/create/single" id="onboarding-topbar-create" class="btn btn-primary topbar-create-btn"><%= t('topbar.create', 'New Episode') %></a>
       </div>
       <div class="topbar-action-rail topbar-action-rail--account">

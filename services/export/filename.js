@@ -21,7 +21,7 @@ function buildTranscriptFilename({ seriesName, themeName, episodeNumberWithinThe
     ? Number(episodeNumberWithinTheme)
     : 'X';
 
-  return `VicPods_${safeSeries}_${safeTheme}_Ep${safeEpisode}.${extension}`;
+  return `VicPods_EpisodeBrief_${safeSeries}_${safeTheme}_Ep${safeEpisode}.${extension}`;
 }
 
 module.exports = {

@@ -6,9 +6,9 @@ function showLanding(req, res) {
   }
 
   return renderPage(res, {
-    title: req.t('page.landing.title', 'VicPods Lab - VicPods'),
-    pageTitle: req.t('page.landing.header', 'VicPods Lab'),
-    subtitle: req.t('page.landing.subtitle', 'Build better podcasts before you hit record.'),
+    title: req.t('page.landing.title', 'VicPods - Podcast Planning + Launch Prep'),
+    pageTitle: req.t('page.landing.header', 'VicPods'),
+    subtitle: req.t('page.landing.subtitle', 'Go from podcast idea to ready-to-record episode.'),
     view: 'landing/index',
     data: {
       publicShell: true,

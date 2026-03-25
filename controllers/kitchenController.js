@@ -45,6 +45,11 @@ const {
   normalizeSeriesBibleInput,
   resolveSeriesBible,
 } = require('../services/series/seriesPlanningService');
+const { buildReleaseReadiness } = require('../services/release/releaseReadinessService');
+const {
+  buildShowNotesSourceSignature,
+  markShowNotesPackStale,
+} = require('../services/showNotes/showNotesPackService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 const { renderPage } = require('../utils/render');
@@ -497,6 +502,14 @@ async function showEpisodeEditor(req, res, next) {
       episode,
       plan: effectivePlan,
     });
+    const toneCheck = computeToneConsistencyScore({
+      episode,
+      tonePreset: effectiveTone.tonePreset,
+      toneIntensity: effectiveTone.toneIntensity,
+    });
+    episode.toneScore = toneCheck.toneScore;
+    episode.toneWarnings = toneCheck.warnings;
+    refreshEpisodeWritingIntelligence(episode, req.language);
     const resolvedBlueprint = resolveEffectiveShowBlueprint({ series, episode });
     const resolvedStructure = resolveEffectiveStructure({ series, episode });
     const effectiveDeliveryStyle = resolveEffectiveDeliveryStyle({ series, episode });
@@ -507,6 +520,10 @@ async function showEpisodeEditor(req, res, next) {
       episodes: seriesEpisodes,
       themes: seriesThemes,
       language: req.language,
+    });
+    const releaseReadiness = buildReleaseReadiness({
+      episode,
+      episodeContinuityContext,
     });
 
     return renderPage(res, {
@@ -537,6 +554,7 @@ async function showEpisodeEditor(req, res, next) {
         targetLengthOptions: TARGET_LENGTH_OPTIONS,
         effectiveDeliveryStyle,
         episodeContinuityContext,
+        releaseReadiness,
       },
     });
   } catch (error) {
@@ -562,6 +580,7 @@ async function saveEpisode(req, res, next) {
       throw new AppError('Episode not found.', 404);
     }
 
+    const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
     const episodeStructure = normalizeEpisodeStructureInput(req.body, episode);
     const writingSettings = normalizeEpisodeWritingSettings(req.body, episode);
 
@@ -619,6 +638,7 @@ async function saveEpisode(req, res, next) {
     });
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
+    markShowNotesPackStale(episode, previousShowNotesSignature);
     refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();

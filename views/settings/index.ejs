@@ -1,7 +1,9 @@
+<% const planLabels = { free: t('plan.free', 'Free'), pro: t('plan.pro', 'Pro'), premium: t('plan.premium', 'Premium') }; %>
+
 <section class="card settings-nav-card">
   <div class="section-head">
     <h3>Settings</h3>
-    <span class="mini-label"><%= effectivePlan %> plan</span>
+    <span class="mini-label"><%= planLabels[effectivePlan] || effectivePlan %> plan</span>
   </div>
   <div class="settings-tab-grid" id="onboarding-settings-tabs">
     <a class="settings-tab-card <%= selectedSection === 'profile' ? 'active-settings-tab' : '' %>" href="/settings?section=profile">
@@ -174,9 +176,9 @@
       <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
     </div>
     <p>
-      <strong>Current Access:</strong> <%= billing.effectivePlan %>
+      <strong>Current Access:</strong> <%= planLabels[billing.effectivePlan] || billing.effectivePlan %>
       <% if (billing.storedPlan !== billing.effectivePlan) { %>
-        <span class="mini-note">(stored: <%= billing.storedPlan %>)</span>
+        <span class="mini-note">(stored: <%= planLabels[billing.storedPlan] || billing.storedPlan %>)</span>
       <% } %>
     </p>
     <% if (billing.currentPeriodStartLabel) { %>
@@ -198,14 +200,23 @@
     </div>
   </section>
 
+  <section class="card">
+    <div class="section-head">
+      <h3>Founding Launch Pricing</h3>
+      <span class="mini-label">through <%= pricing.foundingDeadlineLabel %></span>
+    </div>
+    <p>Lock in the March 2026 launch pricing while VicPods focuses on ready-to-record planning, show notes, release readiness, and episode brief exports.</p>
+  </section>
+
   <section class="card-grid plan-grid">
     <article class="card plan-card <%= billing.effectivePlan === 'free' ? 'active-plan' : '' %>">
       <h3>Free</h3>
       <p class="price"><%= pricing.free %></p>
       <ul>
         <li>Core Studio + Workspace + Pantry access</li>
-        <li>5 generations/day</li>
-        <li>Transcript TXT export only</li>
+        <li>5 AI generations/day</li>
+        <li>Release Readiness Score + Show Notes Pack</li>
+        <li>Episode Brief TXT export</li>
       </ul>
       <button class="btn btn-secondary" disabled>Current Access</button>
     </article>
@@ -213,10 +224,12 @@
     <article class="card plan-card <%= billing.effectivePlan === 'pro' ? 'active-plan' : '' %>">
       <h3>Pro</h3>
       <p class="price"><%= pricing.pro %></p>
+      <p class="mini-note">Launch price through <%= pricing.foundingDeadlineLabel %>. Planned standard price: <%= pricing.proStandard %>.</p>
       <ul>
-        <li>50 generations/day</li>
-        <li>Continuity tools + faster workflow</li>
-        <li>Transcript TXT + PDF exports</li>
+        <li>50 AI generations/day</li>
+        <li>Continuity refresh + stronger series planning</li>
+        <li>Tone consistency scoring</li>
+        <li>Episode Brief TXT + PDF exports</li>
       </ul>
       <% if (billing.effectivePlan === 'pro' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
         <button class="btn btn-secondary" disabled>Current Access</button>
@@ -231,10 +244,12 @@
     <article class="card plan-card <%= billing.effectivePlan === 'premium' ? 'active-plan' : '' %>">
       <h3>Premium</h3>
       <p class="price"><%= pricing.premium %></p>
+      <p class="mini-note">Launch price through <%= pricing.foundingDeadlineLabel %>. Planned standard price: <%= pricing.premiumStandard %>.</p>
       <ul>
-        <li>Unlimited generations</li>
-        <li>Highest continuity + future team features</li>
-        <li>Transcript TXT + PDF + DOCX exports</li>
+        <li>Unlimited AI generations</li>
+        <li>Tone Fix + Voice Persona controls</li>
+        <li>Highest continuity workflow access</li>
+        <li>Episode Brief TXT + PDF + DOCX exports</li>
       </ul>
       <% if (billing.effectivePlan === 'premium' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
         <button class="btn btn-secondary" disabled>Current Access</button>

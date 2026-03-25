@@ -312,9 +312,61 @@ function buildToneFixPrompt(input) {
   ].join('\n');
 }
 
+function buildShowNotesPrompt(input) {
+  const {
+    language,
+    series,
+    theme,
+    episode,
+    effectiveTone,
+    seasonArcStep,
+    continuityWarnings,
+    callbackSuggestions,
+  } = input;
+  const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
+
+  return [
+    'You are Chef AI Launch Editor for VicPods.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
+    'Generate a compact Show Notes Pack for a podcast episode.',
+    'Return valid JSON only with keys: summary, description, keyTakeaways, listenerCTA, socialPosts.',
+    'Do not invent timestamps, analytics, guest quotes, or publishing claims.',
+    'Use the existing episode structure only. Keep the result launch-ready and practical.',
+    '',
+    `Series: ${series.name}`,
+    `Series Goal: ${series.goal || 'Create stronger podcast episodes with clear outcomes.'}`,
+    `Theme: ${theme.name}`,
+    `Theme Summary: ${theme.themeSummary || 'N/A'}`,
+    `Episode Title: ${episode.title || 'Untitled'}`,
+    `Episode Hook: ${episode.hook || 'N/A'}`,
+    `Outline: ${(episode.outline || []).join(' | ') || 'N/A'}`,
+    `Talking Points: ${(episode.talkingPoints || []).join(' | ') || 'N/A'}`,
+    `Host Questions: ${(episode.hostQuestions || []).join(' | ') || 'N/A'}`,
+    `Ending: ${episode.ending || 'N/A'}`,
+    `Season Arc Position: ${seasonArcStep || 'No mapped season step yet.'}`,
+    `Continuity Warnings: ${(continuityWarnings || []).join(' | ') || 'None.'}`,
+    `Callback Suggestions: ${(callbackSuggestions || []).join(' | ') || 'None.'}`,
+    '',
+    tone.toneBlock,
+    '',
+    structureBlock,
+    '',
+    'Constraints:',
+    '- summary: max 80 words',
+    '- description: max 120 words',
+    '- keyTakeaways: max 5 bullets, each concrete and practical',
+    '- listenerCTA: 1-2 lines',
+    '- socialPosts: exactly 3 short options, each ready to post',
+    '- Respect banned words and brand voice rules.',
+  ].join('\n');
+}
+
 module.exports = {
   buildEpisodeGenerationPrompt,
   buildSpicesPrompt,
   buildContinuityRefreshPrompt,
   buildToneFixPrompt,
+  buildShowNotesPrompt,
 };

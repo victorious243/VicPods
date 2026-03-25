@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/episode/generate', requirePlan('free'), enforceAiRateLimit, aiController.generateEpisode);
 router.post('/spices/generate', requirePlan('free'), enforceAiRateLimit, aiController.generateSpices);
+router.post('/show-notes/generate', requirePlan('free'), enforceAiRateLimit, aiController.generateShowNotes);
 router.post('/hooks/generate', requirePlan('free'), enforceAiRateLimit, aiController.generateHooks);
 router.post('/hooks/apply', requirePlan('free'), aiController.applyHookOption);
 router.post('/rewrite/section', requirePlan('free'), enforceAiRateLimit, aiController.rewriteSection);

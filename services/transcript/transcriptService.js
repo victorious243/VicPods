@@ -1,14 +1,14 @@
 const { AppError } = require('../../utils/errors');
 const { buildTranscript } = require('./buildTranscript');
 
-function assertEpisodeServed(episode) {
-  if (episode.status !== 'Served') {
-    throw new AppError('Serve this episode to unlock transcript export.', 403);
+function assertEpisodeBriefEligible(episode) {
+  if (!['Ready', 'Served'].includes(String(episode.status || ''))) {
+    throw new AppError('Set this episode to Ready or Served to unlock episode brief export.', 403);
   }
 }
 
 async function refreshTranscript({ series, theme, episode }) {
-  assertEpisodeServed(episode);
+  assertEpisodeBriefEligible(episode);
 
   episode.transcript = buildTranscript({ series, theme, episode });
   episode.transcriptUpdatedAt = new Date();
@@ -18,7 +18,7 @@ async function refreshTranscript({ series, theme, episode }) {
 }
 
 async function ensureTranscript({ series, theme, episode }) {
-  assertEpisodeServed(episode);
+  assertEpisodeBriefEligible(episode);
 
   if (episode.transcript && String(episode.transcript).trim()) {
     return episode.transcript;
@@ -28,7 +28,7 @@ async function ensureTranscript({ series, theme, episode }) {
 }
 
 module.exports = {
-  assertEpisodeServed,
+  assertEpisodeBriefEligible,
   refreshTranscript,
   ensureTranscript,
 };

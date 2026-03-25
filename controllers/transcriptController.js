@@ -85,7 +85,7 @@ async function generateTranscript(req, res, next) {
       });
     }
 
-    req.flash('success', 'Transcript generated and ready for export.');
+    req.flash('success', 'Episode brief generated and ready for export.');
     return res.redirect(getEditorPath(context));
   } catch (error) {
     if (error.statusCode) {
@@ -107,7 +107,7 @@ async function downloadTranscript(req, res, next) {
     const format = String(req.query.format || 'pdf').toLowerCase();
 
     if (!ALLOWED_FORMATS.has(format)) {
-      throw new AppError('Invalid transcript format. Use pdf, docx, or txt.', 400);
+      throw new AppError('Invalid episode brief format. Use pdf, docx, or txt.', 400);
     }
 
     const planForAccess = req.effectivePlan || req.currentUser?.plan || 'free';

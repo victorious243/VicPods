@@ -3,6 +3,7 @@ const {
   buildSpicesPrompt,
   buildContinuityRefreshPrompt,
   buildToneFixPrompt,
+  buildShowNotesPrompt,
 } = require('./prompts');
 
 class OpenAIProvider {
@@ -71,6 +72,11 @@ class OpenAIProvider {
 
   async fixTone(input) {
     const prompt = buildToneFixPrompt(input);
+    return this.requestJson(prompt);
+  }
+
+  async generateShowNotes(input) {
+    const prompt = buildShowNotesPrompt(input);
     return this.requestJson(prompt);
   }
 }

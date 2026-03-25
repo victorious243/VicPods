@@ -247,6 +247,48 @@ const episodeSchema = new mongoose.Schema(
         default: null,
       },
     },
+    showNotesPack: {
+      summary: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+      description: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1800,
+      },
+      keyTakeaways: {
+        type: [String],
+        default: [],
+      },
+      listenerCTA: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 600,
+      },
+      socialPosts: {
+        type: [String],
+        default: [],
+      },
+      updatedAt: {
+        type: Date,
+        default: null,
+      },
+      stale: {
+        type: Boolean,
+        default: false,
+      },
+      sourceSignature: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 64,
+      },
+    },
     ideaIds: [
       {
         type: mongoose.Schema.Types.ObjectId,

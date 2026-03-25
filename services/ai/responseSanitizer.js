@@ -22,14 +22,14 @@ function clampChars(text, maxChars) {
   return `${normalized.slice(0, Math.max(0, maxChars - 3)).trim()}...`;
 }
 
-function sanitizeBulletArray(value, maxItems) {
+function sanitizeBulletArray(value, maxItems, { maxWords = 24, maxChars = 240 } = {}) {
   const input = Array.isArray(value) ? value : [];
 
   return input
-    .map((item) => toStringSafe(item))
+    .map((item) => clampChars(toStringSafe(item), maxChars))
     .filter(Boolean)
     .slice(0, maxItems)
-    .map((item) => clampWords(item, 24));
+    .map((item) => clampWords(item, maxWords));
 }
 
 function ensureEndingHasTeaser(endingText, { requireTeaser = true } = {}) {
@@ -91,9 +91,20 @@ function sanitizeToneFixPayload(payload, options = {}) {
   };
 }
 
+function sanitizeShowNotesPayload(payload) {
+  return {
+    summary: clampWords(clampChars(payload.summary, 520), 80),
+    description: clampWords(clampChars(payload.description, 800), 120),
+    keyTakeaways: sanitizeBulletArray(payload.keyTakeaways, 5, { maxWords: 20, maxChars: 180 }),
+    listenerCTA: clampWords(clampChars(payload.listenerCTA, 320), 42),
+    socialPosts: sanitizeBulletArray(payload.socialPosts, 3, { maxWords: 35, maxChars: 280 }),
+  };
+}
+
 module.exports = {
   sanitizeEpisodePayload,
   sanitizeSpicesPayload,
   sanitizeContinuityPayload,
   sanitizeToneFixPayload,
+  sanitizeShowNotesPayload,
 };
