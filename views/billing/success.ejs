@@ -1,12 +1,77 @@
-<section class="card">
-  <h3>Checkout Completed</h3>
-  <p>Your payment was submitted. We are syncing your subscription with Stripe now.</p>
-  <p class="mini-note">Plan access updates from webhook events. This usually completes in a few seconds.</p>
-  <% if (checkoutSessionId) { %>
-    <p class="mini-note">Session: <%= checkoutSessionId %></p>
-  <% } %>
-  <div class="inline-actions">
-    <a href="/settings?section=billing" class="btn btn-primary">Back to Billing</a>
-    <a href="/studio" class="btn btn-ghost">Go to Studio</a>
+<%
+  const planLabels = { free: 'Free', pro: 'Pro', premium: 'Premium' };
+  const currentPlanKey = billing?.effectivePlan || effectivePlan || 'free';
+  const currentPlanLabel = planLabels[currentPlanKey] || currentPlanKey;
+  const planStatusLabel = String(billing?.planStatus || 'pending').replace(/_/g, ' ');
+%>
+
+<section class="card billing-hero billing-hero-premium billing-hero-success">
+  <div class="billing-hero-copy">
+    <span class="billing-kicker">Checkout Complete</span>
+    <h3><%= checkoutSync.title %></h3>
+    <p><%= checkoutSync.body %></p>
+    <div class="billing-chip-row">
+      <span class="badge <%= checkoutSync.badgeClass %>"><%= checkoutSync.badgeLabel %></span>
+      <span class="mini-label"><%= currentPlanLabel %> access</span>
+      <% if (billing?.currentPeriodEndLabel && billing?.isPaidActive) { %>
+        <span class="mini-label">through <%= billing.currentPeriodEndLabel %></span>
+      <% } %>
+    </div>
+    <div class="inline-actions">
+      <a href="/settings?section=billing" class="btn btn-primary">Open Billing</a>
+      <a href="/studio" class="btn btn-ghost">Enter Studio</a>
+    </div>
+  </div>
+
+  <aside class="billing-hero-panel billing-hero-panel--receipt">
+    <span class="billing-panel-label">Account Snapshot</span>
+    <div class="billing-receipt-row">
+      <span>Current plan</span>
+      <strong><%= currentPlanLabel %></strong>
+    </div>
+    <div class="billing-receipt-row">
+      <span>Billing status</span>
+      <strong><%= planStatusLabel %></strong>
+    </div>
+    <div class="billing-receipt-row">
+      <span>Access window</span>
+      <strong><%= billing?.currentPeriodEndLabel || 'Syncing from Stripe' %></strong>
+    </div>
+    <% if (checkoutSessionId) { %>
+      <div class="billing-receipt-row billing-receipt-row--session">
+        <span>Session</span>
+        <strong><%= checkoutSessionId %></strong>
+      </div>
+    <% } %>
+  </aside>
+</section>
+
+<section class="card billing-timeline-card">
+  <div class="section-head">
+    <h3>What Happens Next</h3>
+    <span class="mini-label">Stripe + VicPods</span>
+  </div>
+  <div class="billing-timeline">
+    <article class="billing-step is-complete">
+      <span class="billing-step-index">01</span>
+      <div>
+        <strong>Payment secured</strong>
+        <p>Stripe confirmed the checkout and returned you to VicPods.</p>
+      </div>
+    </article>
+    <article class="billing-step <%= billing?.isPaidActive ? 'is-complete' : 'is-live' %>">
+      <span class="billing-step-index">02</span>
+      <div>
+        <strong>Plan access refreshed</strong>
+        <p><%= billing?.isPaidActive ? 'Your subscription is already reflected on the account.' : 'We are reconciling plan access and billing metadata now.' %></p>
+      </div>
+    </article>
+    <article class="billing-step <%= billing?.isPaidActive ? 'is-live' : '' %>">
+      <span class="billing-step-index">03</span>
+      <div>
+        <strong>Premium tools unlocked</strong>
+        <p>Open Billing or head back to the Studio to continue with the updated plan.</p>
+      </div>
+    </article>
   </div>
 </section>

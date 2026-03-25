@@ -170,95 +170,171 @@
 <% } %>
 
 <% if (selectedSection === 'billing') { %>
-  <section class="card">
-    <div class="section-head">
-      <h3>Subscription Status</h3>
-      <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
-    </div>
-    <p>
-      <strong>Current Access:</strong> <%= planLabels[billing.effectivePlan] || billing.effectivePlan %>
-      <% if (billing.storedPlan !== billing.effectivePlan) { %>
-        <span class="mini-note">(stored: <%= planLabels[billing.storedPlan] || billing.storedPlan %>)</span>
+  <%
+    const paidActive = (billing.planStatus === 'active' || billing.planStatus === 'trialing') && billing.effectivePlan !== 'free';
+    const currentPlanLabel = planLabels[billing.effectivePlan] || billing.effectivePlan;
+    const billingHeroTitle = paidActive
+      ? `${currentPlanLabel} access is active`
+      : billing.planStatus === 'past_due'
+        ? 'Billing needs attention'
+        : billing.effectivePlan === 'free'
+          ? 'Upgrade into the premium workflow'
+          : `${currentPlanLabel} access is syncing`;
+    const billingHeroBody = paidActive
+      ? 'Your account is unlocked for the current cycle. Use Billing to manage invoices, upgrades, and future renewal decisions.'
+      : billing.planStatus === 'past_due'
+        ? 'Stripe reported a billing issue. Update your payment details to restore paid access without losing momentum.'
+        : billing.effectivePlan === 'free'
+          ? 'Move beyond the starter workspace with stronger continuity controls, richer exports, and higher daily generation capacity.'
+          : 'Your Stripe checkout completed, but the plan refresh is still being finalized. This page will reflect the paid tier as soon as sync completes.';
+    const billingPlans = [
+      {
+        key: 'free',
+        eyebrow: 'Starter',
+        title: 'Free',
+        price: pricing.free,
+        summary: 'Clean core workspace for early planning.',
+        note: 'Included for every account.',
+        features: [
+          'Core Studio + Workspace + Pantry access',
+          '5 AI generations each day',
+          'Release Readiness Score + Show Notes Pack',
+          'Episode Brief TXT export',
+        ],
+      },
+      {
+        key: 'pro',
+        eyebrow: 'Most popular',
+        title: 'Pro',
+        price: pricing.pro,
+        summary: 'Sharper production flow for serious weekly shows.',
+        note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.proStandard}.`,
+        features: [
+          '50 AI generations each day',
+          'Continuity refresh + stronger series planning',
+          'Tone consistency scoring',
+          'Episode Brief TXT + PDF exports',
+        ],
+      },
+      {
+        key: 'premium',
+        eyebrow: 'Highest control',
+        title: 'Premium',
+        price: pricing.premium,
+        summary: 'Full VicPods suite with maximum AI and export depth.',
+        note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.premiumStandard}.`,
+        features: [
+          'Unlimited AI generations',
+          'Tone Fix + Voice Persona controls',
+          'Highest continuity workflow access',
+          'Episode Brief TXT + PDF + DOCX exports',
+        ],
+      },
+    ];
+  %>
+
+  <section class="card billing-hero billing-hero-premium">
+    <div class="billing-hero-copy">
+      <span class="billing-kicker">Billing Control</span>
+      <h3><%= billingHeroTitle %></h3>
+      <p><%= billingHeroBody %></p>
+      <div class="billing-chip-row">
+        <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
+        <span class="mini-label"><%= currentPlanLabel %> plan</span>
+        <% if (billing.currentPeriodEndLabel && paidActive) { %>
+          <span class="mini-label">through <%= billing.currentPeriodEndLabel %></span>
+        <% } %>
+        <% if (billing.storedPlan !== billing.effectivePlan) { %>
+          <span class="mini-label">stored: <%= planLabels[billing.storedPlan] || billing.storedPlan %></span>
+        <% } %>
+      </div>
+      <% if (billing.cancelAtPeriodEnd && billing.currentPeriodEndLabel) { %>
+        <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
       <% } %>
-    </p>
-    <% if (billing.currentPeriodStartLabel) { %>
-      <p><strong>Current period started:</strong> <%= billing.currentPeriodStartLabel %></p>
-    <% } %>
-    <% if (billing.currentPeriodEndLabel) { %>
-      <p><strong>Current period ends:</strong> <%= billing.currentPeriodEndLabel %></p>
-    <% } %>
-    <% if (billing.cancelAtPeriodEnd && billing.currentPeriodEndLabel) { %>
-      <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
-    <% } %>
-    <% if (billing.planStatus === 'past_due') { %>
-      <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
-    <% } %>
-    <div class="inline-actions">
-      <form method="POST" action="/billing/portal">
-        <button class="btn btn-secondary" type="submit">Manage Billing</button>
-      </form>
+      <% if (billing.planStatus === 'past_due') { %>
+        <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
+      <% } %>
+      <div class="inline-actions">
+        <form method="POST" action="/billing/portal">
+          <button class="btn btn-secondary" type="submit">Manage Billing</button>
+        </form>
+        <a href="/studio" class="btn btn-ghost">Open Studio</a>
+      </div>
     </div>
+
+    <aside class="billing-hero-panel">
+      <div class="billing-stat-card">
+        <span class="billing-panel-label">Current access</span>
+        <strong><%= currentPlanLabel %></strong>
+        <small><%= paidActive ? 'Premium tools are available right now.' : 'Upgrade when you are ready.' %></small>
+      </div>
+      <div class="billing-stat-card">
+        <span class="billing-panel-label">Billing status</span>
+        <strong><%= billing.planStatusLabel %></strong>
+        <small><%= billing.currentPeriodStartLabel ? `Started ${billing.currentPeriodStartLabel}` : 'No paid cycle on record yet.' %></small>
+      </div>
+      <div class="billing-stat-card">
+        <span class="billing-panel-label">Current window</span>
+        <strong><%= billing.currentPeriodEndLabel || 'Not available yet' %></strong>
+        <small><%= paidActive ? 'Managed by Stripe subscription dates.' : 'Will populate after activation.' %></small>
+      </div>
+    </aside>
   </section>
 
-  <section class="card">
-    <div class="section-head">
-      <h3>Founding Launch Pricing</h3>
-      <span class="mini-label">through <%= pricing.foundingDeadlineLabel %></span>
+  <section class="card billing-launch-band">
+    <div>
+      <span class="billing-kicker">Founding Launch Pricing</span>
+      <h3>Premium tools, launch-window pricing</h3>
+      <p>Lock in March 2026 pricing while VicPods sharpens ready-to-record planning, release readiness, show notes, and export workflows.</p>
     </div>
-    <p>Lock in the March 2026 launch pricing while VicPods focuses on ready-to-record planning, show notes, release readiness, and episode brief exports.</p>
+    <span class="mini-label">through <%= pricing.foundingDeadlineLabel %></span>
   </section>
 
-  <section class="card-grid plan-grid">
-    <article class="card plan-card <%= billing.effectivePlan === 'free' ? 'active-plan' : '' %>">
-      <h3>Free</h3>
-      <p class="price"><%= pricing.free %></p>
-      <ul>
-        <li>Core Studio + Workspace + Pantry access</li>
-        <li>5 AI generations/day</li>
-        <li>Release Readiness Score + Show Notes Pack</li>
-        <li>Episode Brief TXT export</li>
-      </ul>
-      <button class="btn btn-secondary" disabled>Current Access</button>
-    </article>
+  <section class="card-grid plan-grid premium-plan-grid">
+    <% billingPlans.forEach((plan) => { %>
+      <% const planIsCurrent = billing.effectivePlan === plan.key && (plan.key === 'free' || paidActive); %>
+      <% const planIsSyncing = billing.effectivePlan === plan.key && !planIsCurrent && plan.key !== 'free'; %>
+      <article class="card plan-card premium-plan-card <%= planIsCurrent ? 'active-plan premium-plan-card-active' : '' %> <%= plan.key === 'pro' ? 'premium-plan-card-featured' : '' %>">
+        <div class="premium-plan-card-top">
+          <div>
+            <span class="mini-label"><%= plan.eyebrow %></span>
+            <h3><%= plan.title %></h3>
+          </div>
+          <% if (planIsCurrent) { %>
+            <span class="badge badge-ready">Current access</span>
+          <% } else if (planIsSyncing) { %>
+            <span class="badge badge-draft">Syncing</span>
+          <% } else if (plan.key === 'pro') { %>
+            <span class="badge badge-planned">Best value</span>
+          <% } else if (plan.key === 'premium') { %>
+            <span class="badge badge-served">Elite</span>
+          <% } %>
+        </div>
 
-    <article class="card plan-card <%= billing.effectivePlan === 'pro' ? 'active-plan' : '' %>">
-      <h3>Pro</h3>
-      <p class="price"><%= pricing.pro %></p>
-      <p class="mini-note">Launch price through <%= pricing.foundingDeadlineLabel %>. Planned standard price: <%= pricing.proStandard %>.</p>
-      <ul>
-        <li>50 AI generations/day</li>
-        <li>Continuity refresh + stronger series planning</li>
-        <li>Tone consistency scoring</li>
-        <li>Episode Brief TXT + PDF exports</li>
-      </ul>
-      <% if (billing.effectivePlan === 'pro' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
-        <button class="btn btn-secondary" disabled>Current Access</button>
-      <% } else { %>
-        <form method="POST" action="/billing/checkout">
-          <input type="hidden" name="plan" value="pro" />
-          <button class="btn btn-primary" type="submit">Upgrade to Pro</button>
-        </form>
-      <% } %>
-    </article>
+        <p class="price premium-price"><%= plan.price %></p>
+        <p class="premium-plan-tagline"><%= plan.summary %></p>
+        <p class="mini-note"><%= plan.note %></p>
 
-    <article class="card plan-card <%= billing.effectivePlan === 'premium' ? 'active-plan' : '' %>">
-      <h3>Premium</h3>
-      <p class="price"><%= pricing.premium %></p>
-      <p class="mini-note">Launch price through <%= pricing.foundingDeadlineLabel %>. Planned standard price: <%= pricing.premiumStandard %>.</p>
-      <ul>
-        <li>Unlimited AI generations</li>
-        <li>Tone Fix + Voice Persona controls</li>
-        <li>Highest continuity workflow access</li>
-        <li>Episode Brief TXT + PDF + DOCX exports</li>
-      </ul>
-      <% if (billing.effectivePlan === 'premium' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
-        <button class="btn btn-secondary" disabled>Current Access</button>
-      <% } else { %>
-        <form method="POST" action="/billing/checkout">
-          <input type="hidden" name="plan" value="premium" />
-          <button class="btn btn-primary" type="submit">Upgrade to Premium</button>
-        </form>
-      <% } %>
-    </article>
+        <ul class="premium-plan-feature-list">
+          <% plan.features.forEach((feature) => { %>
+            <li>
+              <span class="premium-feature-dot" aria-hidden="true"></span>
+              <span><%= feature %></span>
+            </li>
+          <% }) %>
+        </ul>
+
+        <% if (plan.key === 'free') { %>
+          <button class="btn btn-secondary" disabled><%= billing.effectivePlan === 'free' ? 'Current Access' : 'Always Available' %></button>
+        <% } else if (planIsCurrent) { %>
+          <button class="btn btn-secondary" disabled>Current Access</button>
+        <% } else { %>
+          <form method="POST" action="/billing/checkout">
+            <input type="hidden" name="plan" value="<%= plan.key %>" />
+            <button class="btn btn-primary" type="submit">Upgrade to <%= plan.title %></button>
+          </form>
+        <% } %>
+      </article>
+    <% }) %>
   </section>
 <% } %>

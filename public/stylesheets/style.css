@@ -779,39 +779,49 @@ html[data-theme="light"] .topbar {
 }
 
 .settings-nav-card {
-  gap: 14px;
+  gap: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, rgba(255, 255, 255, 0.02)), var(--surface));
 }
 
 .settings-tab-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .settings-tab-card {
   text-decoration: none;
   color: inherit;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg-2));
-  padding: 10px;
-  min-height: 86px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, rgba(255, 255, 255, 0.02)), color-mix(in srgb, var(--bg-2) 78%, var(--surface)));
+  padding: 14px;
+  min-height: 94px;
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 10px;
-  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  gap: 12px;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .settings-tab-card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
-  background: color-mix(in srgb, var(--surface) 84%, var(--primary));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 84%, rgba(59, 130, 246, 0.08)), color-mix(in srgb, var(--bg-2) 76%, var(--primary)));
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.22);
 }
 
 .active-settings-tab {
   border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
-  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 16%, transparent), var(--surface));
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.18), transparent 34%),
+    linear-gradient(160deg, color-mix(in srgb, var(--primary) 18%, transparent), var(--surface));
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
 }
 
 .settings-tab-icon {
@@ -1844,6 +1854,273 @@ html[data-theme='light'] .onboarding-backdrop {
   align-content: start;
 }
 
+.billing-hero {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+  gap: 22px;
+}
+
+.billing-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.12), transparent 28%);
+  pointer-events: none;
+}
+
+.billing-hero-premium {
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, rgba(99, 102, 241, 0.06)), color-mix(in srgb, var(--bg-2) 88%, rgba(8, 47, 73, 0.28)));
+}
+
+.billing-hero-copy,
+.billing-hero-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.billing-hero-copy {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.billing-kicker {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  background: rgba(37, 99, 235, 0.12);
+  color: #bfdbfe;
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.billing-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.billing-hero-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, rgba(255, 255, 255, 0.08));
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.34), rgba(15, 23, 42, 0.12));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.billing-panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.billing-stat-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, rgba(255, 255, 255, 0.06));
+  background: color-mix(in srgb, var(--surface) 78%, rgba(255, 255, 255, 0.02));
+}
+
+.billing-stat-card strong {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.billing-stat-card small {
+  color: var(--muted);
+}
+
+.billing-hero-panel--receipt {
+  gap: 10px;
+}
+
+.billing-receipt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, rgba(255, 255, 255, 0.06));
+  background: color-mix(in srgb, var(--surface) 80%, rgba(255, 255, 255, 0.01));
+}
+
+.billing-receipt-row span {
+  color: var(--muted);
+}
+
+.billing-receipt-row strong {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.billing-receipt-row--session strong {
+  max-width: 260px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.billing-launch-band {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+  border-color: color-mix(in srgb, var(--primary-2) 24%, var(--border));
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.08), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, rgba(255, 255, 255, 0.02)), var(--surface));
+}
+
+.billing-timeline-card {
+  gap: 16px;
+}
+
+.billing-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.billing-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--surface) 82%, rgba(255, 255, 255, 0.02));
+}
+
+.billing-step strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.billing-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-2) 84%, rgba(255, 255, 255, 0.04));
+  border: 1px solid color-mix(in srgb, var(--border) 86%, rgba(255, 255, 255, 0.08));
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+}
+
+.billing-step.is-complete {
+  border-color: rgba(34, 197, 94, 0.26);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.billing-step.is-live {
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(59, 130, 246, 0.09);
+}
+
+.premium-plan-grid {
+  gap: 16px;
+}
+
+.premium-plan-card {
+  position: relative;
+  overflow: hidden;
+  gap: 16px;
+  min-height: 100%;
+  padding: 20px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, rgba(255, 255, 255, 0.02)), color-mix(in srgb, var(--bg-2) 86%, var(--surface)));
+}
+
+.premium-plan-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 28%, transparent 74%, rgba(59, 130, 246, 0.08));
+  pointer-events: none;
+}
+
+.premium-plan-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-plan-card-featured {
+  border-color: rgba(96, 165, 250, 0.26);
+  box-shadow: 0 20px 38px rgba(2, 6, 23, 0.22);
+}
+
+.premium-plan-card-active {
+  border-color: rgba(99, 102, 241, 0.42);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.16);
+}
+
+.premium-plan-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.premium-price {
+  font-size: clamp(2rem, 2.8vw, 2.7rem);
+  letter-spacing: -0.05em;
+}
+
+.premium-plan-tagline {
+  color: color-mix(in srgb, var(--text) 84%, var(--muted) 16%);
+  font-size: 0.98rem;
+}
+
+.premium-plan-feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.premium-plan-feature-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  color: var(--text);
+}
+
+.premium-feature-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, var(--primary), #38bdf8);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
 .plan-card ul {
   margin: 0;
   padding-left: 18px;
@@ -1857,6 +2134,7 @@ html[data-theme='light'] .onboarding-backdrop {
   font-size: 30px;
   color: var(--text);
   font-weight: 760;
+  letter-spacing: -0.03em;
 }
 
 .active-plan {
@@ -1874,6 +2152,12 @@ html[data-theme='light'] .onboarding-backdrop {
 
   .plan-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .billing-hero,
+  .billing-launch-band,
+  .billing-timeline {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1901,6 +2185,18 @@ html[data-theme='light'] .onboarding-backdrop {
 
   .content-wrap {
     padding: 14px 16px 20px;
+  }
+
+  .billing-hero-panel {
+    padding: 14px;
+  }
+
+  .billing-receipt-row {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-receipt-row strong {
+    text-align: left;
   }
 
   .site-footer {

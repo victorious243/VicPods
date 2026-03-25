@@ -97,6 +97,75 @@ async function applySubscriptionToUser(user, subscription) {
   await user.save();
 }
 
+async function syncCheckoutSessionToUser(user, session) {
+  if (!user || !session || session.mode !== 'subscription') {
+    return {
+      synced: false,
+      reason: 'not_subscription',
+    };
+  }
+
+  const sessionUserId = String(session.client_reference_id || session.metadata?.userId || '').trim();
+  if (sessionUserId && sessionUserId !== user._id.toString()) {
+    return {
+      synced: false,
+      reason: 'user_mismatch',
+    };
+  }
+
+  user.stripeCustomerId = session.customer || user.stripeCustomerId;
+  user.stripeSubscriptionId = session.subscription || user.stripeSubscriptionId;
+
+  if (!session.subscription) {
+    await user.save();
+    return {
+      synced: false,
+      reason: 'missing_subscription',
+      user,
+    };
+  }
+
+  const stripe = getStripeClient();
+  const subscriptionId = typeof session.subscription === 'string'
+    ? session.subscription
+    : session.subscription.id;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+  await applySubscriptionToUser(user, subscription);
+
+  return {
+    synced: true,
+    reason: 'subscription_applied',
+    user,
+    subscription,
+  };
+}
+
+async function reconcileCheckoutSession({ sessionId, user }) {
+  const stripe = getStripeClient();
+  const session = await stripe.checkout.sessions.retrieve(String(sessionId || '').trim());
+
+  if (!user) {
+    user = await findUserForCheckoutSession(session);
+  }
+
+  if (!user) {
+    return {
+      synced: false,
+      reason: 'user_not_found',
+      session,
+      user: null,
+      subscription: null,
+    };
+  }
+
+  const syncResult = await syncCheckoutSessionToUser(user, session);
+  return {
+    ...syncResult,
+    session,
+  };
+}
+
 async function handleCheckoutSessionCompleted(session) {
   if (session.mode !== 'subscription') {
     return;
@@ -108,9 +177,7 @@ async function handleCheckoutSessionCompleted(session) {
     return;
   }
 
-  user.stripeCustomerId = session.customer || user.stripeCustomerId;
-  user.stripeSubscriptionId = session.subscription || user.stripeSubscriptionId;
-  await user.save();
+  await syncCheckoutSessionToUser(user, session);
 }
 
 async function handleSubscriptionCreatedOrUpdated(subscription) {
@@ -197,5 +264,7 @@ async function handleStripeEvent(event) {
 }
 
 module.exports = {
+  applySubscriptionToUser,
+  reconcileCheckoutSession,
   handleStripeEvent,
 };

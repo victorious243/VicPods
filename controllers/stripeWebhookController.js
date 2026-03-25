@@ -41,6 +41,7 @@ async function handleWebhook(req, res) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Stripe webhook handler error:', error.message);
+    return res.status(500).json({ received: false, error: 'stripe_webhook_handler_failed' });
   }
 
   return res.status(200).json({ received: true });

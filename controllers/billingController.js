@@ -2,6 +2,82 @@ const { renderPage } = require('../utils/render');
 const { createCheckoutSession } = require('../services/stripe/checkout');
 const { ensureStripeCustomerForUser, createPortalSession } = require('../services/stripe/portal');
 const { getPricingDisplay } = require('../services/billing/pricing');
+const { reconcileCheckoutSession } = require('../services/stripe/webhookHandlers');
+const { resolveEffectivePlan } = require('../middleware/requirePlan');
+
+const ACTIVE_BILLING_STATUSES = new Set(['active', 'trialing']);
+
+function formatDate(dateValue) {
+  if (!dateValue) {
+    return null;
+  }
+
+  return new Date(dateValue).toLocaleString();
+}
+
+function buildBillingSnapshot(user, effectivePlan) {
+  const planStatus = String(user?.planStatus || 'canceled').toLowerCase();
+  return {
+    effectivePlan,
+    storedPlan: String(user?.plan || 'free').toLowerCase(),
+    planStatus,
+    currentPeriodStartLabel: formatDate(user?.currentPeriodStart),
+    currentPeriodEndLabel: formatDate(user?.currentPeriodEnd),
+    cancelAtPeriodEnd: Boolean(user?.cancelAtPeriodEnd),
+    isPaidActive: effectivePlan !== 'free' && ACTIVE_BILLING_STATUSES.has(planStatus),
+  };
+}
+
+function buildCheckoutSyncViewModel({ sessionId, syncResult, billing }) {
+  if (!sessionId) {
+    return {
+      state: 'pending',
+      title: 'Checkout confirmed',
+      body: 'We are waiting for Stripe to send the checkout session details.',
+      badgeLabel: 'sync pending',
+      badgeClass: 'badge-draft',
+    };
+  }
+
+  if (!syncResult) {
+    return {
+      state: 'pending',
+      title: 'Payment received',
+      body: 'Your payment was accepted. We are finalizing plan activation now.',
+      badgeLabel: 'sync pending',
+      badgeClass: 'badge-draft',
+    };
+  }
+
+  if (syncResult.error) {
+    return {
+      state: 'error',
+      title: 'Payment received',
+      body: 'Your checkout succeeded, but we could not refresh your plan immediately. Open Billing again in a moment or use Manage Billing.',
+      badgeLabel: 'needs review',
+      badgeClass: 'badge-draft',
+    };
+  }
+
+  if (billing.isPaidActive) {
+    const planLabel = billing.effectivePlan.charAt(0).toUpperCase() + billing.effectivePlan.slice(1);
+    return {
+      state: 'synced',
+      title: `${planLabel} access is live`,
+      body: 'Stripe confirmed the subscription and your account is already updated.',
+      badgeLabel: billing.planStatus,
+      badgeClass: 'badge-ready',
+    };
+  }
+
+  return {
+    state: 'pending',
+    title: 'Payment received',
+    body: 'Stripe has the payment. Billing access is still syncing and should update shortly.',
+    badgeLabel: 'sync pending',
+    badgeClass: 'badge-draft',
+  };
+}
 
 function showBilling(req, res) {
   return res.redirect('/settings?section=billing');
@@ -48,17 +124,51 @@ async function openPortal(req, res, next) {
   }
 }
 
-function showSuccess(req, res) {
-  return renderPage(res, {
-    title: req.t('page.billing.success.title', 'Billing Success - VicPods'),
-    pageTitle: req.t('page.billing.success.header', 'Payment Received'),
-    subtitle: req.t('page.billing.success.subtitle', 'Processing your subscription. Plan access updates via Stripe webhooks.'),
-    view: 'billing/success',
-    data: {
-      checkoutSessionId: req.query.session_id || null,
-      pricing: getPricingDisplay(),
-    },
-  });
+async function showSuccess(req, res, next) {
+  try {
+    const checkoutSessionId = String(req.query.session_id || '').trim() || null;
+    let syncResult = null;
+
+    if (checkoutSessionId) {
+      try {
+        syncResult = await reconcileCheckoutSession({
+          sessionId: checkoutSessionId,
+          user: req.currentUser,
+        });
+      } catch (error) {
+        syncResult = {
+          error,
+        };
+      }
+    }
+
+    const effectivePlan = resolveEffectivePlan(req.currentUser);
+    req.effectivePlan = effectivePlan;
+    res.locals.effectivePlan = effectivePlan;
+    res.locals.currentUser = req.currentUser;
+
+    const billing = buildBillingSnapshot(req.currentUser, effectivePlan);
+    const checkoutSync = buildCheckoutSyncViewModel({
+      sessionId: checkoutSessionId,
+      syncResult,
+      billing,
+    });
+
+    return renderPage(res, {
+      title: req.t('page.billing.success.title', 'Billing Success - VicPods'),
+      pageTitle: req.t('page.billing.success.header', 'Payment Received'),
+      subtitle: req.t('page.billing.success.subtitle', 'Your checkout is complete. We are confirming account access and billing details now.'),
+      view: 'billing/success',
+      data: {
+        checkoutSessionId,
+        checkoutSync,
+        billing,
+        pricing: getPricingDisplay(),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 function showCancel(req, res) {
