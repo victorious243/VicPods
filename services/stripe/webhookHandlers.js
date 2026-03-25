@@ -93,6 +93,7 @@ async function applySubscriptionToUser(user, subscription) {
   user.currentPeriodStart = currentPeriodStart;
   user.currentPeriodEnd = currentPeriodEnd;
   user.cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
+  user.billingLastSyncedAt = new Date();
 
   await user.save();
 }
@@ -204,6 +205,7 @@ async function handleSubscriptionDeleted(subscription) {
   user.cancelAtPeriodEnd = false;
   user.currentPeriodStart = toDate(subscription.current_period_start) || user.currentPeriodStart;
   user.currentPeriodEnd = toDate(subscription.current_period_end) || user.currentPeriodEnd;
+  user.billingLastSyncedAt = new Date();
 
   await user.save();
 }
@@ -241,6 +243,7 @@ async function handleInvoicePaymentFailed(invoice) {
   user.plan = 'free';
   user.planStatus = 'past_due';
   user.cancelAtPeriodEnd = true;
+  user.billingLastSyncedAt = new Date();
 
   await user.save();
 }

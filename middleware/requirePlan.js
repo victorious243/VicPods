@@ -1,4 +1,5 @@
 const { AppError } = require('../utils/errors');
+const { reconcileUserBilling } = require('../services/stripe/billingReconciliation');
 
 const planPriority = {
   free: 0,
@@ -98,6 +99,14 @@ async function syncPlanStatus(req, res, next) {
       }
 
       return next();
+    }
+
+    try {
+      await reconcileUserBilling(req.currentUser);
+      res.locals.currentUser = req.currentUser;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Billing reconciliation skipped for ${req.currentUser._id}: ${error.message}`);
     }
 
     const now = new Date();

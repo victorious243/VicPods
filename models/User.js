@@ -138,6 +138,10 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    billingLastSyncedAt: {
+      type: Date,
+      default: null,
+    },
     role: {
       type: String,
       enum: ['creator', 'admin'],
