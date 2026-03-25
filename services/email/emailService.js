@@ -49,7 +49,7 @@ function getTransport() {
   return cachedTransport;
 }
 
-async function sendEmail({ to, subject, text, html }) {
+async function sendEmail({ to, subject, text, html, attachments }) {
   const isProduction = process.env.NODE_ENV === 'production';
   const config = getSmtpConfig();
   const transport = getTransport();
@@ -73,6 +73,7 @@ async function sendEmail({ to, subject, text, html }) {
       subject,
       text,
       html,
+      attachments,
     });
   } catch (error) {
     if (isProduction) {

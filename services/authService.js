@@ -1,5 +1,7 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const User = require('../models/User');
 const PendingRegistration = require('../models/PendingRegistration');
 const { AppError } = require('../utils/errors');
@@ -9,6 +11,8 @@ const SALT_ROUNDS = 12;
 const EMAIL_PIN_TTL_MINUTES = 15;
 const PENDING_REGISTRATION_TTL_HOURS = 24;
 const TERMS_VERSION = 'v1.0-2026-02-25';
+const EMAIL_LOGO_CID = 'vicpods-logo@vicpods.app';
+const EMAIL_LOGO_PATH = path.resolve(__dirname, '../public/images/logo/vicpods-logo-horizontal-dark.png');
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -40,20 +44,36 @@ function normalizeIp(value) {
     .slice(0, 80);
 }
 
-function buildPinEmail({ name, pin, appUrl }) {
+function buildEmailLogoAttachment() {
+  if (!fs.existsSync(EMAIL_LOGO_PATH)) {
+    return null;
+  }
+
+  return {
+    filename: 'vicpods-logo-horizontal-dark.png',
+    path: EMAIL_LOGO_PATH,
+    cid: EMAIL_LOGO_CID,
+    contentDisposition: 'inline',
+  };
+}
+
+function buildPinEmail({ name, pin, appUrl, logoCid }) {
   const safeName = String(name || 'there').trim() || 'there';
   const subject = 'Your VicPods verification PIN';
   const text = [
     `Hi ${safeName},`,
     '',
     'Use this PIN to activate your VicPods account:',
+    '',
     `${pin}`,
     '',
     `This PIN expires in ${EMAIL_PIN_TTL_MINUTES} minutes.`,
     '',
-    `Verify here: ${appUrl}/auth/verify`,
+    `Verify your account: ${appUrl}/auth/verify`,
     '',
     'If you did not create this account, you can ignore this email.',
+    '',
+    'VicPods',
   ].join('\n');
 
   const html = `
@@ -64,6 +84,13 @@ function buildPinEmail({ name, pin, appUrl }) {
       <p>This PIN expires in ${EMAIL_PIN_TTL_MINUTES} minutes.</p>
       <p><a href="${appUrl}/auth/verify">Verify your account</a></p>
       <p>If you did not create this account, you can ignore this email.</p>
+      ${logoCid ? `
+      <div style="margin-top:24px;">
+        <img src="cid:${logoCid}" alt="VicPods" width="140" style="display:block; width:140px; max-width:100%; height:auto;" />
+      </div>
+      ` : `
+      <p style="margin-top:24px; font-weight:700;">VicPods</p>
+      `}
     </div>
   `;
 
@@ -72,18 +99,25 @@ function buildPinEmail({ name, pin, appUrl }) {
 
 async function sendVerificationPin({ email, name, pin }) {
   const appUrl = String(process.env.APP_URL || 'http://localhost:3000').trim();
+  const logoAttachment = buildEmailLogoAttachment();
   const message = buildPinEmail({
     name,
     pin,
     appUrl,
+    logoCid: logoAttachment ? EMAIL_LOGO_CID : '',
   });
-
-  const emailResult = await sendEmail({
+  const emailPayload = {
     to: email,
     subject: message.subject,
     text: message.text,
     html: message.html,
-  });
+  };
+
+  if (logoAttachment) {
+    emailPayload.attachments = [logoAttachment];
+  }
+
+  const emailResult = await sendEmail(emailPayload);
 
   return {
     pinDevOnly: emailResult.devFallback ? pin : null,
