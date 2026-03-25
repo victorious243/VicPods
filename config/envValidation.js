@@ -7,6 +7,22 @@ function isValidHttpUrl(value) {
   }
 }
 
+function extractEmailAddress(value) {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/<([^>]+)>/);
+  return String(match ? match[1] : normalized).trim().toLowerCase();
+}
+
+function isValidEmailAddress(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function usesPlaceholderEmailDomain(value) {
+  const normalized = extractEmailAddress(value);
+  const domain = normalized.split('@')[1] || '';
+  return ['yourdomain.com', 'example.com', 'example.org', 'example.net'].includes(domain);
+}
+
 function getStripeKeyMode(value, prefix) {
   const normalized = String(value || '').trim();
   if (!normalized.startsWith(prefix)) {
@@ -117,6 +133,23 @@ function validateEnvironment({ isProduction }) {
     warnings.push('SMTP is partially configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM for email verification delivery.');
   } else if (!isProduction && !smtpConfigured) {
     warnings.push('SMTP is not configured. Verification emails will not be delivered in local development.');
+  }
+
+  if (smtpFrom) {
+    const smtpFromAddress = extractEmailAddress(smtpFrom);
+    const pushSmtpFromIssue = (message) => {
+      if (isProduction) {
+        errors.push(message);
+      } else {
+        warnings.push(message);
+      }
+    };
+
+    if (!isValidEmailAddress(smtpFromAddress)) {
+      pushSmtpFromIssue('SMTP_FROM must contain a valid sender email address.');
+    } else if (usesPlaceholderEmailDomain(smtpFromAddress)) {
+      pushSmtpFromIssue('SMTP_FROM uses a placeholder domain. Replace it with a real sender address on a verified domain or inbox delivery may fail.');
+    }
   }
 
   const googleEnabled = Boolean(googleIssuerUrl || googleClientId || googleClientSecret || googleRedirectUri);

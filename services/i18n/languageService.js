@@ -1239,6 +1239,10 @@ const MESSAGE_TRANSLATIONS = {
     es: 'Tu sesion de seguridad de acceso expiro. Inicia sesion otra vez.',
     pt: 'Sua sessao de seguranca expirou. Entre novamente.',
   },
+  'Check your email and enter the PIN to finish creating your account.': {
+    es: 'Revisa tu correo e ingresa el PIN para terminar de crear tu cuenta.',
+    pt: 'Verifique seu email e digite o PIN para terminar de criar sua conta.',
+  },
   'Account created. Enter the PIN sent to your email to activate your account.': {
     es: 'Cuenta creada. Ingresa el PIN enviado a tu correo para activar tu cuenta.',
     pt: 'Conta criada. Digite o PIN enviado para seu email para ativar sua conta.',

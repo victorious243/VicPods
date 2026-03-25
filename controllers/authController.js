@@ -75,10 +75,11 @@ async function finalizeLoginWithMfa(req, user, welcomeMessage) {
   if (shouldRequireNewUserMfa(user)) {
     const issueResult = await issueMfaPin(user);
     await establishPendingMfaSession(req, userId, user.email);
-    req.flash(
-      'success',
-      `Security check required. Enter the 6-digit code sent to ${issueResult.maskedEmail}.`
-    );
+    let message = `Security check required. Enter the 6-digit code sent to ${issueResult.maskedEmail}.`;
+    if (issueResult.pinDevOnly) {
+      message += ` Dev code: ${issueResult.pinDevOnly}`;
+    }
+    req.flash('success', message);
     return {
       mfaRequired: true,
     };
@@ -175,17 +176,15 @@ async function register(req, res, next) {
       requestIp: req.ip,
     });
 
-    req.flash('success', 'Account created. Enter the PIN sent to your email to activate your account.');
-    return res.redirect(`/auth/verify?email=${encodeURIComponent(result.user.email)}`);
+    let message = 'Check your email and enter the PIN to finish creating your account.';
+    if (result.pinDevOnly) {
+      message += ` Dev PIN: ${result.pinDevOnly}`;
+    }
+    req.flash('success', message);
+    return res.redirect(`/auth/verify?email=${encodeURIComponent(result.email || result.user?.email || req.body.email)}`);
   } catch (error) {
     if (error.statusCode) {
       req.flash('error', error.message);
-      if (error.statusCode === 409) {
-        const email = String(req.body.email || '').trim();
-        if (email) {
-          return res.redirect(`/auth/verify?email=${encodeURIComponent(email)}`);
-        }
-      }
       return res.redirect('/auth/register');
     }
     return next(error);
@@ -242,8 +241,12 @@ async function resendPin(req, res, next) {
       email: req.body.email,
     });
 
-    req.flash('success', 'A new verification PIN has been sent.');
-    return res.redirect(`/auth/verify?email=${encodeURIComponent(result.user.email)}`);
+    let message = 'A new verification PIN has been sent.';
+    if (result.pinDevOnly) {
+      message += ` Dev PIN: ${result.pinDevOnly}`;
+    }
+    req.flash('success', message);
+    return res.redirect(`/auth/verify?email=${encodeURIComponent(result.email || result.user?.email || req.body.email)}`);
   } catch (error) {
     if (error.statusCode) {
       req.flash('error', error.message);
@@ -339,7 +342,11 @@ async function resendMfa(req, res, next) {
       userId: pendingMfaUserId,
     });
 
-    req.flash('success', `A new 6-digit security code was sent to ${result.maskedEmail}.`);
+    let message = `A new 6-digit security code was sent to ${result.maskedEmail}.`;
+    if (result.pinDevOnly) {
+      message += ` Dev code: ${result.pinDevOnly}`;
+    }
+    req.flash('success', message);
     return res.redirect(`/auth/mfa?email=${encodeURIComponent(result.user.email)}`);
   } catch (error) {
     if (error.statusCode) {

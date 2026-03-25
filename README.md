@@ -71,13 +71,13 @@ GOOGLE_OIDC_CLIENT_ID=
 GOOGLE_OIDC_CLIENT_SECRET=
 GOOGLE_OIDC_REDIRECT_URI=http://localhost:3000/auth/google/callback
 GOOGLE_OIDC_SCOPES=openid email profile
-SMTP_HOST=
+SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM="VicPods <no-reply@vicpods.app>"
-EMAIL_TEST_TO=
+SMTP_USER=your_brevo_smtp_login
+SMTP_PASS=your_brevo_smtp_key
+SMTP_FROM="VicPods <sender@verified-domain-you-own.com>"
+EMAIL_TEST_TO=you@example.com
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLIC_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
@@ -110,7 +110,8 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 ## Notes
 - New users must accept Terms and verify email with a 6-digit PIN before account activation.
 - Verification PINs expire after 15 minutes.
-- In non-production only, if SMTP is missing, PIN is logged server-side for local development fallback.
+- In non-production only, if SMTP is missing, email delivery falls back to a local development flow.
+- `SMTP_FROM` must be a real sender address on a domain you have verified with your SMTP provider.
 - In production, SMTP must be configured and verification emails must deliver successfully.
 - Google login is enabled only when Google OIDC env vars are configured.
 - Stripe webhooks are the source of truth for plan activation/cancellation/expiry.

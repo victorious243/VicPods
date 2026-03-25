@@ -1,6 +1,12 @@
 const crypto = require('crypto');
 
-const { authenticateUser, registerUser } = require('../services/authService');
+const {
+  EMAIL_PIN_TTL_MINUTES,
+  authenticateUser,
+  registerUser,
+  resendVerificationPin,
+  verifyEmailPin,
+} = require('../services/authService');
 const { getDailyLimitForPlan } = require('../services/limitService');
 const Episode = require('../models/Episode');
 const Series = require('../models/Series');
@@ -88,6 +94,7 @@ function buildUserProfile(user) {
   return {
     id: user._id.toString(),
     email: user.email,
+    emailVerified: Boolean(user.emailVerified),
     displayName: user.name,
     avatarURL: user.avatarUrl ? user.avatarUrl : null,
     acceptedTermsAt: user.termsAcceptedAt || null,
@@ -136,6 +143,32 @@ function requireApiUser(req, res) {
   return true;
 }
 
+function requireVerifiedApiUser(req, res) {
+  if (!requireApiUser(req, res)) {
+    return false;
+  }
+
+  if (req.currentUser.emailVerified === false) {
+    res.status(403).json({
+      error: 'Please verify your email before continuing.',
+      requiresEmailVerification: true,
+      email: req.currentUser.email,
+    });
+    return false;
+  }
+
+  return true;
+}
+
+function buildVerificationResponse(result) {
+  return {
+    requiresEmailVerification: true,
+    email: result.email || result.user?.email || '',
+    verificationExpiresInMinutes: EMAIL_PIN_TTL_MINUTES,
+    pinDevOnly: result.pinDevOnly || null,
+  };
+}
+
 function episodeMode(episode, series) {
   if (episode.isSingle || series?.creationMode === 'single_collection') {
     return 'single';
@@ -149,7 +182,7 @@ function episodeStatus(value) {
 
 async function register(req, res) {
   try {
-    const userResult = await registerUser({
+    const verificationResult = await registerUser({
       name: req.body?.displayName || req.body?.name,
       email: req.body?.email,
       password: req.body?.password,
@@ -157,14 +190,8 @@ async function register(req, res) {
       requestIp: req.ip,
     });
 
-    const user = userResult.user || userResult;
-    await establishUserSession(req, user._id.toString());
-
-    return res.status(201).json({
-      result: {
-        session: buildSessionPayload(req, user, req.effectivePlan || user.plan || 'free'),
-        mfaChallenge: null,
-      },
+    return res.status(202).json({
+      result: buildVerificationResponse(verificationResult),
     });
   } catch (error) {
     return res.status(error.statusCode || 400).json({
@@ -195,8 +222,46 @@ async function login(req, res) {
   }
 }
 
+async function verifyRegistration(req, res) {
+  try {
+    const user = await verifyEmailPin({
+      email: req.body?.email,
+      pin: req.body?.pin,
+    });
+
+    await establishUserSession(req, user._id.toString());
+
+    return res.json({
+      result: {
+        session: buildSessionPayload(req, user, req.effectivePlan || user.plan || 'free'),
+        mfaChallenge: null,
+      },
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      error: asErrorMessage(error, 'Unable to verify email.'),
+    });
+  }
+}
+
+async function resendRegistrationPin(req, res) {
+  try {
+    const verificationResult = await resendVerificationPin({
+      email: req.body?.email,
+    });
+
+    return res.json({
+      result: buildVerificationResponse(verificationResult),
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      error: asErrorMessage(error, 'Unable to resend verification PIN.'),
+    });
+  }
+}
+
 function session(req, res) {
-  if (!requireApiUser(req, res)) {
+  if (!requireVerifiedApiUser(req, res)) {
     return;
   }
 
@@ -217,7 +282,7 @@ function logout(req, res, next) {
 }
 
 async function studio(req, res, next) {
-  if (!requireApiUser(req, res)) {
+  if (!requireVerifiedApiUser(req, res)) {
     return;
   }
 
@@ -265,6 +330,8 @@ async function studio(req, res, next) {
 module.exports = {
   register,
   login,
+  verifyRegistration,
+  resendRegistrationPin,
   session,
   logout,
   studio,

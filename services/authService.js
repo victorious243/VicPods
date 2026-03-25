@@ -1,11 +1,13 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const User = require('../models/User');
+const PendingRegistration = require('../models/PendingRegistration');
 const { AppError } = require('../utils/errors');
 const { sendEmail } = require('./email/emailService');
 
 const SALT_ROUNDS = 12;
 const EMAIL_PIN_TTL_MINUTES = 15;
+const PENDING_REGISTRATION_TTL_HOURS = 24;
 const TERMS_VERSION = 'v1.0-2026-02-25';
 
 function normalizeEmail(email) {
@@ -26,6 +28,10 @@ function hashVerificationPin(pin) {
 
 function generateVerificationPin() {
   return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+}
+
+function buildPendingRegistrationExpiryDate() {
+  return new Date(Date.now() + PENDING_REGISTRATION_TTL_HOURS * 60 * 60 * 1000);
 }
 
 function normalizeIp(value) {
@@ -64,30 +70,108 @@ function buildPinEmail({ name, pin, appUrl }) {
   return { subject, text, html };
 }
 
-async function issueVerificationPin(user) {
-  const pin = generateVerificationPin();
-  user.emailVerificationPinHash = hashVerificationPin(pin);
-  user.emailVerificationPinExpiresAt = new Date(Date.now() + EMAIL_PIN_TTL_MINUTES * 60 * 1000);
-  await user.save();
-
+async function sendVerificationPin({ email, name, pin }) {
   const appUrl = String(process.env.APP_URL || 'http://localhost:3000').trim();
   const message = buildPinEmail({
-    name: user.name,
+    name,
     pin,
     appUrl,
   });
 
   const emailResult = await sendEmail({
-    to: user.email,
+    to: email,
     subject: message.subject,
     text: message.text,
     html: message.html,
   });
 
   return {
-    user,
     pinDevOnly: emailResult.devFallback ? pin : null,
   };
+}
+
+async function issueVerificationPinForUser(user) {
+  const pin = generateVerificationPin();
+  user.emailVerificationPinHash = hashVerificationPin(pin);
+  user.emailVerificationPinExpiresAt = new Date(Date.now() + EMAIL_PIN_TTL_MINUTES * 60 * 1000);
+  await user.save();
+
+  const emailResult = await sendVerificationPin({
+    email: user.email,
+    name: user.name,
+    pin,
+  });
+
+  return {
+    user,
+    email: user.email,
+    pinDevOnly: emailResult.pinDevOnly,
+  };
+}
+
+async function issueVerificationPinForPendingRegistration(pendingRegistration) {
+  const pin = generateVerificationPin();
+  pendingRegistration.pinHash = hashVerificationPin(pin);
+  pendingRegistration.pinExpiresAt = new Date(Date.now() + EMAIL_PIN_TTL_MINUTES * 60 * 1000);
+  pendingRegistration.expiresAt = buildPendingRegistrationExpiryDate();
+  await pendingRegistration.save();
+
+  const emailResult = await sendVerificationPin({
+    email: pendingRegistration.email,
+    name: pendingRegistration.name,
+    pin,
+  });
+
+  return {
+    pendingRegistration,
+    email: pendingRegistration.email,
+    pinDevOnly: emailResult.pinDevOnly,
+  };
+}
+
+async function activatePendingRegistration(pendingRegistration, existingUser = null) {
+  let user = existingUser;
+
+  if (!user) {
+    try {
+      user = await User.create({
+        name: pendingRegistration.name,
+        email: pendingRegistration.email,
+        passwordHash: pendingRegistration.passwordHash,
+        emailVerified: true,
+        termsAcceptedAt: pendingRegistration.termsAcceptedAt,
+        termsAcceptedVersion: pendingRegistration.termsAcceptedVersion,
+        termsAcceptedIp: pendingRegistration.termsAcceptedIp,
+      });
+    } catch (error) {
+      if (error?.code !== 11000) {
+        throw error;
+      }
+
+      user = await User.findOne({ email: pendingRegistration.email });
+      if (!user) {
+        throw error;
+      }
+    }
+  }
+
+  if (user.emailVerified === false) {
+    user.name = pendingRegistration.name;
+    user.passwordHash = pendingRegistration.passwordHash;
+    user.emailVerified = true;
+    user.authProvider = 'local';
+    user.termsAcceptedAt = pendingRegistration.termsAcceptedAt || user.termsAcceptedAt;
+    user.termsAcceptedVersion = pendingRegistration.termsAcceptedVersion || user.termsAcceptedVersion;
+    user.termsAcceptedIp = pendingRegistration.termsAcceptedIp || user.termsAcceptedIp;
+    user.emailVerificationPinHash = '';
+    user.emailVerificationPinExpiresAt = null;
+    await user.save();
+  } else {
+    user.emailVerified = true;
+  }
+
+  await pendingRegistration.deleteOne();
+  return user;
 }
 
 async function registerUser({ name, email, password, acceptedTerms, requestIp }) {
@@ -109,24 +193,35 @@ async function registerUser({ name, email, password, acceptedTerms, requestIp })
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     if (existingUser.emailVerified === false) {
-      throw new AppError('This email is pending verification. Enter the PIN sent to your inbox.', 409);
+      await PendingRegistration.deleteOne({ email: normalizedEmail });
+      existingUser.name = normalizedName;
+      existingUser.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+      existingUser.termsAcceptedAt = new Date();
+      existingUser.termsAcceptedVersion = TERMS_VERSION;
+      existingUser.termsAcceptedIp = normalizeIp(requestIp);
+      return issueVerificationPinForUser(existingUser);
     }
     throw new AppError('An account with this email already exists.', 409);
   }
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  let pendingRegistration = await PendingRegistration.findOne({ email: normalizedEmail });
 
-  const user = await User.create({
-    name: normalizedName,
-    email: normalizedEmail,
-    passwordHash,
-    emailVerified: false,
-    termsAcceptedAt: new Date(),
-    termsAcceptedVersion: TERMS_VERSION,
-    termsAcceptedIp: normalizeIp(requestIp),
-  });
+  if (!pendingRegistration) {
+    pendingRegistration = new PendingRegistration({
+      email: normalizedEmail,
+      expiresAt: buildPendingRegistrationExpiryDate(),
+    });
+  }
 
-  return issueVerificationPin(user);
+  pendingRegistration.name = normalizedName;
+  pendingRegistration.passwordHash = passwordHash;
+  pendingRegistration.termsAcceptedAt = new Date();
+  pendingRegistration.termsAcceptedVersion = TERMS_VERSION;
+  pendingRegistration.termsAcceptedIp = normalizeIp(requestIp);
+  pendingRegistration.expiresAt = buildPendingRegistrationExpiryDate();
+
+  return issueVerificationPinForPendingRegistration(pendingRegistration);
 }
 
 async function authenticateUser({ email, password }) {
@@ -139,6 +234,13 @@ async function authenticateUser({ email, password }) {
   const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) {
+    const pendingRegistration = await PendingRegistration.findOne({ email: normalizedEmail });
+    if (pendingRegistration) {
+      const isPendingPasswordMatch = await bcrypt.compare(password, pendingRegistration.passwordHash);
+      if (isPendingPasswordMatch) {
+        throw new AppError('Please verify your email with the PIN before logging in.', 403);
+      }
+    }
     throw new AppError('Invalid email or password.', 401);
   }
 
@@ -162,15 +264,21 @@ async function resendVerificationPin({ email }) {
   }
 
   const user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    throw new AppError('No account found for that email.', 404);
-  }
-
-  if (user.emailVerified !== false) {
+  if (user && user.emailVerified !== false) {
     throw new AppError('This account is already verified. Please log in.', 409);
   }
 
-  return issueVerificationPin(user);
+  if (user) {
+    await PendingRegistration.deleteOne({ email: normalizedEmail });
+    return issueVerificationPinForUser(user);
+  }
+
+  const pendingRegistration = await PendingRegistration.findOne({ email: normalizedEmail });
+  if (pendingRegistration) {
+    return issueVerificationPinForPendingRegistration(pendingRegistration);
+  }
+
+  throw new AppError('No account found for that email.', 404);
 }
 
 async function verifyEmailPin({ email, pin }) {
@@ -185,14 +293,37 @@ async function verifyEmailPin({ email, pin }) {
     throw new AppError('PIN must be 6 digits.', 400);
   }
 
-  const user = await User.findOne({ email: normalizedEmail });
+  const [user, pendingRegistration] = await Promise.all([
+    User.findOne({ email: normalizedEmail }),
+    PendingRegistration.findOne({ email: normalizedEmail }),
+  ]);
+
+  if (user && user.emailVerified !== false) {
+    if (pendingRegistration) {
+      await pendingRegistration.deleteOne();
+    }
+    return user;
+  }
+
+  if (pendingRegistration) {
+    if (!pendingRegistration.pinHash || !pendingRegistration.pinExpiresAt) {
+      throw new AppError('No active PIN found. Request a new one.', 400);
+    }
+
+    if (new Date(pendingRegistration.pinExpiresAt).getTime() <= Date.now()) {
+      throw new AppError('This PIN has expired. Request a new one.', 400);
+    }
+
+    const expectedHash = hashVerificationPin(normalizedPin);
+    if (pendingRegistration.pinHash !== expectedHash) {
+      throw new AppError('Invalid PIN. Please try again.', 400);
+    }
+
+    return activatePendingRegistration(pendingRegistration, user || null);
+  }
 
   if (!user) {
     throw new AppError('No account found for that email.', 404);
-  }
-
-  if (user.emailVerified !== false) {
-    return user;
   }
 
   if (!user.emailVerificationPinHash || !user.emailVerificationPinExpiresAt) {
@@ -217,6 +348,7 @@ async function verifyEmailPin({ email, pin }) {
 }
 
 module.exports = {
+  EMAIL_PIN_TTL_MINUTES,
   registerUser,
   authenticateUser,
   resendVerificationPin,

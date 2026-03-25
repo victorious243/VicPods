@@ -2,6 +2,22 @@ require('dotenv').config({ quiet: true });
 
 const nodemailer = require('nodemailer');
 
+function extractEmailAddress(value) {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/<([^>]+)>/);
+  return String(match ? match[1] : normalized).trim().toLowerCase();
+}
+
+function isValidEmailAddress(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function usesPlaceholderEmailDomain(value) {
+  const normalized = extractEmailAddress(value);
+  const domain = normalized.split('@')[1] || '';
+  return ['yourdomain.com', 'example.com', 'example.org', 'example.net'].includes(domain);
+}
+
 function requireEnv(name) {
   const value = String(process.env[name] || '').trim();
   if (!value) {
@@ -18,9 +34,18 @@ async function run() {
   const pass = requireEnv('SMTP_PASS');
   const from = requireEnv('SMTP_FROM');
   const to = requireEnv('EMAIL_TEST_TO');
+  const fromAddress = extractEmailAddress(from);
 
   if (!Number.isInteger(port)) {
     throw new Error('SMTP_PORT must be a valid integer.');
+  }
+
+  if (!isValidEmailAddress(fromAddress)) {
+    throw new Error('SMTP_FROM must contain a valid sender email address.');
+  }
+
+  if (usesPlaceholderEmailDomain(fromAddress)) {
+    throw new Error('SMTP_FROM uses a placeholder domain. Replace it with a real sender address on a verified domain before testing delivery.');
   }
 
   const transport = nodemailer.createTransport({

@@ -20,6 +20,7 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const webhooksRouter = require('./routes/webhooks');
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
+const apiRouter = require('./routes/api');
 const studioRouter = require('./routes/studio');
 const createRouter = require('./routes/create');
 const kitchenRouter = require('./routes/kitchen');
@@ -125,6 +126,7 @@ app.locals.appName = 'VicPods';
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
+app.use('/api', apiRouter);
 
 app.use('/studio', requireAuth, studioRouter);
 app.use('/create', requireAuth, createRouter);
