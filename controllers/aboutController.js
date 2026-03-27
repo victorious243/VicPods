@@ -7,6 +7,7 @@ function showAbout(req, res) {
     subtitle: req.t('page.about.subtitle', 'What VicPods is, who it serves, and why it starts before recording.'),
     view: 'about/index',
     data: {
+      publicShell: true,
       effectivePlan: req.effectivePlan || req.currentUser?.plan || 'free',
     },
   });

@@ -1,49 +1,84 @@
-<aside class="sidebar">
-  <div class="brand-block">
-    <a href="/studio" class="brand-link" aria-label="<%= t('sidebar.brand.aria', 'VicPods Studio') %>">
-      <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-dark.svg" alt="VicPods" />
-      <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-light.svg" alt="VicPods" />
-      <div>
-        <h1>VicPods</h1>
-        <p><%= t('sidebar.tagline', 'Podcast Planning + Launch Prep') %></p>
+<%
+  const normalizedPath = (currentPath || '').split('?')[0];
+  const sidebarName = currentUser
+    ? (currentUser.name || currentUser.email || t('generic.user', 'User')).trim()
+    : '';
+  const sidebarInitials = sidebarName
+    ? (sidebarName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP')
+    : 'VP';
+%>
+
+<aside class="sidebar-shell" data-app-sidebar aria-label="<%= t('sidebar.brand.aria', 'VicPods Studio') %>">
+  <div class="sidebar-backdrop" data-app-sidebar-backdrop hidden></div>
+
+  <div id="app-sidebar-panel" class="sidebar-panel">
+    <div class="sidebar-panel-main">
+      <div class="sidebar-panel-head">
+        <a href="/studio" class="sidebar-brand" aria-label="<%= t('sidebar.brand.aria', 'VicPods Studio') %>">
+          <span class="sidebar-brand-mark">
+            <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-dark.svg" alt="VicPods" />
+            <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-light.svg" alt="VicPods" />
+          </span>
+          <span class="sidebar-brand-copy">
+            <strong>VicPods</strong>
+            <small><%= t('sidebar.tagline', 'Podcast Planning + Launch Prep') %></small>
+          </span>
+        </a>
+
+        <button
+          type="button"
+          class="sidebar-close"
+          data-app-sidebar-close
+          aria-label="<%= t('sidebar.close', 'Close navigation') %>"
+        >
+          <span></span>
+          <span></span>
+        </button>
       </div>
-    </a>
-  </div>
 
-  <nav class="sidebar-nav" aria-label="Primary">
-    <% const normalizedPath = (currentPath || '').split('?')[0]; %>
-    <% (navItems || []).forEach((item) => { %>
-      <% const active = item.href === '/kitchen'
-        ? normalizedPath && (normalizedPath.startsWith('/kitchen') || normalizedPath.startsWith('/create'))
-        : normalizedPath && normalizedPath.startsWith(item.href); %>
-      <a href="<%= item.href %>" class="nav-link <%= active ? 'active' : '' %>">
-        <span class="nav-icon" aria-hidden="true"><%= item.icon %></span>
-        <span><%= item.label %></span>
-      </a>
-    <% }) %>
-  </nav>
+      <nav class="sidebar-nav" aria-label="Primary">
+        <span class="sidebar-mobile-section-label sidebar-mobile-section-label--nav">Navigation</span>
+        <% (navItems || []).forEach((item) => { %>
+          <% const active = item.href === '/kitchen'
+            ? normalizedPath && (normalizedPath.startsWith('/kitchen') || normalizedPath.startsWith('/create'))
+            : normalizedPath && normalizedPath.startsWith(item.href); %>
+          <a href="<%= item.href %>" class="nav-link <%= active ? 'active' : '' %>" data-app-sidebar-close>
+            <span class="nav-link-accent" aria-hidden="true"></span>
+            <span class="nav-icon" aria-hidden="true"><%= item.icon %></span>
+            <span class="nav-label"><%= item.label %></span>
+          </a>
+        <% }) %>
+      </nav>
+    </div>
 
-  <% if (currentUser) { %>
-    <% const sidebarName = (currentUser.name || currentUser.email || t('generic.user', 'User')).trim(); %>
-    <% const sidebarInitials = sidebarName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'; %>
-    <a href="/settings?section=profile" class="sidebar-user-card">
-      <span class="sidebar-user-avatar">
-        <% if (currentUser.avatarUrl) { %>
-          <img src="<%= currentUser.avatarUrl %>" alt="<%= sidebarName %> avatar" />
-        <% } else { %>
-          <span><%= sidebarInitials %></span>
-        <% } %>
-      </span>
-      <span class="sidebar-user-meta">
-        <strong><%= currentUser.name %></strong>
-        <small><%= currentUser.email %></small>
-      </span>
-    </a>
-  <% } %>
+    <div class="sidebar-panel-bottom">
+      <% if (currentUser) { %>
+        <div class="sidebar-mobile-section">
+          <span class="sidebar-mobile-section-label">Account</span>
+          <a href="/settings?section=profile" class="sidebar-user-card" data-app-sidebar-close>
+            <span class="sidebar-user-avatar">
+              <% if (currentUser.avatarUrl) { %>
+                <img src="<%= currentUser.avatarUrl %>" alt="<%= sidebarName %> avatar" />
+              <% } else { %>
+                <span><%= sidebarInitials %></span>
+              <% } %>
+            </span>
+            <span class="sidebar-user-meta">
+              <strong><%= currentUser.name %></strong>
+              <small><%= currentUser.email %></small>
+            </span>
+          </a>
+        </div>
+      <% } %>
 
-  <div class="upgrade-card">
-    <h3><%= t('sidebar.upgrade.title', 'Upgrade Ready') %></h3>
-    <p><%= t('sidebar.upgrade.body', 'Unlock higher AI volume, continuity controls, tone scoring, and richer episode brief exports.') %></p>
-    <a href="/settings?section=billing" class="btn btn-secondary"><%= t('sidebar.upgrade.cta', 'See Plans') %></a>
+      <div class="sidebar-mobile-section">
+        <span class="sidebar-mobile-section-label">Upgrade</span>
+        <div class="upgrade-card">
+          <h3><%= t('sidebar.upgrade.title', 'Upgrade Ready') %></h3>
+          <p><%= t('sidebar.upgrade.body', 'Higher AI limits and richer launch assets when you are ready.') %></p>
+          <a href="/settings?section=billing" class="btn btn-secondary" data-app-sidebar-close><%= t('sidebar.upgrade.cta', 'See Plans') %></a>
+        </div>
+      </div>
+    </div>
   </div>
 </aside>

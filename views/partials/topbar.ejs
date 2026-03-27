@@ -8,11 +8,18 @@
   const userInitials = currentUser
     ? userDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'VP'
     : 'VP';
-  const mobileMenuOpenLabel = currentUser ? 'Open account menu' : 'Open navigation menu';
-  const mobileMenuCloseLabel = currentUser ? 'Close account menu' : 'Close navigation menu';
+  const mobileMenuOpenLabel = currentUser ? 'Open navigation and account menu' : 'Open navigation menu';
+  const mobileMenuCloseLabel = currentUser ? 'Close navigation and account menu' : 'Close navigation menu';
+  const publicPrimaryHref = currentUser ? '/studio' : '/auth/register';
+  const publicPrimaryLabelFull = currentUser ? 'Open Studio' : t('page.about.cta.guest.primary', 'Create account');
+  const publicPrimaryLabelCompact = currentUser ? 'Studio' : 'Create';
 %>
 
-<header class="topbar <%= isPublicShell ? 'topbar--public' : 'topbar--app' %>" data-topbar>
+<header
+  class="topbar <%= isPublicShell ? 'topbar--public' : 'topbar--app' %>"
+  data-topbar
+  data-topbar-mode="<%= isPublicShell ? 'public' : 'app' %>"
+>
   <div class="topbar-main">
     <div class="topbar-intro">
       <% if (isPublicShell) { %>
@@ -37,32 +44,17 @@
     </div>
 
     <div class="topbar-right">
-      <% if (currentUser) { %>
-        <div class="topbar-links-desktop" aria-label="Account shortcuts">
-          <span class="plan-chip topbar-plan-chip"><%= topbarPlanLabel %> <%= t('topbar.plan', 'plan') %></span>
-          <a href="/settings?section=profile" class="topbar-user topbar-user--desktop" aria-label="<%= t('topbar.profile.aria', 'Open profile settings') %>">
-            <span class="topbar-avatar">
-              <% if (currentUser?.avatarUrl) { %>
-                <img src="<%= currentUser.avatarUrl %>" alt="<%= userDisplayName %> avatar" />
-              <% } else { %>
-                <span><%= userInitials %></span>
-              <% } %>
-            </span>
-            <span class="topbar-user-copy">
-              <span class="topbar-user-name"><%= currentUser?.name || t('topbar.profile', 'Profile') %></span>
-            </span>
-          </a>
-          <form method="POST" action="/auth/logout" class="topbar-logout-form">
-            <button type="submit" class="btn btn-secondary topbar-logout-btn"><%= t('topbar.logout', 'Logout') %></button>
-          </form>
-        </div>
-      <% } else { %>
+      <% if (isPublicShell) { %>
         <nav class="topbar-links-desktop" aria-label="Primary navigation">
           <a href="/examples" class="topbar-link">Examples</a>
           <a href="/about" class="topbar-link"><%= t('page.about.link', 'About VicPods') %></a>
           <a href="/help" class="topbar-link"><%= t('page.help.link', 'Help Center') %></a>
-          <a href="/auth/login" class="topbar-link"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+          <% if (!currentUser) { %>
+            <a href="/auth/login" class="topbar-link"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+          <% } %>
         </nav>
+      <% } else if (currentUser) { %>
+        <span class="plan-chip topbar-plan-chip"><%= topbarPlanLabel %> <%= t('topbar.plan', 'plan') %></span>
       <% } %>
 
       <div class="topbar-quick-actions">
@@ -78,80 +70,125 @@
           <span class="theme-toggle-label"><%= t('theme.dark', 'Dark') %></span>
         </button>
 
-        <% if (currentUser) { %>
+        <% if (isPublicShell) { %>
+          <a href="<%= publicPrimaryHref %>" class="btn btn-primary topbar-primary-cta">
+            <span class="topbar-cta-label topbar-cta-label--full"><%= publicPrimaryLabelFull %></span>
+            <span class="topbar-cta-label topbar-cta-label--compact"><%= publicPrimaryLabelCompact %></span>
+          </a>
+
+          <button
+            type="button"
+            class="topbar-menu-toggle"
+            data-topbar-toggle
+            data-topbar-open-label="<%= mobileMenuOpenLabel %>"
+            data-topbar-close-label="<%= mobileMenuCloseLabel %>"
+            aria-label="<%= mobileMenuOpenLabel %>"
+            aria-controls="topbar-mobile-panel"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span class="topbar-menu-icon" aria-hidden="true">
+              <span class="topbar-menu-line"></span>
+              <span class="topbar-menu-line"></span>
+              <span class="topbar-menu-line"></span>
+            </span>
+          </button>
+        <% } else if (currentUser) { %>
           <a href="/create/single" id="onboarding-topbar-create" class="btn btn-primary topbar-primary-cta">
             <span class="topbar-cta-label topbar-cta-label--full"><%= t('topbar.create', 'New Episode') %></span>
             <span class="topbar-cta-label topbar-cta-label--compact"><%= t('topbar.create', 'New') %></span>
           </a>
+
+          <div class="topbar-account" data-account>
+            <button
+              type="button"
+              class="topbar-account-trigger"
+              data-account-trigger
+              data-account-open-label="Open account menu"
+              data-account-close-label="Close account menu"
+              data-mobile-open-label="<%= mobileMenuOpenLabel %>"
+              data-mobile-close-label="<%= mobileMenuCloseLabel %>"
+              data-account-controls="topbar-account-panel"
+              data-mobile-controls="app-sidebar-panel"
+              data-topbar-open-label="Open account menu"
+              data-topbar-close-label="Close account menu"
+              aria-label="Open account menu"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="topbar-account-panel"
+            >
+              <span class="topbar-account-avatar" aria-hidden="true">
+                <% if (currentUser?.avatarUrl) { %>
+                  <img src="<%= currentUser.avatarUrl %>" alt="" />
+                <% } else { %>
+                  <span><%= userInitials %></span>
+                <% } %>
+              </span>
+              <span class="topbar-account-copy">
+                <strong><%= currentUser?.name || t('topbar.profile', 'Profile') %></strong>
+                <small><%= t('topbar.account.menu', 'Account menu') %></small>
+              </span>
+              <span class="topbar-account-mobile-menu" aria-hidden="true">
+                <span></span>
+                <span></span>
+              </span>
+              <span class="topbar-account-caret" aria-hidden="true"></span>
+            </button>
+
+            <div id="topbar-account-panel" class="topbar-account-panel" data-account-panel hidden>
+              <a href="/settings?section=profile" class="topbar-account-link" data-account-close>Account</a>
+              <a href="/settings?section=billing" class="topbar-account-link" data-account-close>Billing</a>
+              <a href="/settings" class="topbar-account-link" data-account-close>Settings</a>
+              <form method="POST" action="/auth/logout" class="topbar-account-form">
+                <button type="submit" class="topbar-account-logout" data-account-close>Logout</button>
+              </form>
+            </div>
+          </div>
         <% } else { %>
           <a href="/auth/register" class="btn btn-primary topbar-primary-cta">
             <span class="topbar-cta-label topbar-cta-label--full"><%= t('page.about.cta.guest.primary', 'Create account') %></span>
             <span class="topbar-cta-label topbar-cta-label--compact">Create</span>
           </a>
-        <% } %>
 
-        <button
-          type="button"
-          class="topbar-menu-toggle"
-          data-topbar-toggle
-          data-topbar-open-label="<%= mobileMenuOpenLabel %>"
-          data-topbar-close-label="<%= mobileMenuCloseLabel %>"
-          aria-label="<%= mobileMenuOpenLabel %>"
-          aria-controls="topbar-mobile-panel"
-          aria-expanded="false"
-          aria-haspopup="true"
-        >
-          <% if (currentUser) { %>
-            <span class="topbar-menu-avatar" aria-hidden="true">
-              <% if (currentUser?.avatarUrl) { %>
-                <img src="<%= currentUser.avatarUrl %>" alt="" />
-              <% } else { %>
-                <span><%= userInitials %></span>
-              <% } %>
+          <button
+            type="button"
+            class="topbar-menu-toggle"
+            data-topbar-toggle
+            data-topbar-open-label="<%= mobileMenuOpenLabel %>"
+            data-topbar-close-label="<%= mobileMenuCloseLabel %>"
+            aria-label="<%= mobileMenuOpenLabel %>"
+            aria-controls="topbar-mobile-panel"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span class="topbar-menu-icon" aria-hidden="true">
+              <span class="topbar-menu-line"></span>
+              <span class="topbar-menu-line"></span>
+              <span class="topbar-menu-line"></span>
             </span>
-          <% } %>
-          <span class="topbar-menu-icon" aria-hidden="true">
-            <span class="topbar-menu-line"></span>
-            <span class="topbar-menu-line"></span>
-            <span class="topbar-menu-line"></span>
-          </span>
-        </button>
+          </button>
+        <% } %>
       </div>
     </div>
   </div>
 
-  <div class="topbar-mobile-panel" id="topbar-mobile-panel" data-topbar-panel hidden>
-    <% if (currentUser) { %>
-      <div class="topbar-panel-user">
-        <span class="topbar-panel-user-avatar" aria-hidden="true">
-          <% if (currentUser?.avatarUrl) { %>
-            <img src="<%= currentUser.avatarUrl %>" alt="" />
-          <% } else { %>
-            <span><%= userInitials %></span>
-          <% } %>
-        </span>
-        <div class="topbar-panel-user-copy">
-          <strong><%= userDisplayName %></strong>
-          <small><%= currentUser?.email || '' %></small>
-        </div>
-        <span class="plan-chip topbar-plan-chip topbar-plan-chip--panel"><%= topbarPlanLabel %> <%= t('topbar.plan', 'plan') %></span>
-      </div>
-
-      <nav class="topbar-panel-links" aria-label="Account navigation">
-        <a href="/settings?section=profile" class="topbar-panel-link" data-topbar-close><%= t('topbar.profile', 'Profile') %> &amp; Settings</a>
-        <a href="/help" class="topbar-panel-link" data-topbar-close><%= t('page.help.link', 'Help Center') %></a>
-      </nav>
-
-      <form method="POST" action="/auth/logout" class="topbar-panel-form">
-        <button type="submit" class="btn btn-secondary topbar-panel-action" data-topbar-close><%= t('topbar.logout', 'Logout') %></button>
-      </form>
-    <% } else { %>
+  <% if (isPublicShell) { %>
+    <div class="topbar-mobile-panel" id="topbar-mobile-panel" data-topbar-panel hidden>
       <nav class="topbar-panel-links" aria-label="Mobile navigation">
         <a href="/examples" class="topbar-panel-link" data-topbar-close>Examples</a>
         <a href="/about" class="topbar-panel-link" data-topbar-close><%= t('page.about.link', 'About VicPods') %></a>
         <a href="/help" class="topbar-panel-link" data-topbar-close><%= t('page.help.link', 'Help Center') %></a>
-        <a href="/auth/login" class="topbar-panel-link" data-topbar-close><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+        <% if (currentUser) { %>
+          <a href="/studio" class="topbar-panel-link" data-topbar-close>Open Studio</a>
+          <a href="/create/single" class="topbar-panel-link" data-topbar-close>New Episode</a>
+          <a href="/settings" class="topbar-panel-link" data-topbar-close>Settings</a>
+          <form method="POST" action="/auth/logout" class="topbar-account-form">
+            <button type="submit" class="topbar-account-logout topbar-panel-action" data-topbar-close>Logout</button>
+          </form>
+        <% } else { %>
+          <a href="/auth/login" class="topbar-panel-link" data-topbar-close><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
+        <% } %>
       </nav>
-    <% } %>
-  </div>
+    </div>
+  <% } %>
 </header>

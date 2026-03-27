@@ -7,6 +7,7 @@ function showHelp(req, res) {
     subtitle: req.t('page.help.subtitle', 'Official VicPods guidance for setup, creation flows, launch prep, and account help.'),
     view: 'help/index',
     data: {
+      publicShell: true,
       effectivePlan: req.effectivePlan || req.currentUser?.plan || 'free',
     },
   });

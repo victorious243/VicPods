@@ -1,16 +1,32 @@
-<section id="onboarding-studio-start" class="card">
-  <div class="section-head">
-    <h3>Start Creating</h3>
-    <div class="inline-actions">
-      <a id="onboarding-open-settings" href="/settings?section=appearance" class="btn btn-ghost">Open Settings</a>
-      <a href="/kitchen" class="btn btn-primary">Open Workspace</a>
-    </div>
-  </div>
-  <p>Open Workspace to build a ready-to-record episode, generate show notes, or plan a continuity-driven series arc.</p>
+<section id="onboarding-studio-start" class="card studio-hero-card">
+  <div class="studio-hero-grid">
+    <div class="studio-hero-copy">
+      <span class="mini-label studio-hero-kicker">Command center</span>
+      <h3>Start your next episode with structure.</h3>
+      <p>Move from rough topic to launch-ready prep in one focused workflow.</p>
 
-  <div class="inline-actions">
-    <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">Start Single Episode</a>
-    <a id="onboarding-start-series" href="/create/series" class="btn btn-secondary">Start Series</a>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/kitchen" class="btn btn-primary">Open Workspace</a>
+        <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">New Single Episode</a>
+        <a id="onboarding-start-series" href="/create/series" class="btn btn-ghost">Start Series</a>
+      </div>
+    </div>
+
+    <aside class="studio-hero-side">
+      <article class="studio-hero-stat">
+        <span class="mini-label">Current access</span>
+        <strong><%= effectivePlan === 'free' ? 'Free plan' : `${effectivePlan.charAt(0).toUpperCase()}${effectivePlan.slice(1)} plan` %></strong>
+      </article>
+      <article class="studio-hero-stat">
+        <span class="mini-label">AI remaining today</span>
+        <strong><%= stats.aiRemaining %></strong>
+      </article>
+      <article class="studio-hero-stat">
+        <span class="mini-label">Next milestone</span>
+        <strong><%= activationChecklist.nextStep?.label || 'Open Workspace' %></strong>
+      </article>
+      <a id="onboarding-open-settings" href="/settings?section=appearance" class="btn btn-tertiary studio-hero-settings">Open Settings</a>
+    </aside>
   </div>
 </section>
 
@@ -19,7 +35,7 @@
     <div class="section-head">
       <div>
         <h3>First-Week Activation</h3>
-        <p class="mini-note">A simple path from zero to shareable output.</p>
+        <p class="mini-note">A short path from zero to shareable output.</p>
       </div>
       <span class="mini-label"><%= activationChecklist.completedCount %>/<%= activationChecklist.totalCount %> complete</span>
     </div>
@@ -46,12 +62,12 @@
     <div class="section-head">
       <div>
         <h3>Referral Loop</h3>
-        <p class="mini-note">Invite creators and unlock extra usage.</p>
+        <p class="mini-note">Invite creators. Unlock extra usage.</p>
       </div>
       <span class="mini-label">+<%= referralProgram.rewardPerReferral %> AI credits/day per verified invite</span>
     </div>
 
-    <p>When another creator joins through your link and verifies their account, VicPods adds more daily AI capacity to your workflow automatically.</p>
+    <p>When another creator joins through your link and verifies their account, VicPods adds more daily AI capacity automatically.</p>
 
     <label class="share-link-field">
       <span class="landing-preview-label">Your invite link</span>
@@ -60,7 +76,7 @@
 
     <div class="inline-actions">
       <button class="btn btn-primary" type="button" data-copy-trigger="studio-referral-link" data-copy-label="Copy Invite Link">Copy Invite Link</button>
-      <a href="/examples" class="btn btn-ghost">Show examples first</a>
+      <a href="/examples" class="btn btn-ghost">Examples</a>
     </div>
 
     <div class="referral-growth-stats">

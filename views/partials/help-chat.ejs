@@ -10,10 +10,19 @@
       id="help-chat-toggle"
       type="button"
       class="help-chat-toggle"
+      aria-label="<%= t('help.chat.open', 'Ask VicPods') %>"
       aria-expanded="false"
       aria-controls="help-chat-panel"
     >
-      <span class="help-chat-toggle-label"><%= t('help.chat.open', 'Help') %></span>
+      <span class="help-chat-toggle-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M6.5 17.5L3.5 20V7.75C3.5 5.955 4.955 4.5 6.75 4.5H17.25C19.045 4.5 20.5 5.955 20.5 7.75V14.25C20.5 16.045 19.045 17.5 17.25 17.5H6.5Z"></path>
+          <circle cx="8.5" cy="11" r="1.1"></circle>
+          <circle cx="12" cy="11" r="1.1"></circle>
+          <circle cx="15.5" cy="11" r="1.1"></circle>
+        </svg>
+      </span>
+      <span class="sr-only"><%= t('help.chat.open', 'Ask VicPods') %></span>
     </button>
 
     <section id="help-chat-panel" class="help-chat-panel" hidden>
