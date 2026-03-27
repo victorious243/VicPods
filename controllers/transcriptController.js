@@ -1,10 +1,12 @@
 const Episode = require('../models/Episode');
 const Series = require('../models/Series');
 const Theme = require('../models/Theme');
+const { buildLaunchPackView } = require('../services/launch/launchPackService');
 const { sendDocxExport } = require('../services/export/docxExport');
 const { buildTranscriptFilename } = require('../services/export/filename');
 const { sendPdfExport } = require('../services/export/pdfExport');
 const { sendTxtExport } = require('../services/export/txtExport');
+const { buildEpisodeLightExport } = require('../services/export/watermarkedPreviewExportService');
 const { consumeAiCredit } = require('../services/limitService');
 const { ensureTranscript, refreshTranscript } = require('../services/transcript/transcriptService');
 const { AppError } = require('../utils/errors');
@@ -166,7 +168,42 @@ async function downloadTranscript(req, res, next) {
   }
 }
 
+async function downloadLightPreview(req, res, next) {
+  try {
+    const context = await getOwnedEpisodeContext(req);
+    const launchPackPreview = buildLaunchPackView(context.episode.launchPack, {
+      fullAccess: false,
+    });
+    const exportFile = buildEpisodeLightExport({
+      series: context.series,
+      theme: context.theme,
+      episode: context.episode,
+      launchPackView: launchPackPreview,
+    }, {
+      appUrl: process.env.APP_URL || 'http://localhost:3000',
+    });
+
+    return sendTxtExport({
+      res,
+      filename: exportFile.filename,
+      transcript: exportFile.content,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
 module.exports = {
   generateTranscript,
   downloadTranscript,
+  downloadLightPreview,
 };

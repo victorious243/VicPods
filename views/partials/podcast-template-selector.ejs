@@ -1,0 +1,76 @@
+<section class="wizard-step podcast-style-step" id="onboarding-podcast-style" data-podcast-template-root>
+  <div class="podcast-style-head">
+    <div>
+      <h4>Step 1 - Choose your podcast style</h4>
+      <p class="mini-note">
+        <%= isFirstEpisodeCreation
+          ? 'Start with a guided structure. VicPods will prefill the episode architecture, tone, and CTA defaults for this draft.'
+          : 'Match this episode to a proven format. VicPods will prefill the key defaults, and you can still tune everything below.' %>
+      </p>
+    </div>
+    <div class="podcast-style-selection">
+      <span class="mini-label">Selected</span>
+      <strong data-selected-template-label><%= selectedPodcastTemplate.label %></strong>
+      <small data-selected-template-best-for><%= selectedPodcastTemplate.bestFor %></small>
+    </div>
+  </div>
+
+  <input type="hidden" name="templateType" value="<%= selectedPodcastTemplate.key %>" data-template-type-input />
+
+  <div class="podcast-template-grid">
+    <% podcastTemplates.forEach((template) => { %>
+      <% const isSelectedTemplate = template.key === selectedPodcastTemplate.key; %>
+      <button
+        type="button"
+        class="podcast-template-card <%= isSelectedTemplate ? 'is-selected' : '' %>"
+        data-template-key="<%= template.key %>"
+        aria-pressed="<%= isSelectedTemplate ? 'true' : 'false' %>"
+      >
+        <span class="podcast-template-icon" aria-hidden="true">
+          <svg viewBox="<%= template.icon?.viewBox || '0 0 24 24' %>" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <% (template.icon?.paths || []).forEach((iconPath) => { %>
+              <path d="<%= iconPath %>"></path>
+            <% }) %>
+          </svg>
+        </span>
+        <span class="podcast-template-copy">
+          <strong><%= template.label %></strong>
+          <small><%= template.description %></small>
+        </span>
+        <span class="podcast-template-meta">
+          <span class="mini-label"><%= template.preview.episodeTypeLabel %></span>
+          <span class="mini-label"><%= template.preview.formatTemplateLabel %></span>
+        </span>
+      </button>
+    <% }) %>
+  </div>
+
+  <div class="podcast-style-preview">
+    <div class="podcast-style-preview-copy">
+      <span class="mini-label">Template direction</span>
+      <p data-selected-template-description><%= selectedPodcastTemplate.description %></p>
+    </div>
+
+    <div class="podcast-style-preview-grid">
+      <article class="podcast-style-preview-card">
+        <span class="mini-label">Best for</span>
+        <p data-selected-template-prompt><%= selectedPodcastTemplate.promptHint %></p>
+        <div class="podcast-style-badges" data-selected-template-badges>
+          <span class="mini-label"><%= selectedPodcastTemplate.preview.deliveryStyleLabel %></span>
+          <span class="mini-label"><%= selectedPodcastTemplate.preview.hookStyleLabel %></span>
+          <span class="mini-label"><%= selectedPodcastTemplate.preview.targetLengthLabel %></span>
+          <span class="mini-label"><%= selectedPodcastTemplate.preview.ctaStyleLabel %></span>
+        </div>
+      </article>
+
+      <article class="podcast-style-preview-card">
+        <span class="mini-label">Episode flow</span>
+        <div class="podcast-style-flow" data-selected-template-sections>
+          <% selectedPodcastTemplate.sectionLabels.forEach((label) => { %>
+            <span class="podcast-style-flow-chip"><%= label %></span>
+          <% }) %>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

@@ -5,23 +5,40 @@
   </div>
 
   <div class="wizard-progress" role="list" aria-label="Single mode steps">
-    <span class="step active" role="listitem">1. Topic</span>
-    <span class="step active" role="listitem">2. Blueprint</span>
-    <span class="step active" role="listitem">3. Tone</span>
-    <span class="step active" role="listitem">4. Structure</span>
-    <span class="step active" role="listitem">5. Generate</span>
+    <span class="step active" role="listitem">1. Style</span>
+    <span class="step active" role="listitem">2. Topic</span>
+    <span class="step active" role="listitem">3. Blueprint</span>
+    <span class="step active" role="listitem">4. Tone</span>
+    <span class="step active" role="listitem">5. Structure</span>
+    <span class="step active" role="listitem">6. Generate</span>
   </div>
 
   <form method="POST" action="/create/single" class="form-grid" data-ai-loading="true">
+    <%- include('../partials/podcast-template-selector') %>
+
     <section class="wizard-step">
-      <h4>Step 1 - Topic</h4>
+      <h4>Step 2 - Topic</h4>
       <label>
         Topic Title
-        <input id="onboarding-single-topic-title" type="text" name="title" required maxlength="160" placeholder="How to Launch Your Podcast in 30 Days" />
+        <input
+          id="onboarding-single-topic-title"
+          type="text"
+          name="title"
+          required
+          maxlength="160"
+          placeholder="<%= singleTemplateDefaults.titlePlaceholder %>"
+          data-template-title-input
+        />
       </label>
       <label>
         Description (optional)
-        <textarea name="description" rows="2" maxlength="400" placeholder="1-2 lines on what this episode should deliver"></textarea>
+        <textarea
+          name="description"
+          rows="2"
+          maxlength="400"
+          placeholder="<%= singleTemplateDefaults.descriptionPlaceholder %>"
+          data-template-description-input
+        ></textarea>
       </label>
       <div class="two-col">
         <label>
@@ -56,7 +73,7 @@
     </section>
 
     <section class="wizard-step">
-      <h4>Step 2 - Show Blueprint</h4>
+      <h4>Step 3 - Show Blueprint</h4>
       <div class="two-col">
         <label>
           Audience Problem
@@ -76,7 +93,10 @@
           CTA Style
           <select name="ctaStyle">
             <% ctaStyleOptions.forEach((option, index) => { %>
-              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+              <option
+                value="<%= option.value %>"
+                <%= option.value === singleTemplateDefaults.ctaStyle || (!singleTemplateDefaults.ctaStyle && index === 0) ? 'selected' : '' %>
+              ><%= option.label %></option>
             <% }) %>
           </select>
         </label>
@@ -92,7 +112,7 @@
     </section>
 
     <section class="wizard-step">
-      <h4>Step 3 - Tone</h4>
+      <h4>Step 4 - Tone</h4>
       <div class="tone-grid">
         <% tonePresets.forEach((preset, index) => { %>
           <label class="tone-card">
@@ -100,7 +120,7 @@
               type="radio"
               name="tonePreset"
               value="<%= preset.name %>"
-              <%= (index === 7 || (!index && !tonePresets[7])) ? 'checked' : '' %>
+              <%= preset.name === singleTemplateDefaults.tonePreset || (!singleTemplateDefaults.tonePreset && (index === 7 || (!index && !tonePresets[7]))) ? 'checked' : '' %>
             />
             <span class="tone-card-title"><%= preset.name %></span>
             <span class="tone-card-desc"><%= preset.description %></span>
@@ -109,14 +129,14 @@
         <% }) %>
       </div>
       <label>
-        Tone Intensity (<span data-range-value="single-tone-intensity">3</span>/5)
+        Tone Intensity (<span data-range-value="single-tone-intensity"><%= singleTemplateDefaults.toneIntensity %></span>/5)
         <input
           id="single-tone-intensity"
           type="range"
           name="toneIntensity"
           min="1"
           max="<%= maxToneIntensity || 3 %>"
-          value="3"
+          value="<%= singleTemplateDefaults.toneIntensity %>"
           data-range-source="single-tone-intensity"
         />
       </label>
@@ -136,13 +156,16 @@
     </section>
 
     <section class="wizard-step">
-      <h4>Step 4 - Structure</h4>
+      <h4>Step 5 - Structure</h4>
       <div class="two-col">
         <label>
           Format Template
           <select name="formatTemplate">
             <% formatTemplateOptions.forEach((option, index) => { %>
-              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+              <option
+                value="<%= option.value %>"
+                <%= option.value === singleTemplateDefaults.formatTemplate || (!singleTemplateDefaults.formatTemplate && index === 0) ? 'selected' : '' %>
+              ><%= option.label %></option>
             <% }) %>
           </select>
         </label>
@@ -150,7 +173,10 @@
           Hook Style
           <select name="hookStyle">
             <% hookStyleOptions.forEach((option, index) => { %>
-              <option value="<%= option.value %>" <%= index === 0 ? 'selected' : '' %>><%= option.label %></option>
+              <option
+                value="<%= option.value %>"
+                <%= option.value === singleTemplateDefaults.hookStyle || (!singleTemplateDefaults.hookStyle && index === 0) ? 'selected' : '' %>
+              ><%= option.label %></option>
             <% }) %>
           </select>
         </label>
@@ -159,7 +185,10 @@
         Delivery Style
         <select name="deliveryStyle">
           <% deliveryStyleOptions.forEach((option, index) => { %>
-            <option value="<%= option.value %>" <%= (option.value === 'friendly' || (!index && !deliveryStyleOptions.some((item) => item.value === 'friendly'))) ? 'selected' : '' %>><%= option.label %></option>
+            <option
+              value="<%= option.value %>"
+              <%= option.value === singleTemplateDefaults.deliveryStyle || (!singleTemplateDefaults.deliveryStyle && (option.value === 'friendly' || (!index && !deliveryStyleOptions.some((item) => item.value === 'friendly')))) ? 'selected' : '' %>
+            ><%= option.label %></option>
           <% }) %>
         </select>
       </label>
@@ -168,7 +197,7 @@
           Episode Type
           <select name="episodeType">
             <% episodeTypeOptions.forEach((option) => { %>
-              <option value="<%= option.value %>"><%= option.label %></option>
+              <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.episodeType ? 'selected' : '' %>><%= option.label %></option>
             <% }) %>
           </select>
         </label>
@@ -176,23 +205,25 @@
           Duration Preset
           <select name="targetLength">
             <% targetLengthOptions.forEach((option) => { %>
-              <option value="<%= option.value %>"><%= option.label %></option>
+              <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.targetLength ? 'selected' : '' %>><%= option.label %></option>
             <% }) %>
           </select>
         </label>
       </div>
       <label class="check-item">
         <input type="hidden" name="includeFunSegment" value="off" />
-        <input type="checkbox" name="includeFunSegment" checked />
+        <input type="checkbox" name="includeFunSegment" <%= singleTemplateDefaults.includeFunSegment ? 'checked' : '' %> />
         <span>Include a fun segment</span>
       </label>
       <p class="mini-note">VicPods will follow your blueprint, hook style, and episode architecture when it generates the draft.</p>
     </section>
 
     <section class="wizard-step">
-      <h4>Step 5 - Generate</h4>
+      <h4>Step 6 - Generate</h4>
       <p class="mini-note">This creates the episode in your Single Episodes collection and opens the editor with a structured draft.</p>
       <button id="onboarding-single-generate" type="submit" class="btn btn-primary">Generate Episode Draft</button>
     </section>
   </form>
 </section>
+
+<script id="podcast-templates-data" type="application/json"><%- podcastTemplatesJson %></script>

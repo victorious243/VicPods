@@ -14,6 +14,72 @@
   </div>
 </section>
 
+<section class="studio-growth-grid">
+  <article class="card activation-checklist-card">
+    <div class="section-head">
+      <div>
+        <h3>First-Week Activation</h3>
+        <p class="mini-note">A simple path from zero to shareable output.</p>
+      </div>
+      <span class="mini-label"><%= activationChecklist.completedCount %>/<%= activationChecklist.totalCount %> complete</span>
+    </div>
+
+    <div class="activation-progress-bar" aria-hidden="true">
+      <span style="width:<%= activationChecklist.progressPercent %>%"></span>
+    </div>
+
+    <div class="activation-checklist-steps">
+      <% activationChecklist.steps.forEach((step, index) => { %>
+        <article class="activation-checklist-step <%= step.complete ? 'is-complete' : '' %>">
+          <div class="activation-checklist-index"><%= String(index + 1).padStart(2, '0') %></div>
+          <div class="activation-checklist-copy">
+            <strong><%= step.label %></strong>
+            <p><%= step.description %></p>
+          </div>
+          <a href="<%= step.href %>" class="btn <%= step.complete ? 'btn-ghost' : 'btn-secondary' %>"><%= step.complete ? 'Open' : step.ctaLabel %></a>
+        </article>
+      <% }) %>
+    </div>
+  </article>
+
+  <article class="card referral-growth-card">
+    <div class="section-head">
+      <div>
+        <h3>Referral Loop</h3>
+        <p class="mini-note">Invite creators and unlock extra usage.</p>
+      </div>
+      <span class="mini-label">+<%= referralProgram.rewardPerReferral %> AI credits/day per verified invite</span>
+    </div>
+
+    <p>When another creator joins through your link and verifies their account, VicPods adds more daily AI capacity to your workflow automatically.</p>
+
+    <label class="share-link-field">
+      <span class="landing-preview-label">Your invite link</span>
+      <input type="text" value="<%= referralProgram.inviteUrl %>" readonly data-copy-source="studio-referral-link" />
+    </label>
+
+    <div class="inline-actions">
+      <button class="btn btn-primary" type="button" data-copy-trigger="studio-referral-link" data-copy-label="Copy Invite Link">Copy Invite Link</button>
+      <a href="/examples" class="btn btn-ghost">Show examples first</a>
+    </div>
+
+    <div class="referral-growth-stats">
+      <article>
+        <span class="mini-label">Verified invites</span>
+        <strong><%= referralProgram.referralCount %></strong>
+      </article>
+      <article>
+        <span class="mini-label">Bonus AI credits/day</span>
+        <strong>+<%= referralProgram.referralBonusCredits %></strong>
+      </article>
+      <article>
+        <span class="mini-label">Current daily ceiling</span>
+        <strong><%= stats.aiLimit === null ? 'Unlimited' : stats.aiLimit %></strong>
+      </article>
+    </div>
+  </article>
+</section>
+
 <section class="card-grid stats-grid" id="onboarding-stats">
   <a id="onboarding-stats-series" class="card stat-card stat-card-link <%= selectedInspect === 'series' ? 'active-stat-card' : '' %>" href="/studio?inspect=series">
     <p>Series</p>
@@ -48,7 +114,7 @@
   <a class="card stat-card stat-card-link wide <%= selectedInspect === 'ai' ? 'active-stat-card' : '' %>" href="/studio?inspect=ai">
     <p>Chef AI Credits Today</p>
     <h3><%= stats.aiRemaining %></h3>
-    <span class="mini-note">Usage details</span>
+    <span class="mini-note"><%= stats.aiLimitNote %></span>
   </a>
 </section>
 

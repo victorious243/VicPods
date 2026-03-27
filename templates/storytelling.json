@@ -1,0 +1,32 @@
+{
+  "key": "storytelling",
+  "label": "Storytelling",
+  "description": "Lead with narrative tension, then turn the story into a memorable lesson listeners can carry forward.",
+  "bestFor": "Narrative solo shows, personal stories, and emotionally resonant teaching.",
+  "promptHint": "Use scenes, tension, and a clear emotional turn before landing the lesson and takeaway.",
+  "episodeStructure": {
+    "episodeType": "solo",
+    "formatTemplate": "story_to_strategy",
+    "hookStyle": "story_scene",
+    "targetLength": "20-30",
+    "includeFunSegment": false
+  },
+  "tone": {
+    "tonePreset": "Storytelling & Emotional",
+    "toneIntensity": 3,
+    "deliveryStyle": "storytelling"
+  },
+  "showBlueprint": {
+    "ctaStyle": "reflection_prompt"
+  },
+  "sectionLabels": [
+    "Opening Scene",
+    "Tension",
+    "Turning Point",
+    "Lesson",
+    "Listener Reflection",
+    "Close"
+  ],
+  "exampleTitle": "The Episode That Taught Me Structure Matters More Than Talent",
+  "exampleDescription": "Open with a real moment, build tension, and turn the story into a clear practical insight."
+}

@@ -1,7 +1,12 @@
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
 const Series = require('../models/Series');
-const { getDailyLimitForPlan } = require('../services/limitService');
+const {
+  getBaseDailyLimitForPlan,
+  getDailyLimitForUser,
+} = require('../services/limitService');
+const { buildActivationChecklist } = require('../services/marketing/activationChecklistService');
+const { buildReferralProgramViewModel } = require('../services/marketing/referralService');
 const { renderPage } = require('../utils/render');
 
 const INSPECT_KEYS = new Set(['series', 'episodes', 'single', 'ready', 'served', 'ideas', 'ai']);
@@ -83,7 +88,8 @@ async function showStudio(req, res, next) {
   try {
     const userId = req.currentUser._id;
     const effectivePlan = req.effectivePlan || req.currentUser.plan || 'free';
-    const planLimit = getDailyLimitForPlan(effectivePlan);
+    const planLimit = getDailyLimitForUser(req.currentUser, effectivePlan);
+    const basePlanLimit = getBaseDailyLimitForPlan(effectivePlan);
     const selectedFilter = String(req.query.filter || 'all').toLowerCase();
     const selectedInspect = String(req.query.inspect || '').toLowerCase();
 
@@ -107,6 +113,8 @@ async function showStudio(req, res, next) {
       ideaCount,
       latestEpisodes,
       inspectPanel,
+      activationChecklist,
+      referralProgram,
     ] = await Promise.all([
       Series.countDocuments({ userId }),
       Episode.countDocuments({ userId }),
@@ -120,6 +128,10 @@ async function showStudio(req, res, next) {
         .populate('seriesId')
         .populate('themeId'),
       getInspectPanel({ userId, inspectKey: selectedInspect, t: req.t }),
+      buildActivationChecklist({ userId }),
+      buildReferralProgramViewModel(req.currentUser, {
+        appUrl: process.env.APP_URL || 'http://localhost:3000',
+      }),
     ]);
 
     return renderPage(res, {
@@ -138,11 +150,20 @@ async function showStudio(req, res, next) {
           aiRemaining: planLimit === Infinity
             ? req.t('studio.ai.unlimited', 'Unlimited')
             : Math.max(planLimit - req.currentUser.aiDailyCount, 0),
+          aiLimit: planLimit === Infinity ? null : planLimit,
+          aiBaseLimit: basePlanLimit === Infinity ? null : basePlanLimit,
+          aiLimitNote: planLimit === Infinity
+            ? 'Usage details'
+            : (planLimit > basePlanLimit
+              ? `${basePlanLimit} base · +${planLimit - basePlanLimit} referral bonus`
+              : 'Usage details'),
         },
         latestEpisodes,
         selectedFilter,
         selectedInspect,
         inspectPanel,
+        activationChecklist,
+        referralProgram,
       },
     });
   } catch (error) {

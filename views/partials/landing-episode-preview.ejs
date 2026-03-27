@@ -1,0 +1,160 @@
+<section
+  class="landing-preview-shell"
+  data-public-generator-result
+  hidden
+  aria-live="polite"
+  aria-atomic="true"
+>
+  <div class="landing-preview-grid">
+    <article class="landing-preview-card landing-preview-card-main">
+      <div class="landing-preview-card-top">
+        <span class="mini-label">Generated preview</span>
+        <span class="landing-preview-live-pill">Live structure</span>
+      </div>
+
+      <div class="landing-preview-block">
+        <span class="landing-preview-label">Title</span>
+        <h3 data-public-preview-title>Ready-to-record episode preview</h3>
+      </div>
+
+      <div class="landing-preview-block">
+        <span class="landing-preview-label">Hook</span>
+        <p class="landing-preview-hook" data-public-preview-hook>
+          Your idea becomes a sharper opening, stronger structure, and clearer next step in seconds.
+        </p>
+      </div>
+
+      <div class="landing-preview-block">
+        <span class="landing-preview-label">Structured outline</span>
+        <ul class="landing-preview-outline" data-public-preview-outline>
+          <li>Outline items appear here after generation.</li>
+        </ul>
+      </div>
+
+      <div class="landing-preview-block landing-preview-block-cta">
+        <span class="landing-preview-label">Listener CTA</span>
+        <p class="landing-preview-cta" data-public-preview-cta>
+          Turn this idea into one clear talking point and test it in your next recording.
+        </p>
+      </div>
+    </article>
+
+    <aside class="landing-preview-side">
+      <div class="landing-preview-convert">
+        <span class="mini-label">Launch prep</span>
+        <strong>Move from idea to publish-ready assets</strong>
+        <p>VicPods does not stop at structure. The Launch Pack turns the episode into title options, a publishable description, show notes, captions, and a stronger close.</p>
+        <a href="<%= unlockHref %>" class="btn btn-primary landing-unlock-btn"><%= unlockLabel %></a>
+      </div>
+    </aside>
+  </div>
+
+  <section class="launch-pack-shell <%= fullLaunchPackPreview ? 'is-unlocked' : '' %>" data-public-launchpack-shell>
+    <div class="section-head launch-pack-head">
+      <h3>Your Launch Pack</h3>
+      <span class="mini-label">Publish-ready</span>
+    </div>
+
+    <div class="launch-pack-grid">
+      <article class="launch-pack-panel">
+        <div class="launch-pack-block">
+          <span class="landing-preview-label">Title variations</span>
+          <ul class="launch-pack-list" data-public-launchpack-titles>
+            <li>Publish-ready title options appear here after generation.</li>
+          </ul>
+        </div>
+
+        <div class="launch-pack-block">
+          <span class="landing-preview-label">Short description</span>
+          <p class="launch-pack-copy" data-public-launchpack-description>
+            A concise publish-ready description appears here once the Launch Pack is generated.
+          </p>
+        </div>
+      </article>
+
+      <div class="launch-pack-locked-grid <%= fullLaunchPackPreview ? 'is-unlocked' : '' %>" data-public-launchpack-access-shell>
+        <article class="launch-pack-lock-card">
+          <div class="launch-pack-lock-head">
+            <span class="mini-label" data-public-launchpack-badge>Locked</span>
+            <strong>Full Show Notes</strong>
+          </div>
+          <div class="launch-pack-lock-body">
+            <p class="launch-pack-rich-copy" data-public-launchpack-show-notes>
+              Publish-ready show notes appear here once the full Launch Pack is unlocked.
+            </p>
+            <div class="launch-pack-lock-overlay" data-public-launchpack-lock>
+              <p>Unlock the full notes block and make the episode feel ready to publish today.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="launch-pack-lock-card">
+          <div class="launch-pack-lock-head">
+            <span class="mini-label" data-public-launchpack-badge>Locked</span>
+            <strong>Social Captions</strong>
+          </div>
+          <div class="launch-pack-lock-body">
+            <ul class="launch-pack-list launch-pack-list-captions" data-public-launchpack-captions>
+              <li>Caption options appear here once the full Launch Pack is unlocked.</li>
+            </ul>
+            <div class="launch-pack-lock-overlay" data-public-launchpack-lock>
+              <p>Get short publish-ready caption options without rewriting the angle yourself.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="launch-pack-lock-card">
+          <div class="launch-pack-lock-head">
+            <span class="mini-label" data-public-launchpack-badge>Locked</span>
+            <strong>CTA Script</strong>
+          </div>
+          <div class="launch-pack-lock-body">
+            <p class="launch-pack-rich-copy" data-public-launchpack-cta-script>
+              A host-read CTA script appears here once the full Launch Pack is unlocked.
+            </p>
+            <div class="launch-pack-lock-overlay" data-public-launchpack-lock>
+              <p>Unlock a stronger close that helps the episode convert after listeners finish it.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="landing-preview-growth-grid">
+    <article class="card landing-preview-growth-card">
+      <span class="mini-label">Save My Preview</span>
+      <h3>Email this preview to yourself</h3>
+      <p>Capture the result before you leave. We will send the episode structure and launch preview straight to your inbox.</p>
+
+      <form class="landing-preview-save-form" data-save-preview-form data-save-preview-source="episode_preview">
+        <label class="landing-preview-save-label" for="landingPreviewSaveEmail">Email address</label>
+        <div class="landing-preview-save-row">
+          <input
+            id="landingPreviewSaveEmail"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+            data-save-preview-email
+          />
+          <button type="submit" class="btn btn-primary" data-save-preview-submit>Save My Preview</button>
+        </div>
+        <p class="mini-note">No account required.</p>
+        <p class="landing-preview-save-status" data-save-preview-status hidden aria-live="polite"></p>
+      </form>
+    </article>
+
+    <article class="card landing-preview-growth-card">
+      <span class="mini-label">Watermarked Free Export</span>
+      <h3>Download a light episode brief</h3>
+      <p>Get a clean TXT preview with structured sections and a subtle “Created with VicPods” watermark for easy sharing.</p>
+      <div class="inline-actions">
+        <button type="button" class="btn btn-secondary" data-public-export-button>Download Preview</button>
+        <a href="<%= unlockHref %>" class="btn btn-ghost"><%= unlockLabel %></a>
+      </div>
+      <p class="landing-preview-save-status" data-public-export-status hidden aria-live="polite"></p>
+    </article>
+  </div>
+</section>

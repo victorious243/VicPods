@@ -1,0 +1,12 @@
+<div class="proof-snippet-grid <%= typeof gridClass !== 'undefined' ? gridClass : '' %>">
+  <% (proofSnippets || []).forEach((item) => { %>
+    <article class="card proof-snippet-card">
+      <span class="mini-label"><%= item.eyebrow %></span>
+      <h3><%= item.title %></h3>
+      <p><%= item.body %></p>
+      <% if (item.ctaHref && item.ctaLabel) { %>
+        <a href="<%= item.ctaHref %>" class="btn btn-ghost"><%= item.ctaLabel %></a>
+      <% } %>
+    </article>
+  <% }) %>
+</div>

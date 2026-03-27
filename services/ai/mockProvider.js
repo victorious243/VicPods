@@ -5,6 +5,7 @@ const {
   resolveEffectiveShowBlueprint,
   resolveEffectiveStructure,
 } = require('../structure/structureService');
+const { getPodcastTemplate } = require('../templates/podcastTemplateService');
 
 function hashSeed(text) {
   return [...String(text || '')].reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -258,6 +259,24 @@ function formatTemplate(template, values) {
   return Object.keys(values || {}).reduce((acc, key) => acc.replace(new RegExp(`\\{${key}\\}`, 'g'), values[key]), template);
 }
 
+function toTitleCase(value) {
+  return String(value || '')
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function normalizeIdeaNiche(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+}
+
 class MockProvider {
   constructor() {
     this.name = 'mock';
@@ -288,6 +307,9 @@ class MockProvider {
     const toneAccent = buildToneAccent(tonePreset, toneIntensity);
     const blueprint = resolveEffectiveShowBlueprint({ series, episode });
     const structure = resolveEffectiveStructure({ series, episode });
+    const selectedTemplate = episode?.templateType
+      ? getPodcastTemplate(episode.templateType)
+      : null;
     const templateMeta = structure.formatTemplateMeta;
     const targetLengthMeta = structure.targetLengthMeta;
     const ctaStyle = getCtaStyleOption(blueprint.ctaStyle);
@@ -297,7 +319,11 @@ class MockProvider {
     const voiceRule = blueprint.brandVoiceRules[0] || 'Keep every line specific and useful.';
     const bannedWord = blueprint.bannedWords[0];
 
-    const outlinePool = (templateMeta.flow || []).map((step, index) => {
+    const outlineSteps = selectedTemplate?.sectionLabels?.length
+      ? selectedTemplate.sectionLabels
+      : (templateMeta.flow || []);
+
+    const outlinePool = outlineSteps.map((step, index) => {
       const timing = targetLengthMeta.timingPlan[index] || `Part ${index + 1}`;
       return formatTemplate(copy.outlineTemplate, {
         timing,
@@ -466,6 +492,81 @@ class MockProvider {
         takeaway: normalizedTakeaways[0],
         tonePreset: effectiveTone?.tonePreset || series.tonePreset || 'Conversational & Casual',
       })).slice(0, 3),
+    };
+  }
+
+  async generateLaunchPack(input) {
+    const { series, theme, episode, effectiveTone } = input;
+    const blueprint = resolveEffectiveShowBlueprint({ series, episode });
+    const structure = resolveEffectiveStructure({ series, episode });
+    const title = episode.title || `${theme.name} Episode`;
+    const audienceProblem = blueprint.audienceProblem || series.audience || `listeners struggling with ${theme.name}`;
+    const transformation = blueprint.listenerTransformation || series.goal || `clearer momentum around ${theme.name}`;
+    const outlineLead = (episode.outline || []).filter(Boolean).slice(0, 4);
+    const talkingPointLead = (episode.talkingPoints || []).filter(Boolean).slice(0, 3);
+    const notesLines = (outlineLead.length ? outlineLead : talkingPointLead).map((item) => `- ${item}`);
+    const toneLabel = effectiveTone?.tonePreset || series.tonePreset || 'Conversational & Casual';
+
+    return {
+      titles: [
+        title,
+        `${title}: The Practical Framework`,
+        `${theme.name}: A Clearer Recording Plan`,
+      ],
+      description: `${title} helps creators move from ${audienceProblem} toward ${transformation} with a sharper ${structure.formatTemplateMeta.label.toLowerCase()} episode flow and clearer next action.`,
+      showNotes: [
+        `Why this episode matters: ${audienceProblem}`,
+        '',
+        'What listeners will get:',
+        ...(notesLines.length ? notesLines : ['- A clearer publishing angle', '- A tighter episode structure', '- One action to test before the next recording']),
+        '',
+        `Delivery angle: ${toneLabel}.`,
+      ].join('\n'),
+      socialCaptions: [
+        `New episode: ${title}. ${transformation}`,
+        `If your audience is stuck on ${theme.name}, this episode gives them a clearer path forward.`,
+        `${title} breaks ${theme.name} into a sharper, more publishable structure.`,
+      ],
+      cta: 'If this episode helped, follow the show and share it with one creator who should hear it next.',
+    };
+  }
+
+  async generatePodcastIdeas(input) {
+    const niche = normalizeIdeaNiche(input?.niche);
+    const topic = niche || 'podcast growth';
+    const titleTopic = toTitleCase(topic) || 'Podcast Growth';
+
+    const titleTemplates = [
+      `Why ${titleTopic} Stalls Before It Turns Into Listener Momentum`,
+      `The ${titleTopic} Mistake Most Shows Repeat Without Noticing`,
+      `How To Turn ${titleTopic} Into A Stronger Weekly Episode Angle`,
+      `${titleTopic}: The Questions Your Audience Actually Wants Answered`,
+      `What ${titleTopic} Sounds Like When The Host Finally Gets Specific`,
+      `The Story Behind A ${titleTopic} Episode That Actually Lands`,
+      `${titleTopic} Myths Worth Breaking On Your Next Recording`,
+      `A Better ${titleTopic} Framework For Clearer Podcast Episodes`,
+      `The ${titleTopic} Signals That Tell You An Idea Is Worth Recording`,
+      `How Great Hosts Build Authority Around ${titleTopic} Without Rambling`,
+    ];
+
+    const hookTemplates = [
+      `Use a myth-busting angle that replaces weak assumptions with a clearer model your listeners can apply.`,
+      `Open with a friction point in ${topic.toLowerCase()} and show why most creators stay too vague too long.`,
+      `Frame the episode around one decision your audience needs to make before they record or publish again.`,
+      `Lead with a quick story or case-study moment, then turn it into a practical framework.`,
+      `Show what most podcasters miss about ${topic.toLowerCase()} and close with one action listeners can test immediately.`,
+      `Use a sharp question-led hook that makes the listener reconsider how they approach ${topic.toLowerCase()}.`,
+      `Turn one common mistake into a step-by-step breakdown that feels immediately useful on mic.`,
+      `Focus on one overlooked signal in ${topic.toLowerCase()} and explain how it changes the episode structure.`,
+      `Build the angle around a before-and-after transformation so the listener can picture the result fast.`,
+      `Challenge the default advice in ${topic.toLowerCase()} and replace it with a stronger recording plan.`,
+    ];
+
+    return {
+      ideas: titleTemplates.map((title, index) => ({
+        title,
+        hookAngle: hookTemplates[index % hookTemplates.length],
+      })),
     };
   }
 }

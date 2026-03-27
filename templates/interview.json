@@ -1,0 +1,32 @@
+{
+  "key": "interview_show",
+  "label": "Interview Show",
+  "description": "Structure a guest conversation so the strongest insight comes through cleanly and feels easy to publish.",
+  "bestFor": "Founder interviews, expert guests, and conversational insight-led episodes.",
+  "promptHint": "Extract the guest's best insight fast, keep the conversation moving, and make the takeaways highly usable.",
+  "episodeStructure": {
+    "episodeType": "interview",
+    "formatTemplate": "interview_extraction",
+    "hookStyle": "question_led",
+    "targetLength": "20-30",
+    "includeFunSegment": false
+  },
+  "tone": {
+    "tonePreset": "Conversational & Casual",
+    "toneIntensity": 3,
+    "deliveryStyle": "friendly"
+  },
+  "showBlueprint": {
+    "ctaStyle": "community_invite"
+  },
+  "sectionLabels": [
+    "Guest Hook",
+    "Context",
+    "Core Question",
+    "Insight Extraction",
+    "Practical Takeaway",
+    "Close"
+  ],
+  "exampleTitle": "What Great Podcast Guests Do Before the Mic Goes Live",
+  "exampleDescription": "Pull out one strong guest lesson, give it context, and leave listeners with the most useful idea to apply."
+}

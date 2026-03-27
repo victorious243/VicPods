@@ -1,0 +1,69 @@
+<div class="help-page-shell landing-page-shell example-library-shell">
+  <section class="card tool-hero example-library-hero" data-help-reveal>
+    <div class="tool-hero-copy">
+      <span class="landing-kicker">Public example library</span>
+      <h1>See what a strong VicPods episode looks like before you start.</h1>
+      <p class="landing-lead">
+        Browse example episode structures, Launch Pack previews, and podcast styles already modeled inside VicPods. Every example is built to show the value fast.
+      </p>
+      <div class="inline-actions">
+        <a href="/#idea-to-episode-generator" class="btn btn-primary">Try the generator</a>
+        <a href="/podcast-idea-generator" class="btn btn-secondary">Generate ideas</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="example-library-proof" data-help-reveal>
+    <div class="section-head">
+      <h2>What VicPods is optimized to do</h2>
+      <a href="/about" class="btn btn-ghost">About VicPods</a>
+    </div>
+    <%- include('../partials/proof-snippet-grid', { proofSnippets }) %>
+  </section>
+
+  <section class="example-library-section" data-help-reveal>
+    <div class="section-head">
+      <div>
+        <h2>Episode examples</h2>
+        <p class="mini-note">Realistic example workflows showing the structure and launch preview users see inside VicPods.</p>
+      </div>
+      <a href="/auth/register" class="btn btn-ghost">Create account</a>
+    </div>
+    <%- include('../partials/example-preview-grid', { examples }) %>
+  </section>
+
+  <section class="example-library-section" data-help-reveal>
+    <div class="section-head">
+      <div>
+        <h2>Podcast styles already modeled</h2>
+        <p class="mini-note">Start with structure instead of a blank page.</p>
+      </div>
+    </div>
+
+    <div class="template-proof-grid">
+      <% (podcastStyles || []).forEach((template) => { %>
+        <article class="card template-proof-card">
+          <div class="template-proof-head">
+            <span class="mini-label"><%= template.label %></span>
+            <span class="template-proof-bestfor"><%= template.bestFor %></span>
+          </div>
+          <p><%= template.description %></p>
+          <ul class="template-proof-labels">
+            <% (template.sectionLabels || []).slice(0, 4).forEach((label) => { %>
+              <li><%= label %></li>
+            <% }) %>
+          </ul>
+          <div class="inline-actions">
+            <% if (currentUser) { %>
+              <a href="/create/single?template=<%= encodeURIComponent(template.key) %>" class="btn btn-primary">Start with this style</a>
+            <% } else { %>
+              <a href="/auth/register" class="btn btn-primary">Create account</a>
+            <% } %>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>

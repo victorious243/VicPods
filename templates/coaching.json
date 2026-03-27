@@ -1,0 +1,32 @@
+{
+  "key": "coaching_personal_brand",
+  "label": "Coaching / Personal Brand",
+  "description": "Blend encouragement with structure so the episode feels personal, motivating, and easy to act on.",
+  "bestFor": "Coaches, consultants, and creator-led personal brand podcasts.",
+  "promptHint": "Sound warm and motivating, but keep the advice structured enough that listeners know exactly what to do next.",
+  "episodeStructure": {
+    "episodeType": "solo",
+    "formatTemplate": "signature_framework",
+    "hookStyle": "question_led",
+    "targetLength": "10-15",
+    "includeFunSegment": false
+  },
+  "tone": {
+    "tonePreset": "Energetic & Motivational",
+    "toneIntensity": 3,
+    "deliveryStyle": "friendly"
+  },
+  "showBlueprint": {
+    "ctaStyle": "direct_action"
+  },
+  "sectionLabels": [
+    "Personal Insight",
+    "Mindset Shift",
+    "Simple Framework",
+    "Client Example",
+    "Next Step",
+    "Close"
+  ],
+  "exampleTitle": "The Mindset Reset That Makes Your Next Episode Easier to Record",
+  "exampleDescription": "Start with a relatable coaching insight, bring structure quickly, and close with one action the listener can do today."
+}

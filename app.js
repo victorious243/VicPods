@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const { connectDatabase } = require('./config/database');
 const { validateEnvironment } = require('./config/envValidation');
 const { loadCurrentUser, requireAuth } = require('./middleware/auth');
+const { captureReferralContext } = require('./middleware/referralContext');
 const { applyLanguageContext } = require('./middleware/i18n');
 const { syncPlanStatus } = require('./middleware/requirePlan');
 const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtection');
@@ -112,6 +113,7 @@ app.use(session({
 }));
 
 app.use(loadCurrentUser);
+app.use(captureReferralContext);
 app.use(applyLanguageContext);
 app.use(syncPlanStatus);
 app.use(flashMiddleware);

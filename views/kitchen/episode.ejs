@@ -345,6 +345,190 @@
   </form>
 </section>
 
+<section class="card share-link-card">
+  <div class="section-head">
+    <h3>Share Episode</h3>
+    <span class="mini-label">Read-only link</span>
+  </div>
+
+  <p class="mini-note">Share a clean public page with the episode title, hook, outline, and Launch Pack preview. No editing, no login required.</p>
+
+  <div class="share-link-toolbar">
+    <label class="share-link-field">
+      <span class="landing-preview-label">Public share URL</span>
+      <input type="text" value="<%= sharedEpisodeUrl %>" readonly data-copy-source="episode-share-url" />
+    </label>
+
+    <div class="inline-actions">
+      <button class="btn btn-primary" type="button" data-copy-trigger="episode-share-url" data-copy-label="Copy Share Link" data-copy-complete-endpoint="/api/episodes/<%= episode._id %>/share/copied">Copy Share Link</button>
+      <a class="btn btn-ghost" href="<%= sharedEpisodeUrl %>" target="_blank" rel="noopener noreferrer">Open Shared Page</a>
+    </div>
+  </div>
+
+  <div class="share-growth-grid">
+    <% if (effectivePlan === 'free') { %>
+      <article class="card share-growth-card">
+        <span class="mini-label">Watermarked Free Export</span>
+        <h3>Download a light episode brief</h3>
+        <p>Share a clean TXT preview with a subtle VicPods watermark while you keep building the full episode.</p>
+        <div class="inline-actions">
+          <a class="btn btn-secondary" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/preview/download">Download Preview TXT</a>
+          <a class="btn btn-ghost" href="/settings?section=billing">Unlock full exports</a>
+        </div>
+      </article>
+    <% } %>
+
+    <article class="card share-growth-card">
+      <span class="mini-label">Referral Loop</span>
+      <h3>Invite another creator and earn more usage</h3>
+      <p>Use your invite link after you share an episode. Each verified creator adds +<%= referralProgram.rewardPerReferral %> extra AI credits/day to your account.</p>
+      <label class="share-link-field">
+        <span class="landing-preview-label">Invite link</span>
+        <input type="text" value="<%= referralProgram.inviteUrl %>" readonly data-copy-source="episode-referral-link" />
+      </label>
+      <div class="inline-actions">
+        <button class="btn btn-primary" type="button" data-copy-trigger="episode-referral-link" data-copy-label="Copy Invite Link">Copy Invite Link</button>
+        <span class="mini-label">+<%= referralProgram.referralBonusCredits %> credits/day active</span>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Your Launch Pack</h3>
+    <span class="mini-label">Publish-ready assets</span>
+  </div>
+
+  <div class="inline-actions">
+    <form method="POST" action="/ai/launch-pack/generate">
+      <input type="hidden" name="seriesId" value="<%= series._id %>" />
+      <input type="hidden" name="themeId" value="<%= theme._id %>" />
+      <input type="hidden" name="episodeId" value="<%= episode._id %>" />
+      <button class="btn btn-primary" type="submit"><%= launchPackView?.updatedAt ? 'Refresh Launch Pack' : 'Generate Launch Pack' %></button>
+    </form>
+    <% if (launchPackFullAccess && launchPackView?.updatedAt) { %>
+      <button class="btn btn-ghost" type="button" data-copy-trigger="launch-pack" data-copy-label="Copy Launch Pack">Copy Launch Pack</button>
+    <% } %>
+    <% if (!launchPackFullAccess) { %>
+      <a class="btn btn-secondary" href="/settings?section=billing">Unlock full launch pack</a>
+    <% } %>
+    <% if (effectivePlan === 'free') { %>
+      <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/preview/download">Download light preview</a>
+    <% } %>
+  </div>
+
+  <% if (launchPackView?.updatedAt) { %>
+    <p>
+      Launch Pack ready.
+      Last updated: <%= new Date(launchPackView.updatedAt).toLocaleString() %>
+      <% if (launchPackView?.stale) { %>
+        · refresh recommended after recent draft edits
+      <% } %>
+    </p>
+  <% } else { %>
+    <p class="mini-note">Generate title variations, description copy, show notes, social captions, and a publish CTA in one pass.</p>
+  <% } %>
+
+  <div class="launch-pack-grid">
+    <article class="launch-pack-panel">
+      <div class="launch-pack-block">
+        <span class="landing-preview-label">Title variations</span>
+        <% if (launchPackView?.titles?.length) { %>
+          <ul class="launch-pack-list">
+            <% launchPackView.titles.forEach((titleOption) => { %>
+              <li><%= titleOption %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p class="mini-note">Generate the Launch Pack to see 2-3 publish-ready title options.</p>
+        <% } %>
+      </div>
+
+      <div class="launch-pack-block">
+        <span class="landing-preview-label">Short description</span>
+        <p class="launch-pack-copy">
+          <%= launchPackView?.description || 'A concise publish-ready description will appear here once the Launch Pack is generated.' %>
+        </p>
+      </div>
+    </article>
+
+    <div class="launch-pack-locked-grid <%= launchPackFullAccess ? 'is-unlocked' : '' %>">
+      <article class="launch-pack-lock-card">
+        <div class="launch-pack-lock-head">
+          <span class="mini-label"><%= launchPackFullAccess ? 'Unlocked' : 'Locked' %></span>
+          <strong>Full Show Notes</strong>
+        </div>
+        <div class="launch-pack-lock-body">
+          <p class="launch-pack-rich-copy"><%= launchPackView?.showNotes || 'Full publish-ready show notes unlock on Pro and Premium.' %></p>
+          <% if (!launchPackFullAccess) { %>
+            <div class="launch-pack-lock-overlay">
+              <p>Upgrade to unlock the full publish-ready notes block for this episode.</p>
+            </div>
+          <% } %>
+        </div>
+      </article>
+
+      <article class="launch-pack-lock-card">
+        <div class="launch-pack-lock-head">
+          <span class="mini-label"><%= launchPackFullAccess ? 'Unlocked' : 'Locked' %></span>
+          <strong>Social Captions</strong>
+        </div>
+        <div class="launch-pack-lock-body">
+          <% if (launchPackView?.socialCaptions?.length) { %>
+            <ul class="launch-pack-list launch-pack-list-captions">
+              <% launchPackView.socialCaptions.forEach((caption) => { %>
+                <li><%= caption %></li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p class="launch-pack-copy">Three publish-ready social captions unlock on Pro and Premium.</p>
+          <% } %>
+          <% if (!launchPackFullAccess) { %>
+            <div class="launch-pack-lock-overlay">
+              <p>Get ready-to-post caption options without leaving the episode workflow.</p>
+            </div>
+          <% } %>
+        </div>
+      </article>
+
+      <article class="launch-pack-lock-card">
+        <div class="launch-pack-lock-head">
+          <span class="mini-label"><%= launchPackFullAccess ? 'Unlocked' : 'Locked' %></span>
+          <strong>CTA Script</strong>
+        </div>
+        <div class="launch-pack-lock-body">
+          <p class="launch-pack-rich-copy"><%= launchPackView?.cta || 'A host-read CTA script unlocks on Pro and Premium.' %></p>
+          <% if (!launchPackFullAccess) { %>
+            <div class="launch-pack-lock-overlay">
+              <p>Unlock a stronger close that makes the episode feel ready to publish today.</p>
+            </div>
+          <% } %>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <% if (launchPackFullAccess && launchPackView?.updatedAt) { %>
+    <textarea hidden readonly data-copy-source="launch-pack">LAUNCH PACK
+
+TITLE VARIATIONS
+<%= (launchPackView.titles || []).map((titleOption, index) => `${index + 1}. ${titleOption}`).join('\n') %>
+
+SHORT DESCRIPTION
+<%= launchPackView.description || '' %>
+
+FULL SHOW NOTES
+<%= launchPackView.showNotes || '' %>
+
+SOCIAL CAPTIONS
+<%= (launchPackView.socialCaptions || []).map((caption, index) => `${index + 1}. ${caption}`).join('\n\n') %>
+
+CTA SCRIPT
+<%= launchPackView.cta || '' %></textarea>
+  <% } %>
+</section>
+
 <section class="card">
   <div class="section-head">
     <h3>Series Continuity</h3>

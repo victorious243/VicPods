@@ -42,6 +42,12 @@ const pendingRegistrationSchema = new mongoose.Schema(
       default: '',
       maxlength: 80,
     },
+    referredByCode: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 18,
+    },
     expiresAt: {
       type: Date,
       required: true,

@@ -2,12 +2,19 @@ const crypto = require('crypto');
 
 const {
   EMAIL_PIN_TTL_MINUTES,
+  PASSWORD_RESET_TTL_MINUTES,
   authenticateUser,
   registerUser,
+  requestPasswordReset,
+  resetPassword: resetPasswordWithToken,
   resendVerificationPin,
   verifyEmailPin,
 } = require('../services/authService');
-const { getDailyLimitForPlan } = require('../services/limitService');
+const {
+  getBaseDailyLimitForPlan,
+  getDailyLimitForUser,
+} = require('../services/limitService');
+const { getReferralBonusCredits } = require('../services/marketing/referralService');
 const Episode = require('../models/Episode');
 const Series = require('../models/Series');
 const Theme = require('../models/Theme');
@@ -65,7 +72,9 @@ function lockedFeaturesForPlan(plan) {
 
 function buildEntitlements(user, effectivePlan) {
   const resolvedPlan = effectivePlan || 'free';
-  const dailyLimit = getDailyLimitForPlan(resolvedPlan);
+  const baseDailyLimit = getBaseDailyLimitForPlan(resolvedPlan);
+  const dailyLimit = getDailyLimitForUser(user, resolvedPlan);
+  const referralBonusCredits = getReferralBonusCredits(user);
 
   return {
     plan: resolvedPlan,
@@ -76,6 +85,8 @@ function buildEntitlements(user, effectivePlan) {
     aiUsage: {
       used: Number(user?.aiDailyCount || 0),
       limit: Number.isFinite(dailyLimit) ? dailyLimit : null,
+      baseLimit: Number.isFinite(baseDailyLimit) ? baseDailyLimit : null,
+      bonusCredits: referralBonusCredits,
       resetAt: user?.aiDailyResetDate || null,
     },
     billingPortalURL: null,
@@ -121,14 +132,17 @@ function buildSessionPayload(req, user, effectivePlan) {
   };
 }
 
-async function establishUserSession(req, userId) {
+async function establishUserSession(req, user) {
+  user.lastActiveAt = new Date();
+  await user.save();
+
   return new Promise((resolve, reject) => {
     req.session.regenerate((error) => {
       if (error) {
         return reject(error);
       }
 
-      req.session.userId = userId;
+      req.session.userId = user._id.toString();
       req.session.apiAccessToken = crypto.randomBytes(24).toString('hex');
       return resolve();
     });
@@ -169,6 +183,15 @@ function buildVerificationResponse(result) {
   };
 }
 
+function buildPasswordResetRequestResponse(result) {
+  return {
+    requested: true,
+    email: result.email || '',
+    resetLinkExpiresInMinutes: PASSWORD_RESET_TTL_MINUTES,
+    resetUrlDevOnly: result.resetUrlDevOnly || null,
+  };
+}
+
 function episodeMode(episode, series) {
   if (episode.isSingle || series?.creationMode === 'single_collection') {
     return 'single';
@@ -188,6 +211,7 @@ async function register(req, res) {
       password: req.body?.password,
       acceptedTerms: Boolean(req.body?.acceptedTerms),
       requestIp: req.ip,
+      referralCode: req.body?.referralCode || req.session?.referralCode || '',
     });
 
     return res.status(202).json({
@@ -207,7 +231,7 @@ async function login(req, res) {
       password: req.body?.password,
     });
 
-    await establishUserSession(req, user._id.toString());
+    await establishUserSession(req, user);
 
     return res.json({
       result: {
@@ -229,7 +253,7 @@ async function verifyRegistration(req, res) {
       pin: req.body?.pin,
     });
 
-    await establishUserSession(req, user._id.toString());
+    await establishUserSession(req, user);
 
     return res.json({
       result: {
@@ -240,6 +264,51 @@ async function verifyRegistration(req, res) {
   } catch (error) {
     return res.status(error.statusCode || 400).json({
       error: asErrorMessage(error, 'Unable to verify email.'),
+    });
+  }
+}
+
+async function forgotPassword(req, res) {
+  try {
+    const result = await requestPasswordReset({
+      email: req.body?.email,
+    });
+
+    return res.json({
+      result: buildPasswordResetRequestResponse(result),
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      error: asErrorMessage(error, 'Unable to start password reset.'),
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const newPassword = String(req.body?.newPassword || '');
+    const confirmPassword = String(req.body?.confirmPassword || '');
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        error: 'New password and confirm password do not match.',
+      });
+    }
+
+    await resetPasswordWithToken({
+      email: req.body?.email,
+      token: req.body?.token,
+      newPassword,
+    });
+
+    return res.json({
+      result: {
+        passwordReset: true,
+      },
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({
+      error: asErrorMessage(error, 'Unable to reset password.'),
     });
   }
 }
@@ -327,12 +396,41 @@ async function studio(req, res, next) {
   }
 }
 
+async function markEpisodeShareCopied(req, res, next) {
+  if (!requireVerifiedApiUser(req, res)) {
+    return;
+  }
+
+  try {
+    const episode = await Episode.findOne({
+      _id: req.params.episodeId,
+      userId: req.currentUser._id,
+    }).select('_id shareLinkCopiedAt');
+
+    if (!episode) {
+      return res.status(404).json({
+        error: 'Episode not found.',
+      });
+    }
+
+    episode.shareLinkCopiedAt = new Date();
+    await episode.save();
+
+    return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   register,
   login,
   verifyRegistration,
+  forgotPassword,
+  resetPassword,
   resendRegistrationPin,
   session,
   logout,
   studio,
+  markEpisodeShareCopied,
 };

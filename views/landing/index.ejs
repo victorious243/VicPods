@@ -49,6 +49,86 @@
     </div>
   </section>
 
+  <section class="card landing-generator-section" id="idea-to-episode-generator" data-help-reveal>
+    <div class="landing-generator-head">
+      <span class="landing-kicker">Idea to episode generator</span>
+      <h2>Paste a podcast idea. See the episode take shape instantly.</h2>
+      <p class="landing-generator-copy">
+        Generate a live VicPods preview with a stronger title, hook, structure, and CTA before you ever create an account.
+      </p>
+    </div>
+
+    <form
+      class="landing-generator-form"
+      action="/api/public/generate"
+      method="post"
+      data-public-generator-form
+    >
+      <label class="landing-generator-label" for="landingIdeaInput">Type your podcast idea</label>
+      <textarea
+        id="landingIdeaInput"
+        name="idea"
+        class="landing-generator-textarea"
+        placeholder="Type your podcast idea..."
+        rows="5"
+        maxlength="900"
+        data-public-generator-input
+      ></textarea>
+
+      <div class="landing-generator-actions">
+        <div class="landing-generator-meta">
+          <span class="mini-label">Instant preview</span>
+          <p>No login required. Just paste the idea and generate the episode structure.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary landing-generator-submit" data-public-generator-submit>
+          Generate Episode
+        </button>
+      </div>
+
+      <p
+        class="landing-generator-status"
+        data-public-generator-status
+        hidden
+        role="status"
+        aria-live="polite"
+      ></p>
+      <p class="landing-generator-error" data-public-generator-error hidden></p>
+    </form>
+
+    <%- include('../partials/landing-episode-preview', {
+      unlockHref: currentUser
+        ? ((effectivePlan === 'pro' || effectivePlan === 'premium') ? '/studio' : '/settings?section=billing')
+        : '/auth/register',
+      unlockLabel: currentUser
+        ? ((effectivePlan === 'pro' || effectivePlan === 'premium') ? 'Open Studio' : 'Unlock full launch pack')
+        : 'Unlock full launch pack',
+      fullLaunchPackPreview: Boolean(currentUser && (effectivePlan === 'pro' || effectivePlan === 'premium')),
+    }) %>
+  </section>
+
+  <section class="landing-proof-shell" data-help-reveal>
+    <div class="section-head">
+      <div>
+        <h3>Why creators get value quickly</h3>
+        <p class="mini-note">Product proof, not vague promises.</p>
+      </div>
+      <a href="/examples" class="btn btn-ghost">Open example library</a>
+    </div>
+    <%- include('../partials/proof-snippet-grid', { proofSnippets: landingProofSnippets }) %>
+  </section>
+
+  <section class="landing-examples-shell" data-help-reveal>
+    <div class="section-head">
+      <div>
+        <h3>See the episode structure before you sign up</h3>
+        <p class="mini-note">A few example episode directions and Launch Pack previews built in the VicPods style.</p>
+      </div>
+      <a href="/examples" class="btn btn-ghost">View all examples</a>
+    </div>
+    <%- include('../partials/example-preview-grid', { examples: featuredExamples, gridClass: 'example-preview-grid-compact' }) %>
+  </section>
+
   <section class="help-story-stack landing-story-stack">
     <article class="card help-story-section" data-help-reveal>
       <div class="help-story-aside">
@@ -118,4 +198,5 @@
 </div>
 
 <script src="/javascripts/help-center.js" defer></script>
+<script src="/javascripts/landing-generator.js" defer></script>
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>

@@ -101,10 +101,47 @@ function sanitizeShowNotesPayload(payload) {
   };
 }
 
+function sanitizeRichText(value, { maxLines = 14, maxChars = 2400, maxWordsPerLine = 40 } = {}) {
+  const lines = String(value || '')
+    .split('\n')
+    .map((line) => clampChars(String(line || '').replace(/\s+/g, ' ').trim(), maxChars))
+    .filter((line, index, source) => Boolean(line) || (index > 0 && source[index - 1]))
+    .slice(0, maxLines)
+    .map((line) => clampWords(line, maxWordsPerLine));
+
+  return lines.join('\n').trim();
+}
+
+function sanitizeLaunchPackPayload(payload) {
+  return {
+    titles: sanitizeBulletArray(payload.titles, 3, { maxWords: 16, maxChars: 120 }),
+    description: clampWords(clampChars(payload.description, 900), 130),
+    showNotes: sanitizeRichText(payload.showNotes, { maxLines: 14, maxChars: 2600, maxWordsPerLine: 42 }),
+    socialCaptions: sanitizeBulletArray(payload.socialCaptions, 3, { maxWords: 40, maxChars: 320 }),
+    cta: clampWords(clampChars(payload.cta, 420), 60),
+  };
+}
+
+function sanitizePodcastIdeasPayload(payload) {
+  const items = Array.isArray(payload?.ideas) ? payload.ideas : [];
+
+  return {
+    ideas: items
+      .map((item) => ({
+        title: clampWords(clampChars(item?.title || item?.headline || item?.name, 140), 16),
+        hookAngle: clampWords(clampChars(item?.hookAngle || item?.hook || item?.angle, 280), 38),
+      }))
+      .filter((item) => item.title && item.hookAngle)
+      .slice(0, 10),
+  };
+}
+
 module.exports = {
   sanitizeEpisodePayload,
   sanitizeSpicesPayload,
   sanitizeContinuityPayload,
   sanitizeToneFixPayload,
   sanitizeShowNotesPayload,
+  sanitizeLaunchPackPayload,
+  sanitizePodcastIdeasPayload,
 };

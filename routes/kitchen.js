@@ -21,5 +21,9 @@ router.get(
   '/:seriesId/themes/:themeId/episodes/:episodeId/transcript/download',
   transcriptController.downloadTranscript
 );
+router.get(
+  '/:seriesId/themes/:themeId/episodes/:episodeId/preview/download',
+  transcriptController.downloadLightPreview
+);
 
 module.exports = router;

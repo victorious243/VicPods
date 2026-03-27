@@ -1,4 +1,5 @@
 const User = require('../../models/User');
+const { sendPaymentFailedEmailIfNeeded, sendPaymentSuccessEmailIfNeeded } = require('../billing/paymentEmailService');
 const { mapPriceIdToPlan } = require('./planMapping');
 const { getStripeClient } = require('./stripeClient');
 
@@ -221,11 +222,24 @@ async function handleInvoicePaid(invoice) {
 
   const stripe = getStripeClient();
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-  await handleSubscriptionCreatedOrUpdated(subscription);
+  const user = await findUserForSubscription(subscription);
+
+  if (!user) {
+    return;
+  }
+
+  await applySubscriptionToUser(user, subscription);
+  await sendPaymentSuccessEmailIfNeeded({
+    user,
+    invoice,
+    subscription,
+    plan: findPlanFromSubscription(subscription),
+  });
 }
 
 async function handleInvoicePaymentFailed(invoice) {
   const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+  let subscription = null;
 
   let user = null;
   if (customerId) {
@@ -239,6 +253,25 @@ async function handleInvoicePaymentFailed(invoice) {
   if (!user) {
     return;
   }
+
+  if (invoice.subscription) {
+    try {
+      const stripe = getStripeClient();
+      subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+    } catch (_error) {
+      subscription = null;
+    }
+  }
+
+  const failedPlan = subscription
+    ? findPlanFromSubscription(subscription)
+    : String(user.plan || '').trim().toLowerCase() || 'free';
+
+  await sendPaymentFailedEmailIfNeeded({
+    user,
+    invoice,
+    plan: failedPlan,
+  });
 
   user.plan = 'free';
   user.planStatus = 'past_due';

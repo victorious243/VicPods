@@ -1,0 +1,32 @@
+{
+  "key": "solo_educator",
+  "label": "Solo Educator",
+  "description": "Teach one clear lesson with a confident solo structure that feels practical from the first line.",
+  "bestFor": "Explainers, frameworks, and sharp educational episodes.",
+  "promptHint": "Prioritize clarity, step-by-step teaching, and a concrete listener takeaway.",
+  "episodeStructure": {
+    "episodeType": "solo",
+    "formatTemplate": "signature_framework",
+    "hookStyle": "problem_first",
+    "targetLength": "20-30",
+    "includeFunSegment": false
+  },
+  "tone": {
+    "tonePreset": "Educational & Structured",
+    "toneIntensity": 3,
+    "deliveryStyle": "expert"
+  },
+  "showBlueprint": {
+    "ctaStyle": "direct_action"
+  },
+  "sectionLabels": [
+    "Opening Problem",
+    "Core Insight",
+    "Framework Breakdown",
+    "Example",
+    "Listener Action",
+    "Close"
+  ],
+  "exampleTitle": "The 3-Part Podcast Workflow That Actually Ships Episodes",
+  "exampleDescription": "Teach one clear lesson, break it into usable parts, and leave the listener with a concrete next step."
+}

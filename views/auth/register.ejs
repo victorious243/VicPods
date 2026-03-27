@@ -31,6 +31,10 @@
   </div>
 
   <form method="POST" action="/auth/register" class="form-grid">
+    <% if (pendingReferralCode) { %>
+      <p class="mini-note auth-referral-note">Invite applied: <strong><%= pendingReferralCode %></strong>. Your signup will be linked when you verify your email.</p>
+    <% } %>
+    <input type="hidden" name="referralCode" value="<%= pendingReferralCode || '' %>" />
     <label>
       Name
       <input type="text" name="name" required maxlength="80" placeholder="Your name" />

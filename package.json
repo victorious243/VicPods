@@ -8,6 +8,7 @@
     "billing:reconcile": "node ./scripts/reconcileStripeBilling.js",
     "stripe:setup-plans": "node ./scripts/setupStripePlans.js --write-env",
     "email:test": "node ./scripts/testEmailDelivery.js",
+    "email:lifecycle": "node ./scripts/runLifecycleEmailCampaigns.js",
     "google:test-client": "node ./scripts/testGoogleOidcClient.js"
   },
   "dependencies": {

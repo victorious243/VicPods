@@ -1,0 +1,116 @@
+<section class="shared-episode-shell">
+  <article class="shared-episode-doc">
+    <div class="shared-episode-hero">
+      <span class="shared-episode-kicker">Read-only episode preview</span>
+      <h1><%= shareEpisode.title %></h1>
+      <p class="shared-episode-hook"><%= shareEpisode.hook %></p>
+
+      <div class="shared-episode-meta">
+        <span class="mini-label">Created with VicPods</span>
+        <span class="shared-episode-meta-dot"></span>
+        <span>Structured episode planning and launch prep</span>
+      </div>
+    </div>
+
+    <section class="shared-episode-section">
+      <div class="shared-episode-section-head">
+        <span class="landing-preview-label">Episode outline</span>
+        <span class="mini-label">Shareable draft</span>
+      </div>
+
+      <ol class="shared-episode-outline">
+        <% shareEpisode.outline.forEach((item) => { %>
+          <li><%= item %></li>
+        <% }) %>
+      </ol>
+    </section>
+
+    <section class="launch-pack-shell shared-launch-pack-shell">
+      <div class="section-head launch-pack-head">
+        <h2>Your Launch Pack Preview</h2>
+        <span class="mini-label">Publish-ready</span>
+      </div>
+
+      <div class="launch-pack-grid">
+        <article class="launch-pack-panel">
+          <div class="launch-pack-block">
+            <span class="landing-preview-label">Title variations</span>
+            <% if (shareEpisode.launchPackPreview?.titles?.length) { %>
+              <ul class="launch-pack-list">
+                <% shareEpisode.launchPackPreview.titles.forEach((titleOption) => { %>
+                  <li><%= titleOption %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              <p class="launch-pack-copy">Launch-ready title options appear here when the episode pack is generated.</p>
+            <% } %>
+          </div>
+
+          <div class="launch-pack-block">
+            <span class="landing-preview-label">Short description</span>
+            <p class="launch-pack-copy">
+              <%= shareEpisode.launchPackPreview?.description || 'A concise publish-ready description appears here once the Launch Pack is ready.' %>
+            </p>
+          </div>
+        </article>
+
+        <div class="launch-pack-locked-grid">
+          <article class="launch-pack-lock-card">
+            <div class="launch-pack-lock-head">
+              <span class="mini-label">Preview</span>
+              <strong>Full Show Notes</strong>
+            </div>
+            <div class="launch-pack-lock-body">
+              <p class="launch-pack-rich-copy">Publishing notes, key moments, listener takeaways, and episode resources sit here in the full Launch Pack.</p>
+              <div class="launch-pack-lock-overlay">
+                <p>Show notes stay locked on shared pages to keep the public view focused and clean.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="launch-pack-lock-card">
+            <div class="launch-pack-lock-head">
+              <span class="mini-label">Preview</span>
+              <strong>Social Captions</strong>
+            </div>
+            <div class="launch-pack-lock-body">
+              <ul class="launch-pack-list launch-pack-list-captions">
+                <li>Launch caption option one for this episode angle.</li>
+                <li>Short post copy for the strongest listener hook.</li>
+                <li>Publishing prompt tied to the episode CTA.</li>
+              </ul>
+              <div class="launch-pack-lock-overlay">
+                <p>Shared links only show the preview layer. Full captions stay inside VicPods.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="launch-pack-lock-card">
+            <div class="launch-pack-lock-head">
+              <span class="mini-label">Preview</span>
+              <strong>CTA Script</strong>
+            </div>
+            <div class="launch-pack-lock-body">
+              <p class="launch-pack-rich-copy">A tighter host-read close and response-driving CTA appear here in the full pack.</p>
+              <div class="launch-pack-lock-overlay">
+                <p>The public page stays read-only. Generate your own episode to unlock the full launch workflow.</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <aside class="shared-episode-rail">
+    <div class="shared-episode-rail-card">
+      <span class="mini-label">Created with VicPods</span>
+      <strong>Turn one idea into a structured episode and launch-ready assets.</strong>
+      <p>Go from rough concept to title, hook, outline, and publish prep without building the structure from scratch.</p>
+      <a class="btn btn-primary" href="<%= createEpisodeHref %>">Create your own episode</a>
+      <% if (sharePageUrl) { %>
+        <p class="shared-episode-url"><span>Shared link</span><br /><%= sharePageUrl %></p>
+      <% } %>
+    </div>
+  </aside>
+</section>

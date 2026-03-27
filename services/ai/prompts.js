@@ -10,6 +10,7 @@ const {
   getDeliveryStyleOption,
   resolveEffectiveDeliveryStyle,
 } = require('../writing/writingIntelligenceService');
+const { getPodcastTemplate } = require('../templates/podcastTemplateService');
 
 function resolveToneInput(series, effectiveTone = {}) {
   return buildToneBlock({
@@ -27,9 +28,24 @@ function buildStructureBlock({ series, episode }) {
   const structure = resolveEffectiveStructure({ series, episode });
   const ctaStyle = getCtaStyleOption(blueprint.ctaStyle);
   const deliveryStyle = getDeliveryStyleOption(resolveEffectiveDeliveryStyle({ series, episode }));
+  const selectedTemplate = episode?.templateType
+    ? getPodcastTemplate(episode.templateType)
+    : null;
 
   return [
     'VicPods Structuring Application:',
+    selectedTemplate
+      ? `Podcast Style Template: ${selectedTemplate.label} - ${selectedTemplate.description}`
+      : null,
+    selectedTemplate?.bestFor
+      ? `Template Best For: ${selectedTemplate.bestFor}`
+      : null,
+    selectedTemplate?.sectionLabels?.length
+      ? `Preferred Section Labels: ${selectedTemplate.sectionLabels.join(' -> ')}`
+      : null,
+    selectedTemplate?.promptHint
+      ? `Template Prompt Hint: ${selectedTemplate.promptHint}`
+      : null,
     `Format Template: ${structure.formatTemplateMeta.label} - ${structure.formatTemplateMeta.description}`,
     `Architected Flow: ${(structure.formatTemplateMeta.flow || []).join(' -> ')}`,
     `Hook Style: ${structure.hookStyleMeta.label} - ${structure.hookStyleMeta.description}`,
@@ -45,7 +61,7 @@ function buildStructureBlock({ series, episode }) {
     `CTA Style: ${ctaStyle.label} - ${ctaStyle.description}`,
     `Banned Words/Phrases: ${blueprint.bannedWords.join(' | ') || 'None specified.'}`,
     `Brand Voice Rules: ${blueprint.brandVoiceRules.join(' | ') || 'Keep the language specific, practical, and structured.'}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function buildEpisodeGenerationPrompt(input) {
@@ -363,10 +379,86 @@ function buildShowNotesPrompt(input) {
   ].join('\n');
 }
 
+function buildLaunchPackPrompt(input) {
+  const {
+    language,
+    series,
+    theme,
+    episode,
+    effectiveTone,
+    seasonArcStep,
+    continuityWarnings,
+    callbackSuggestions,
+  } = input;
+  const tone = resolveToneInput(series, effectiveTone);
+  const outputLanguage = resolveAiLanguageName(language);
+  const structureBlock = buildStructureBlock({ series, episode });
+
+  return [
+    'You are Chef AI Launch Strategist for VicPods.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
+    'Generate a compact Launch Pack that makes this episode feel publish-ready today.',
+    'Return valid JSON only with keys: titles, description, showNotes, socialCaptions, cta.',
+    'Do not invent timestamps, fake guest quotes, analytics, or external claims.',
+    'Use the existing episode draft only. Stay specific, practical, and launch-ready.',
+    '',
+    `Series: ${series.name}`,
+    `Series Goal: ${series.goal || 'Create stronger podcast episodes with clear outcomes.'}`,
+    `Theme: ${theme.name}`,
+    `Theme Summary: ${theme.themeSummary || 'N/A'}`,
+    `Episode Title: ${episode.title || 'Untitled'}`,
+    `Episode Hook: ${episode.hook || 'N/A'}`,
+    `Outline: ${(episode.outline || []).join(' | ') || 'N/A'}`,
+    `Talking Points: ${(episode.talkingPoints || []).join(' | ') || 'N/A'}`,
+    `Host Questions: ${(episode.hostQuestions || []).join(' | ') || 'N/A'}`,
+    `Ending: ${episode.ending || 'N/A'}`,
+    `Season Arc Position: ${seasonArcStep || 'No mapped season step yet.'}`,
+    `Continuity Warnings: ${(continuityWarnings || []).join(' | ') || 'None.'}`,
+    `Callback Suggestions: ${(callbackSuggestions || []).join(' | ') || 'None.'}`,
+    '',
+    tone.toneBlock,
+    '',
+    structureBlock,
+    '',
+    'Constraints:',
+    '- titles: 2-3 strong publish-ready variations',
+    '- description: one concise episode description, max 120 words',
+    '- showNotes: one compact publish-ready block with clear scannable lines',
+    '- socialCaptions: exactly 3 short promotional caption options',
+    '- cta: one short host-read style call to action',
+    '- Respect banned words and brand voice rules.',
+  ].join('\n');
+}
+
+function buildPodcastIdeasPrompt(input) {
+  const outputLanguage = resolveAiLanguageName(input?.language);
+  const niche = String(input?.niche || '').trim();
+
+  return [
+    'You are Chef AI for VicPods.',
+    `Output language: ${outputLanguage}. All JSON text fields must use this language.`,
+    'Generate 10 strong podcast episode ideas that feel specific, usable, and worth turning into a real episode.',
+    niche
+      ? `Podcast niche: ${niche}`
+      : 'Podcast niche: broad. Spread the ideas across strong creator, business, storytelling, and audience-growth angles.',
+    'Return valid JSON only with this shape:',
+    '{ "ideas": [ { "title": "", "hookAngle": "" } ] }',
+    'Rules:',
+    '- Give exactly 10 ideas.',
+    '- Make every idea distinct.',
+    '- Titles should be clear and compelling, not clickbait.',
+    '- hookAngle should be 1 concise sentence explaining the angle.',
+    '- Avoid vague filler like "Part 1", "ultimate guide", or "tips and tricks".',
+    '- Write ideas a real podcaster could record today.',
+  ].join('\n');
+}
+
 module.exports = {
   buildEpisodeGenerationPrompt,
   buildSpicesPrompt,
   buildContinuityRefreshPrompt,
   buildToneFixPrompt,
   buildShowNotesPrompt,
+  buildLaunchPackPrompt,
+  buildPodcastIdeasPrompt,
 };

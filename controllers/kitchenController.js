@@ -50,6 +50,13 @@ const {
   buildShowNotesSourceSignature,
   markShowNotesPackStale,
 } = require('../services/showNotes/showNotesPackService');
+const {
+  buildLaunchPackSourceSignature,
+  buildLaunchPackView,
+  markLaunchPackStale,
+} = require('../services/launch/launchPackService');
+const { buildReferralProgramViewModel } = require('../services/marketing/referralService');
+const { ensureEpisodeShareUrl } = require('../services/sharing/episodeShareService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 const { renderPage } = require('../utils/render');
@@ -525,6 +532,14 @@ async function showEpisodeEditor(req, res, next) {
       episode,
       episodeContinuityContext,
     });
+    const launchPackFullAccess = effectivePlan === 'pro' || effectivePlan === 'premium';
+    const launchPackView = buildLaunchPackView(episode.launchPack, {
+      fullAccess: launchPackFullAccess,
+    });
+    const sharedEpisodeUrl = await ensureEpisodeShareUrl(episode);
+    const referralProgram = await buildReferralProgramViewModel(req.currentUser, {
+      appUrl: process.env.APP_URL || 'http://localhost:3000',
+    });
 
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
@@ -555,6 +570,11 @@ async function showEpisodeEditor(req, res, next) {
         effectiveDeliveryStyle,
         episodeContinuityContext,
         releaseReadiness,
+        launchPackView,
+        launchPackFullAccess,
+        sharedEpisodeUrl,
+        referralProgram,
+        effectivePlan,
       },
     });
   } catch (error) {
@@ -581,6 +601,7 @@ async function saveEpisode(req, res, next) {
     }
 
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const episodeStructure = normalizeEpisodeStructureInput(req.body, episode);
     const writingSettings = normalizeEpisodeWritingSettings(req.body, episode);
 
@@ -639,6 +660,7 @@ async function saveEpisode(req, res, next) {
     episode.toneScore = toneCheck.toneScore;
     episode.toneWarnings = toneCheck.warnings;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
     refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();

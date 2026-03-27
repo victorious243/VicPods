@@ -1,6 +1,8 @@
 const {
   authenticateUser,
   registerUser,
+  requestPasswordReset,
+  resetPassword: resetPasswordWithToken,
   resendVerificationPin,
   verifyEmailPin,
 } = require('../services/authService');
@@ -17,6 +19,7 @@ const {
   resendMfaPin,
   maskEmail,
 } = require('../services/auth/mfaService');
+const { AppError } = require('../utils/errors');
 const { renderPage } = require('../utils/render');
 
 function getProviderErrorMessage(error, fallbackMessage) {
@@ -31,7 +34,11 @@ function getProviderErrorMessage(error, fallbackMessage) {
   return fallbackMessage;
 }
 
-function establishUserSession(req, userId) {
+async function establishUserSession(req, user) {
+  const userId = user._id.toString();
+  user.lastActiveAt = new Date();
+  await user.save();
+
   return new Promise((resolve, reject) => {
     req.session.regenerate((error) => {
       if (error) {
@@ -85,7 +92,7 @@ async function finalizeLoginWithMfa(req, user, welcomeMessage) {
     };
   }
 
-  await establishUserSession(req, userId);
+  await establishUserSession(req, user);
   req.flash('success', welcomeMessage);
   return {
     mfaRequired: false,
@@ -103,6 +110,7 @@ function showRegister(req, res) {
     data: {
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
+      pendingReferralCode: res.locals.pendingReferralCode || '',
     },
   });
 }
@@ -135,6 +143,19 @@ function showLogin(req, res) {
   });
 }
 
+function showForgotPassword(req, res) {
+  return renderPage(res, {
+    title: 'Forgot Password - VicPods',
+    pageTitle: 'Reset your password',
+    subtitle: 'Enter your account email and we will send a secure reset link.',
+    view: 'auth/forgot-password',
+    authPage: true,
+    data: {
+      email: String(req.query.email || '').trim(),
+    },
+  });
+}
+
 function showVerify(req, res) {
   return renderPage(res, {
     title: req.t('page.auth.verify.title', 'Verify Email - VicPods'),
@@ -144,6 +165,19 @@ function showVerify(req, res) {
     authPage: true,
     data: {
       email: String(req.query.email || '').trim(),
+    },
+  });
+}
+
+function showResetPassword(req, res) {
+  return renderPage(res, {
+    title: 'Reset Password - VicPods',
+    pageTitle: 'Choose a new password',
+    subtitle: 'Create a new password for your VicPods account.',
+    view: 'auth/reset-password',
+    authPage: true,
+    data: {
+      token: String(req.query.token || '').trim(),
     },
   });
 }
@@ -174,6 +208,7 @@ async function register(req, res, next) {
       ...req.body,
       acceptedTerms: req.body.acceptTerms === 'on',
       requestIp: req.ip,
+      referralCode: req.body.referralCode || req.session?.referralCode || '',
     });
 
     let message = 'Check your email and enter the PIN to finish creating your account.';
@@ -186,6 +221,27 @@ async function register(req, res, next) {
     if (error.statusCode) {
       req.flash('error', error.message);
       return res.redirect('/auth/register');
+    }
+    return next(error);
+  }
+}
+
+async function forgotPassword(req, res, next) {
+  try {
+    const result = await requestPasswordReset({
+      email: req.body.email,
+    });
+
+    let message = 'If an account exists for that email, we sent a password reset link.';
+    if (result.resetUrlDevOnly) {
+      message += ` Dev link: ${result.resetUrlDevOnly}`;
+    }
+    req.flash('success', message);
+    return res.redirect(`/auth/forgot-password?email=${encodeURIComponent(result.email || req.body.email || '')}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(`/auth/forgot-password?email=${encodeURIComponent(String(req.body.email || '').trim())}`);
     }
     return next(error);
   }
@@ -214,6 +270,33 @@ async function login(req, res, next) {
   }
 }
 
+async function resetPassword(req, res, next) {
+  try {
+    const newPassword = String(req.body.newPassword || '');
+    const confirmPassword = String(req.body.confirmPassword || '');
+    if (newPassword !== confirmPassword) {
+      throw new AppError('New password and confirm password do not match.', 400);
+    }
+
+    await resetPasswordWithToken({
+      email: req.body.email,
+      token: req.body.token,
+      newPassword,
+    });
+
+    req.flash('success', 'Password reset successful. Sign in with your new password.');
+    return res.redirect('/auth/login');
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      const token = encodeURIComponent(String(req.body.token || '').trim());
+      return res.redirect(`/auth/reset-password?token=${token}`);
+    }
+
+    return next(error);
+  }
+}
+
 async function verify(req, res, next) {
   try {
     const user = await verifyEmailPin({
@@ -221,7 +304,7 @@ async function verify(req, res, next) {
       pin: req.body.pin,
     });
 
-    await establishUserSession(req, user._id.toString());
+    await establishUserSession(req, user);
     req.flash('success', 'Email verified. Welcome to your Studio.');
     return res.redirect('/studio');
   } catch (error) {
@@ -319,7 +402,7 @@ async function verifyMfa(req, res, next) {
       pin: req.body.pin,
     });
 
-    await establishUserSession(req, user._id.toString());
+    await establishUserSession(req, user);
     req.flash('success', `Welcome, ${user.name}.`);
     return res.redirect('/studio');
   } catch (error) {
@@ -379,10 +462,14 @@ module.exports = {
   showRegister,
   showTerms,
   showLogin,
+  showForgotPassword,
   showVerify,
+  showResetPassword,
   showMfa,
   register,
+  forgotPassword,
   login,
+  resetPassword,
   verify,
   resendPin,
   loginWithGoogle,

@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const { TONE_PRESET_NAMES } = require('../services/tone/tonePresets');
+const { PODCAST_TEMPLATE_KEYS } = require('../services/templates/podcastTemplateService');
 const {
   CTA_STYLE_VALUES,
   FORMAT_TEMPLATE_VALUES,
@@ -7,6 +9,12 @@ const {
   VALID_TARGET_LENGTHS,
 } = require('../services/structure/structureService');
 const { DELIVERY_STYLE_VALUES } = require('../services/writing/writingIntelligenceService');
+
+const SHARE_TOKEN_BYTES = 18;
+
+function createShareToken() {
+  return crypto.randomBytes(SHARE_TOKEN_BYTES).toString('hex');
+}
 
 const episodeSchema = new mongoose.Schema(
   {
@@ -117,6 +125,20 @@ const episodeSchema = new mongoose.Schema(
       type: String,
       enum: DELIVERY_STYLE_VALUES,
       default: 'friendly',
+    },
+    templateType: {
+      type: String,
+      enum: ['', ...PODCAST_TEMPLATE_KEYS],
+      default: '',
+    },
+    shareToken: {
+      type: String,
+      trim: true,
+      maxlength: 64,
+    },
+    shareLinkCopiedAt: {
+      type: Date,
+      default: null,
     },
     includeFunSegment: {
       type: Boolean,
@@ -289,12 +311,62 @@ const episodeSchema = new mongoose.Schema(
         maxlength: 64,
       },
     },
+    launchPack: {
+      titles: {
+        type: [String],
+        default: [],
+      },
+      description: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1800,
+      },
+      showNotes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 4000,
+      },
+      socialCaptions: {
+        type: [String],
+        default: [],
+      },
+      cta: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+      updatedAt: {
+        type: Date,
+        default: null,
+      },
+      stale: {
+        type: Boolean,
+        default: false,
+      },
+      sourceSignature: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 64,
+      },
+    },
     ideaIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Idea',
       },
     ],
+    readyEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastDraftReminderEmailSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -321,5 +393,73 @@ episodeSchema.index(
     },
   }
 );
+
+episodeSchema.index(
+  { shareToken: 1 },
+  {
+    unique: true,
+    sparse: true,
+  }
+);
+
+episodeSchema.statics.generateUniqueShareToken = async function generateUniqueShareToken() {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const token = createShareToken();
+    const existingEpisode = await this.exists({ shareToken: token });
+
+    if (!existingEpisode) {
+      return token;
+    }
+  }
+
+  throw new Error('Unable to allocate a unique episode share token.');
+};
+
+episodeSchema.methods.ensureShareToken = async function ensureShareToken() {
+  if (this.shareToken) {
+    return this.shareToken;
+  }
+
+  const token = await this.constructor.generateUniqueShareToken();
+  const updatedEpisode = await this.constructor.findOneAndUpdate(
+    {
+      _id: this._id,
+      $or: [
+        { shareToken: { $exists: false } },
+        { shareToken: '' },
+        { shareToken: null },
+      ],
+    },
+    {
+      $set: { shareToken: token },
+    },
+    {
+      new: true,
+      timestamps: false,
+    }
+  ).select('shareToken');
+
+  if (updatedEpisode?.shareToken) {
+    this.shareToken = updatedEpisode.shareToken;
+    return this.shareToken;
+  }
+
+  const latestEpisode = await this.constructor.findById(this._id).select('shareToken');
+  this.shareToken = latestEpisode?.shareToken || token;
+  return this.shareToken;
+};
+
+episodeSchema.pre('validate', async function assignShareToken(next) {
+  if (!this.isNew || this.shareToken) {
+    return next();
+  }
+
+  try {
+    this.shareToken = await this.constructor.generateUniqueShareToken();
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
 
 module.exports = mongoose.model('Episode', episodeSchema);

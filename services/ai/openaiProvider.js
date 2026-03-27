@@ -4,6 +4,8 @@ const {
   buildContinuityRefreshPrompt,
   buildToneFixPrompt,
   buildShowNotesPrompt,
+  buildLaunchPackPrompt,
+  buildPodcastIdeasPrompt,
 } = require('./prompts');
 
 class OpenAIProvider {
@@ -77,6 +79,16 @@ class OpenAIProvider {
 
   async generateShowNotes(input) {
     const prompt = buildShowNotesPrompt(input);
+    return this.requestJson(prompt);
+  }
+
+  async generateLaunchPack(input) {
+    const prompt = buildLaunchPackPrompt(input);
+    return this.requestJson(prompt);
+  }
+
+  async generatePodcastIdeas(input) {
+    const prompt = buildPodcastIdeasPrompt(input);
     return this.requestJson(prompt);
   }
 }

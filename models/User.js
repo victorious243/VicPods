@@ -138,9 +138,136 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    referralCode: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 18,
+    },
+    referredByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+    referredByCode: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 18,
+    },
+    referralCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    referralBonusCredits: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    referralRewardAppliedAt: {
+      type: Date,
+      default: null,
+    },
     billingLastSyncedAt: {
       type: Date,
       default: null,
+    },
+    lastActiveAt: {
+      type: Date,
+      default: null,
+    },
+    welcomeEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    firstEpisodeOnboardingEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    passwordResetTokenHash: {
+      type: String,
+      default: '',
+      maxlength: 128,
+    },
+    passwordResetExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    lastPaymentEmailInvoiceId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 255,
+    },
+    lastPaymentEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastPaymentFailureEmailInvoiceId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 255,
+    },
+    lastPaymentFailureEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastUsageLimitUpgradeEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastUsageLimitUpgradeEmailDateKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 16,
+    },
+    lastReEngagementEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastWeeklySummaryEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastWeeklySummaryEmailWeekKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
+    lastAiSuggestionsEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastAiSuggestionsEmailWeekKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
+    lastCreatorTipsEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastCreatorTipsEmailWeekKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
+    lastTrialEndingEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastTrialEndingEmailKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 48,
     },
     role: {
       type: String,
@@ -159,6 +286,17 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  }
+);
+
+userSchema.index(
+  { referralCode: 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: {
+      referralCode: { $type: 'string' },
+    },
   }
 );
 

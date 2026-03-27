@@ -1,0 +1,66 @@
+<section class="card idea-tool-results-shell" data-idea-generator-results-shell hidden>
+  <div class="section-head">
+    <div>
+      <h2>10 podcast ideas</h2>
+      <p class="mini-note" data-idea-generator-results-summary>Generate a list to see fresh ideas here.</p>
+    </div>
+    <a href="/" class="btn btn-ghost">Open main generator</a>
+  </div>
+
+  <div class="idea-tool-results-grid" data-idea-generator-results></div>
+
+  <div class="idea-tool-save-grid">
+    <article class="card landing-preview-growth-card">
+      <span class="mini-label">Save My Preview</span>
+      <h3>Email these ideas to yourself</h3>
+      <p>Capture the full list before you leave, then come back and turn the best angle into a full episode.</p>
+
+      <form class="landing-preview-save-form" data-idea-save-form data-save-preview-source="podcast_ideas">
+        <label class="landing-preview-save-label" for="ideaResultsSaveEmail">Email address</label>
+        <div class="landing-preview-save-row">
+          <input
+            id="ideaResultsSaveEmail"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+            data-idea-save-email
+          />
+          <button type="submit" class="btn btn-primary" data-idea-save-submit>Save My Ideas</button>
+        </div>
+        <p class="mini-note">No account required.</p>
+        <p class="landing-preview-save-status" data-idea-save-status hidden aria-live="polite"></p>
+      </form>
+    </article>
+
+    <article class="card landing-preview-growth-card">
+      <span class="mini-label">Need proof fast?</span>
+      <h3>See example episodes and Launch Packs</h3>
+      <p>Browse a small library of example workflows to see how different podcast styles are shaped inside VicPods.</p>
+      <div class="inline-actions">
+        <a href="/examples" class="btn btn-secondary">Open example library</a>
+        <a href="/" class="btn btn-ghost">Open episode generator</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<template id="podcast-idea-card-template">
+  <article class="idea-result-card">
+    <div class="idea-result-head">
+      <span class="idea-result-index" data-idea-card-index>01</span>
+      <span class="mini-label">Idea</span>
+    </div>
+
+    <div class="idea-result-body">
+      <h3 data-idea-card-title>Idea title</h3>
+      <p data-idea-card-hook>Hook angle</p>
+    </div>
+
+    <div class="idea-result-actions">
+      <button type="button" class="btn btn-ghost" data-idea-card-copy>Copy</button>
+      <a href="/" class="btn btn-primary" data-idea-card-turn>Turn into episode</a>
+    </div>
+  </article>
+</template>

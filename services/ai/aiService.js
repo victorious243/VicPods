@@ -5,6 +5,8 @@ const {
   sanitizeContinuityPayload,
   sanitizeToneFixPayload,
   sanitizeShowNotesPayload,
+  sanitizeLaunchPackPayload,
+  sanitizePodcastIdeasPayload,
 } = require('./responseSanitizer');
 
 async function callProviderWithFallback(methodName, input) {
@@ -48,10 +50,22 @@ async function generateShowNotes(input) {
   return sanitizeShowNotesPayload(raw);
 }
 
+async function generateLaunchPack(input) {
+  const raw = await callProviderWithFallback('generateLaunchPack', input);
+  return sanitizeLaunchPackPayload(raw);
+}
+
+async function generatePodcastIdeas(input) {
+  const raw = await callProviderWithFallback('generatePodcastIdeas', input);
+  return sanitizePodcastIdeasPayload(raw);
+}
+
 module.exports = {
   generateEpisodeDraft,
   generateSpices,
   refreshContinuity,
   fixTone,
   generateShowNotes,
+  generateLaunchPack,
+  generatePodcastIdeas,
 };

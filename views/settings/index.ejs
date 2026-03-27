@@ -337,4 +337,25 @@
       </article>
     <% }) %>
   </section>
+
+  <section class="billing-proof-shell">
+    <div class="section-head">
+      <div>
+        <h3>Why creators upgrade</h3>
+        <p class="mini-note">Concrete workflow proof instead of generic claims.</p>
+      </div>
+      <a href="/examples" class="btn btn-ghost">Open example library</a>
+    </div>
+    <%- include('../partials/proof-snippet-grid', { proofSnippets: billingProofSnippets }) %>
+  </section>
+
+  <section class="billing-proof-shell">
+    <div class="section-head">
+      <div>
+        <h3>Example output inside VicPods</h3>
+        <p class="mini-note">A few of the public example episode directions and Launch Pack previews.</p>
+      </div>
+    </div>
+    <%- include('../partials/example-preview-grid', { examples: featuredExamples, gridClass: 'example-preview-grid-compact' }) %>
+  </section>
 <% } %>

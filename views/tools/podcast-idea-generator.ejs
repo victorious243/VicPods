@@ -1,0 +1,77 @@
+<div class="help-page-shell landing-page-shell idea-tool-shell">
+  <section class="card tool-hero" data-help-reveal>
+    <div class="tool-hero-copy">
+      <span class="landing-kicker">Free AI tool</span>
+      <h1>Podcast Idea Generator</h1>
+      <p class="landing-lead">
+        Generate 10 podcast ideas in seconds. Add a niche if you want a tighter angle, or leave it blank to get broader show-worthy ideas you can refine fast.
+      </p>
+
+      <form
+        class="idea-tool-form"
+        action="/api/public/podcast-ideas"
+        method="post"
+        data-idea-generator-form
+        data-episode-generator-base="<%= ideaGeneratorEpisodeBaseUrl %>"
+      >
+        <label class="landing-generator-label" for="podcastIdeaNicheInput">Optional niche</label>
+        <div class="idea-tool-form-row">
+          <input
+            id="podcastIdeaNicheInput"
+            type="text"
+            name="niche"
+            maxlength="120"
+            placeholder="e.g. business podcast, real estate, personal branding, ministry"
+            value="<%= ideaGeneratorInitialNiche %>"
+            data-idea-generator-input
+          />
+          <button type="submit" class="btn btn-primary idea-tool-submit" data-idea-generator-submit>
+            Generate ideas
+          </button>
+        </div>
+
+        <div class="idea-tool-inline-meta">
+          <span class="mini-label">10 ideas</span>
+          <span class="mini-label">No login required</span>
+          <span class="mini-label">Turn any idea into an episode</span>
+        </div>
+
+        <p class="landing-generator-status" data-idea-generator-status hidden role="status" aria-live="polite"></p>
+        <p class="landing-generator-error" data-idea-generator-error hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <%- include('../partials/podcast-idea-results') %>
+
+  <section class="idea-tool-support-grid" data-help-reveal>
+    <article class="card">
+      <h2>See example episodes before you commit</h2>
+      <p>VicPods also has a public example library showing how different podcast styles are shaped into episode structures and Launch Pack previews.</p>
+      <div class="inline-actions">
+        <a href="/examples" class="btn btn-secondary">Open example library</a>
+        <a href="/" class="btn btn-ghost">Open main generator</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="idea-tool-support-grid" data-help-reveal>
+    <article class="card">
+      <h2>How to use this podcast idea generator</h2>
+      <p>Start with a niche if you want tighter ideas for a specific audience. Leave it blank if you want broader episode concepts you can shape later.</p>
+      <p>Every result includes a title and a hook angle, so you can see not just the idea itself, but how the episode could open and why it might land.</p>
+    </article>
+
+    <article class="card">
+      <h2>Turn any idea into a real episode</h2>
+      <p>When one angle feels strong, send it into the VicPods episode generator to build a title, hook, outline, CTA, and launch-ready preview around it.</p>
+      <div class="inline-actions">
+        <a href="/" class="btn btn-primary">Open episode generator</a>
+        <a href="/auth/register" class="btn btn-secondary">Create account</a>
+      </div>
+    </article>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>
+<script src="/javascripts/podcast-idea-generator.js" defer></script>

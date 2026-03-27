@@ -3,6 +3,12 @@ const crypto = require('crypto');
 const { Issuer, generators } = require('openid-client');
 const User = require('../../models/User');
 const { AppError } = require('../../utils/errors');
+const { sendWelcomeEmailOnce } = require('../authService');
+const {
+  applyReferralRewardIfEligible,
+  attachReferralToUser,
+  normalizeReferralCode,
+} = require('../marketing/referralService');
 
 const GOOGLE_OIDC_SESSION_KEY = 'googleOidcFlow';
 const SALT_ROUNDS = 12;
@@ -167,10 +173,11 @@ async function createLocalPasswordPlaceholder() {
   return bcrypt.hash(randomSecret, SALT_ROUNDS);
 }
 
-async function upsertUserFromClaims(claims) {
+async function upsertUserFromClaims(claims, { referralCode } = {}) {
   const email = String(claims.email || '').trim().toLowerCase();
   const subject = String(claims.sub || '').trim();
   const providerSubject = `google:${subject}`;
+  const normalizedReferralCode = normalizeReferralCode(referralCode);
 
   if (!email) {
     throw new AppError('Google did not return an email address.', 400);
@@ -199,6 +206,13 @@ async function upsertUserFromClaims(claims) {
       emailVerified: true,
     });
 
+    await attachReferralToUser(user, normalizedReferralCode);
+    if (user.isModified()) {
+      await user.save();
+    }
+    await applyReferralRewardIfEligible(user);
+    await sendWelcomeEmailOnce(user);
+
     return user;
   }
 
@@ -210,7 +224,12 @@ async function upsertUserFromClaims(claims) {
     user.authProvider = 'google';
   }
 
+  if (!user.referredByUserId && !user.referralRewardAppliedAt) {
+    await attachReferralToUser(user, normalizedReferralCode);
+  }
+
   await user.save();
+  await applyReferralRewardIfEligible(user);
   return user;
 }
 
@@ -251,7 +270,8 @@ async function handleGoogleCallback(req) {
     };
   }
 
-  return upsertUserFromClaims(claims);
+  const referralCode = normalizeReferralCode(req.session?.referralCode || '');
+  return upsertUserFromClaims(claims, { referralCode });
 }
 
 module.exports = {

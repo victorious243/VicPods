@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="<%= csrfToken || '' %>" />
   <title><%= title || 'VicPods' %></title>
+  <meta name="description" content="<%= ((typeof metaDescription !== 'undefined') && metaDescription) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
+  <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
+    <link rel="canonical" href="<%= canonicalUrl %>" />
+  <% } %>
+  <% if ((typeof metaRobots !== 'undefined') && metaRobots) { %>
+    <meta name="robots" content="<%= metaRobots %>" />
+  <% } %>
+  <meta property="og:title" content="<%= ((typeof ogTitle !== 'undefined') && ogTitle) || title || 'VicPods' %>" />
+  <meta property="og:description" content="<%= ((typeof ogDescription !== 'undefined') && ogDescription) || (((typeof metaDescription !== 'undefined') && metaDescription)) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
+  <meta property="og:type" content="<%= ((typeof ogType !== 'undefined') && ogType) || 'website' %>" />
+  <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
+    <meta property="og:url" content="<%= canonicalUrl %>" />
+  <% } %>
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<%= ((typeof ogTitle !== 'undefined') && ogTitle) || title || 'VicPods' %>" />
+  <meta name="twitter:description" content="<%= ((typeof ogDescription !== 'undefined') && ogDescription) || (((typeof metaDescription !== 'undefined') && metaDescription)) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
   <script>
     (function initTheme() {
       var serverDefault = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';
@@ -86,6 +102,7 @@
   <% } %>
 
   <script src="/javascripts/theme.js" defer></script>
+  <script src="/javascripts/topbar.js" defer></script>
   <script src="/javascripts/csrf.js" defer></script>
   <script src="/javascripts/settings.js" defer></script>
   <script src="/javascripts/tone.js" defer></script>

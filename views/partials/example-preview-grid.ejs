@@ -1,0 +1,40 @@
+<div class="example-preview-grid <%= typeof gridClass !== 'undefined' ? gridClass : '' %>">
+  <% (examples || []).forEach((example) => { %>
+    <article class="card example-preview-card" id="<%= example.slug %>">
+      <div class="example-preview-head">
+        <span class="mini-label"><%= example.styleLabel %></span>
+        <% if (example.templateKey) { %>
+          <span class="example-preview-template"><%= example.templateKey.replace(/_/g, ' ') %></span>
+        <% } %>
+      </div>
+
+      <h3><%= example.title %></h3>
+      <p class="example-preview-hook"><%= example.hook %></p>
+
+      <ul class="example-preview-outline">
+        <% (example.outline || []).forEach((item) => { %>
+          <li><%= item %></li>
+        <% }) %>
+      </ul>
+
+      <div class="example-preview-launch">
+        <p class="example-preview-launch-label">Launch Pack preview</p>
+        <div class="example-preview-launch-titles">
+          <% (example.launchPack?.titles || []).forEach((titleOption) => { %>
+            <span><%= titleOption %></span>
+          <% }) %>
+        </div>
+        <p><%= example.launchPack?.description %></p>
+      </div>
+
+      <% if (example.takeaway) { %>
+        <p class="mini-note"><%= example.takeaway %></p>
+      <% } %>
+
+      <div class="inline-actions">
+        <a href="/?idea=<%= encodeURIComponent(example.ideaSeed || example.title) %>#idea-to-episode-generator" class="btn btn-primary">Use this angle</a>
+        <a href="/examples#<%= example.slug %>" class="btn btn-ghost">Open example</a>
+      </div>
+    </article>
+  <% }) %>
+</div>

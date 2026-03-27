@@ -26,6 +26,21 @@
     }, 1800);
   }
 
+  function notifyCopyCompleted(button) {
+    var endpoint = button.getAttribute('data-copy-complete-endpoint');
+    if (!endpoint) {
+      return;
+    }
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'same-origin',
+    }).catch(function noop() {});
+  }
+
   function fallbackCopy(text) {
     var helper = document.createElement('textarea');
     helper.value = text;
@@ -53,16 +68,19 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
           .then(function onCopied() {
+            notifyCopyCompleted(button);
             setTemporaryLabel(button, 'Copied');
           })
           .catch(function onClipboardError() {
             fallbackCopy(text);
+            notifyCopyCompleted(button);
             setTemporaryLabel(button, 'Copied');
           });
         return;
       }
 
       fallbackCopy(text);
+      notifyCopyCompleted(button);
       setTemporaryLabel(button, 'Copied');
     });
   });

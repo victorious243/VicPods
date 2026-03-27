@@ -1,0 +1,32 @@
+{
+  "key": "business_podcast",
+  "label": "Business Podcast",
+  "description": "Frame the episode around decisions, clarity, and measurable outcomes without losing momentum.",
+  "bestFor": "B2B shows, strategic breakdowns, and executive-facing content.",
+  "promptHint": "Stay precise, outcome-focused, and decision-oriented. Avoid filler and keep the structure high signal.",
+  "episodeStructure": {
+    "episodeType": "solo",
+    "formatTemplate": "myth_buster",
+    "hookStyle": "bold_claim",
+    "targetLength": "20-30",
+    "includeFunSegment": false
+  },
+  "tone": {
+    "tonePreset": "Professional & Corporate",
+    "toneIntensity": 3,
+    "deliveryStyle": "authoritative"
+  },
+  "showBlueprint": {
+    "ctaStyle": "soft_pitch"
+  },
+  "sectionLabels": [
+    "Business Tension",
+    "What Most Teams Miss",
+    "Better Operating Model",
+    "Execution Example",
+    "Decision Point",
+    "Close"
+  ],
+  "exampleTitle": "Why Most B2B Podcasts Stall Before They Create Revenue Momentum",
+  "exampleDescription": "Break down one business problem, replace weak assumptions with a stronger model, and end with a next decision."
+}

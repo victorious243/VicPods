@@ -48,25 +48,29 @@
   }
 
   function updateToggle(theme) {
-    var button = document.getElementById('theme-toggle');
-    if (!button) {
+    var buttons = document.querySelectorAll('[data-theme-toggle]');
+    if (!buttons.length) {
       return;
     }
 
-    var icon = button.querySelector('.theme-toggle-icon');
-    var label = button.querySelector('.theme-toggle-label');
     var isDark = theme === 'dark';
     var copy = resolveLanguageCopy();
 
-    if (icon) {
-      icon.textContent = isDark ? '🌙' : '☀️';
-    }
-    if (label) {
-      label.textContent = isDark ? copy.dark : copy.light;
-    }
+    buttons.forEach(function updateSingleButton(button) {
+      var icon = button.querySelector('.theme-toggle-icon');
+      var label = button.querySelector('.theme-toggle-label');
 
-    button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-    button.setAttribute('title', isDark ? copy.switchToLight : copy.switchToDark);
+      if (icon) {
+        icon.textContent = isDark ? '🌙' : '☀️';
+      }
+      if (label) {
+        label.textContent = isDark ? copy.dark : copy.light;
+      }
+
+      button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      button.setAttribute('title', isDark ? copy.switchToLight : copy.switchToDark);
+      button.setAttribute('aria-label', isDark ? copy.switchToLight : copy.switchToDark);
+    });
   }
 
   function applyTheme(theme) {
@@ -85,9 +89,9 @@
     var theme = resolveTheme();
     applyTheme(theme);
 
-    var button = document.getElementById('theme-toggle');
-    if (button) {
+    var buttons = document.querySelectorAll('[data-theme-toggle]');
+    buttons.forEach(function bindThemeToggle(button) {
       button.addEventListener('click', toggleTheme);
-    }
+    });
   });
 }());

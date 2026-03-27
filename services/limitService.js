@@ -1,4 +1,6 @@
 const { AppError } = require('../utils/errors');
+const { sendUsageLimitUpgradeEmailForUser } = require('./email/liveLifecycleEmailService');
+const { getReferralBonusCredits } = require('./marketing/referralService');
 
 const FREE_DAILY_LIMIT = 5;
 const PRO_DAILY_LIMIT = 50;
@@ -23,13 +25,28 @@ function getDailyLimitForPlan(plan) {
   return FREE_DAILY_LIMIT;
 }
 
+function getBaseDailyLimitForPlan(plan) {
+  return getDailyLimitForPlan(plan);
+}
+
+function getDailyLimitForUser(user, planOverride) {
+  const resolvedPlan = planOverride || user?.plan || 'free';
+  const baseLimit = getBaseDailyLimitForPlan(resolvedPlan);
+
+  if (baseLimit === Infinity) {
+    return Infinity;
+  }
+
+  return baseLimit + getReferralBonusCredits(user);
+}
+
 async function consumeAiCredit(user) {
   if (!user) {
     throw new AppError('Authentication required.', 401);
   }
 
   const plan = user.plan || 'free';
-  const planLimit = getDailyLimitForPlan(plan);
+  const planLimit = getDailyLimitForUser(user, plan);
 
   if (planLimit === Infinity) {
     return;
@@ -44,6 +61,15 @@ async function consumeAiCredit(user) {
   }
 
   if (user.aiDailyCount >= planLimit) {
+    try {
+      await sendUsageLimitUpgradeEmailForUser(user, {
+        limitLabel: 'AI generations today',
+        usedCount: user.aiDailyCount,
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Usage limit email failed for ${user.email}: ${error.message}`);
+    }
     throw new AppError(`${plan.charAt(0).toUpperCase() + plan.slice(1)} plan limit reached (${planLimit} generations/day). Upgrade for more.`, 429);
   }
 
@@ -54,6 +80,8 @@ async function consumeAiCredit(user) {
 module.exports = {
   FREE_DAILY_LIMIT,
   PRO_DAILY_LIMIT,
+  getBaseDailyLimitForPlan,
   getDailyLimitForPlan,
+  getDailyLimitForUser,
   consumeAiCredit,
 };

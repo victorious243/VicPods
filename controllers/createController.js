@@ -34,6 +34,14 @@ const {
 const {
   normalizeSeriesBibleInput,
 } = require('../services/series/seriesPlanningService');
+const { sendEpisodeReadyEmailForEpisode } = require('../services/email/liveLifecycleEmailService');
+const {
+  DEFAULT_PODCAST_TEMPLATE_KEY,
+  buildPodcastTemplateClientPayload,
+  buildSingleTemplateDefaults,
+  getPodcastTemplate,
+  getPodcastTemplates,
+} = require('../services/templates/podcastTemplateService');
 const { computeToneConsistencyScore } = require('../services/tone/consistencyScore');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
@@ -75,6 +83,10 @@ function buildSingleSeriesContext({ systemSeries, body, toneInput }) {
   };
 }
 
+function serializeJsonForHtml(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
 async function showCreateHub(req, res, next) {
   try {
     return res.redirect('/kitchen');
@@ -86,6 +98,20 @@ async function showCreateHub(req, res, next) {
 async function showSingleWizard(req, res, next) {
   try {
     const effectivePlan = req.effectivePlan || 'free';
+    const maxToneIntensity = getMaxIntensityForPlan(effectivePlan);
+    const selectedPodcastTemplate = getPodcastTemplate(
+      req.query.template || DEFAULT_PODCAST_TEMPLATE_KEY
+    );
+    const [hasExistingEpisodes, podcastTemplates] = await Promise.all([
+      Episode.exists({ userId: req.currentUser._id }),
+      Promise.resolve(getPodcastTemplates()),
+    ]);
+    const singleTemplateDefaults = buildSingleTemplateDefaults(selectedPodcastTemplate, {
+      maxToneIntensity,
+    });
+    const podcastTemplatesJson = serializeJsonForHtml(
+      buildPodcastTemplateClientPayload(podcastTemplates, { maxToneIntensity })
+    );
 
     return renderPage(res, {
       title: req.t('page.create.single.title', 'Create Single Episode - VicPods'),
@@ -102,8 +128,13 @@ async function showSingleWizard(req, res, next) {
         hookStyleOptions: HOOK_STYLE_OPTIONS,
         targetLengthOptions: TARGET_LENGTH_OPTIONS,
         deliveryStyleOptions: DELIVERY_STYLE_OPTIONS,
-        maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
+        maxToneIntensity,
         effectivePlan,
+        isFirstEpisodeCreation: !hasExistingEpisodes,
+        podcastTemplates,
+        selectedPodcastTemplate,
+        singleTemplateDefaults,
+        podcastTemplatesJson,
       },
     });
   } catch (error) {
@@ -112,19 +143,38 @@ async function showSingleWizard(req, res, next) {
 }
 
 async function createSingleEpisode(req, res, next) {
+  const fallbackTemplate = getPodcastTemplate(req.body.templateType || DEFAULT_PODCAST_TEMPLATE_KEY);
   try {
     const userId = req.currentUser._id;
     const effectivePlan = req.effectivePlan || req.currentUser?.plan || 'free';
+    const templateDefaults = buildSingleTemplateDefaults(fallbackTemplate, {
+      maxToneIntensity: getMaxIntensityForPlan(effectivePlan),
+    });
+    const submittedInput = {
+      ...req.body,
+      templateType: fallbackTemplate.key,
+      tonePreset: req.body.tonePreset || templateDefaults.tonePreset,
+      toneIntensity: req.body.toneIntensity || templateDefaults.toneIntensity,
+      deliveryStyle: req.body.deliveryStyle || templateDefaults.deliveryStyle,
+      episodeType: req.body.episodeType || templateDefaults.episodeType,
+      targetLength: req.body.targetLength || templateDefaults.targetLength,
+      includeFunSegment: Object.prototype.hasOwnProperty.call(req.body, 'includeFunSegment')
+        ? req.body.includeFunSegment
+        : (templateDefaults.includeFunSegment ? 'on' : 'off'),
+      formatTemplate: req.body.formatTemplate || templateDefaults.formatTemplate,
+      hookStyle: req.body.hookStyle || templateDefaults.hookStyle,
+      ctaStyle: req.body.ctaStyle || templateDefaults.ctaStyle,
+    };
     const title = String(req.body.title || '').trim();
 
     if (!title) {
       throw new AppError('Topic title is required.', 400);
     }
 
-    const toneInput = normalizeSeriesToneInput(req.body, effectivePlan);
-    const showBlueprint = normalizeShowBlueprintInput(req.body);
-    const episodeStructure = normalizeEpisodeStructureInput(req.body);
-    const writingSettings = normalizeEpisodeWritingSettings(req.body);
+    const toneInput = normalizeSeriesToneInput(submittedInput, effectivePlan);
+    const showBlueprint = normalizeShowBlueprintInput(submittedInput);
+    const episodeStructure = normalizeEpisodeStructureInput(submittedInput);
+    const writingSettings = normalizeEpisodeWritingSettings(submittedInput);
     const includeFunSegment = episodeStructure.includeFunSegment;
     const episodeType = episodeStructure.episodeType;
     const targetLength = episodeStructure.targetLength;
@@ -146,6 +196,7 @@ async function createSingleEpisode(req, res, next) {
       title,
       status: 'Draft',
       isSingle: true,
+      templateType: fallbackTemplate.key,
       episodeType,
       targetLength,
       includeFunSegment,
@@ -159,7 +210,7 @@ async function createSingleEpisode(req, res, next) {
 
     const seriesContext = buildSingleSeriesContext({
       systemSeries: series,
-      body: req.body,
+      body: submittedInput,
       toneInput,
     });
     seriesContext.showBlueprint = showBlueprint;
@@ -215,6 +266,13 @@ async function createSingleEpisode(req, res, next) {
 
     await episode.save();
 
+    try {
+      await sendEpisodeReadyEmailForEpisode(episode);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Episode ready email failed for ${episode._id}: ${error.message}`);
+    }
+
     req.flash('success', 'Single episode draft generated. Now refine and set to Ready.');
     return res.redirect(episodeEditorPath({
       seriesId: series._id,
@@ -224,7 +282,7 @@ async function createSingleEpisode(req, res, next) {
   } catch (error) {
     if (error.statusCode) {
       req.flash('error', error.message);
-      return res.redirect('/create/single');
+      return res.redirect(`/create/single?template=${encodeURIComponent(fallbackTemplate.key)}`);
     }
 
     return next(error);
@@ -414,6 +472,13 @@ async function createSeriesFlow(req, res, next) {
       }
 
       await Promise.all([first.episode.save(), first.theme.save(), series.save()]);
+
+      try {
+        await sendEpisodeReadyEmailForEpisode(first.episode);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`Episode ready email failed for ${first.episode._id}: ${error.message}`);
+      }
 
       req.flash('success', 'Series created and Episode 1 draft generated.');
       return res.redirect(episodeEditorPath({

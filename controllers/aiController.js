@@ -33,6 +33,12 @@ const {
   buildShowNotesSourceSignature,
   markShowNotesPackStale,
 } = require('../services/showNotes/showNotesPackService');
+const {
+  buildLaunchPack,
+  buildLaunchPackSourceSignature,
+  markLaunchPackStale,
+} = require('../services/launch/launchPackService');
+const { sendEpisodeReadyEmailForEpisode } = require('../services/email/liveLifecycleEmailService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 
@@ -179,10 +185,38 @@ function editorRedirect(res, { series, theme, episode }) {
   }));
 }
 
+async function generateAndAssignLaunchPack({
+  language,
+  series,
+  theme,
+  episode,
+  effectivePlan,
+  episodeContinuityContext,
+}) {
+  const generated = await aiService.generateLaunchPack({
+    language,
+    series,
+    theme,
+    episode,
+    effectiveTone: resolveEffectiveTone({
+      series,
+      episode,
+      plan: effectivePlan,
+    }),
+    seasonArcStep: episodeContinuityContext?.seasonArcStep,
+    continuityWarnings: episodeContinuityContext?.warnings || [],
+    callbackSuggestions: episodeContinuityContext?.callbackSuggestions || [],
+  });
+
+  episode.launchPack = buildLaunchPack(generated, episode);
+  return episode.launchPack;
+}
+
 async function generateEpisode(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: true });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const effectivePlan = req.effectivePlan || 'free';
     const isStandalone = Boolean(episode.isSingle);
     const requireTeaser = !isStandalone;
@@ -257,6 +291,7 @@ async function generateEpisode(req, res, next) {
     episode.ending = generated.ending;
     episode.endState = generated.endState;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
 
     if (generated.seriesSummary) {
       series.seriesSummary = generated.seriesSummary;
@@ -280,7 +315,23 @@ async function generateEpisode(req, res, next) {
     episode.toneWarnings = toneCheck.warnings;
     refreshEpisodeWritingIntelligence(episode, req.language);
 
+    await generateAndAssignLaunchPack({
+      language: req.language,
+      series,
+      theme,
+      episode,
+      effectivePlan,
+      episodeContinuityContext,
+    });
+
     await Promise.all([episode.save(), series.save(), theme.save()]);
+
+    try {
+      await sendEpisodeReadyEmailForEpisode(episode);
+    } catch (emailError) {
+      // eslint-disable-next-line no-console
+      console.error(`Episode ready email failed for ${episode._id}: ${emailError.message}`);
+    }
 
     if (wantsJson(req)) {
       return res.json({
@@ -315,6 +366,7 @@ async function generateSpices(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const effectivePlan = req.effectivePlan || 'free';
     const isStandalone = Boolean(episode.isSingle);
 
@@ -368,6 +420,7 @@ async function generateSpices(req, res, next) {
     episode.hostQuestions = generated.hostQuestions;
     episode.funSegment = episode.includeFunSegment === false ? '' : generated.funSegment;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
 
     const toneState = resolveEffectiveTone({
       series,
@@ -412,6 +465,7 @@ async function refreshContinuity(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const effectivePlan = req.effectivePlan || 'free';
 
     const [priorThemeEpisodes, recentSeriesEpisodes] = await Promise.all([
@@ -445,6 +499,7 @@ async function refreshContinuity(req, res, next) {
     series.seriesSummary = refreshed.seriesSummary || series.seriesSummary;
     theme.themeSummary = refreshed.themeSummary || theme.themeSummary;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
     refreshEpisodeWritingIntelligence(episode, req.language);
 
     await Promise.all([episode.save(), series.save(), theme.save()]);
@@ -478,6 +533,7 @@ async function fixTone(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const effectivePlan = req.effectivePlan || 'free';
     const effectiveTone = resolveEffectiveTone({
       series,
@@ -498,6 +554,7 @@ async function fixTone(req, res, next) {
     episode.hostQuestions = fixed.hostQuestions?.length ? fixed.hostQuestions : episode.hostQuestions;
     episode.ending = fixed.ending || episode.ending;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
 
     const toneCheck = computeToneConsistencyScore({
       episode,
@@ -626,10 +683,60 @@ async function generateShowNotes(req, res, next) {
   }
 }
 
+async function generateLaunchPack(req, res, next) {
+  try {
+    const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
+    const effectivePlan = req.effectivePlan || 'free';
+    const allSeriesEpisodes = await Episode.find({
+      userId: req.currentUser._id,
+      seriesId: series._id,
+    }).sort({ globalEpisodeNumber: 1, createdAt: 1 });
+    const episodeContinuityContext = buildEpisodeContinuityContext({
+      series,
+      theme,
+      episode,
+      episodes: allSeriesEpisodes,
+      language: req.language,
+    });
+
+    await generateAndAssignLaunchPack({
+      language: req.language,
+      series,
+      theme,
+      episode,
+      effectivePlan,
+      episodeContinuityContext,
+    });
+    await episode.save();
+
+    if (wantsJson(req)) {
+      return res.json({
+        provider: process.env.AI_PROVIDER || 'mock',
+        launchPack: episode.launchPack,
+      });
+    }
+
+    req.flash('success', 'Launch Pack generated for this episode.');
+    return editorRedirect(res, { series, theme, episode });
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
 async function applyHookOption(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const selectedHook = String(req.body.hook || '').trim();
 
     if (!selectedHook) {
@@ -638,6 +745,7 @@ async function applyHookOption(req, res, next) {
 
     episode.hook = selectedHook;
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
     const effectivePlan = req.effectivePlan || 'free';
     const toneState = resolveEffectiveTone({
       series,
@@ -681,6 +789,7 @@ async function rewriteSection(req, res, next) {
   try {
     const { series, theme, episode } = await getSeriesThemeEpisode(req, { allowCreate: false });
     const previousShowNotesSignature = buildShowNotesSourceSignature(episode);
+    const previousLaunchPackSignature = buildLaunchPackSourceSignature(episode);
     const effectivePlan = req.effectivePlan || 'free';
     const section = REWRITE_SECTION_VALUES.includes(req.body.section)
       ? req.body.section
@@ -705,6 +814,7 @@ async function rewriteSection(req, res, next) {
       episode.ending = rewrite.ending;
     }
     markShowNotesPackStale(episode, previousShowNotesSignature);
+    markLaunchPackStale(episode, previousLaunchPackSignature);
 
     const toneState = resolveEffectiveTone({
       series,
@@ -767,6 +877,7 @@ module.exports = {
   fixTone,
   generateHooks,
   generateShowNotes,
+  generateLaunchPack,
   applyHookOption,
   rewriteSection,
   answerHelpChat,
