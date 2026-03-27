@@ -1,7 +1,87 @@
-<section class="card">
-  <h3>Error <%= errorCode %></h3>
-  <p><%= subtitle || 'Something went wrong.' %></p>
+<%
+  const isNotFound = Number(errorCode) === 404;
+  const primaryHref = currentUser ? '/studio' : '/';
+  const primaryLabel = currentUser ? 'Back to Studio' : 'Back to Home';
+  const secondaryHref = currentUser ? '/create/single' : '/podcast-idea-generator';
+  const secondaryLabel = currentUser ? 'Start New Episode' : 'Try Idea Generator';
+  const supportHref = '/help';
+  const supportLabel = 'Visit Help Center';
+  const requestedPath = String(currentPath || '/').split('?')[0] || '/';
+%>
+
+<section class="error-shell <%= isNotFound ? 'error-shell-404' : 'error-shell-generic' %>">
+  <div class="error-hero">
+    <div class="error-hero-grid">
+      <div class="error-copy">
+        <span class="error-kicker"><%= isNotFound ? 'Signal lost' : 'System alert' %></span>
+        <h1><%= isNotFound ? 'This page drifted off script.' : `Error ${errorCode}` %></h1>
+        <p class="error-lead">
+          <%= isNotFound
+            ? 'The route you opened is not on the current VicPods map. Jump back into the studio, open a new episode, or head to the help center and keep moving.'
+            : (subtitle || 'Something went wrong while loading this part of VicPods.') %>
+        </p>
+
+        <div class="error-meta-row">
+          <span class="error-meta-chip">Error <strong><%= errorCode %></strong></span>
+          <span class="error-meta-chip error-meta-chip-path">Requested path <code><%= requestedPath %></code></span>
+        </div>
+
+        <div class="inline-actions error-actions">
+          <a href="<%= primaryHref %>" class="btn btn-primary"><%= primaryLabel %></a>
+          <a href="<%= secondaryHref %>" class="btn btn-secondary"><%= secondaryLabel %></a>
+          <a href="<%= supportHref %>" class="btn btn-ghost"><%= supportLabel %></a>
+        </div>
+
+        <div class="error-support-grid">
+          <article class="error-support-card">
+            <span class="mini-label">Recovery</span>
+            <strong><%= isNotFound ? 'Get back into a live workflow' : 'Take the clean path back' %></strong>
+            <p><%= isNotFound ? 'Open Studio, Workspace, or the idea tools and keep the session moving.' : 'Return to a known route and reload the flow from a clean entry point.' %></p>
+          </article>
+          <article class="error-support-card">
+            <span class="mini-label">VicPods</span>
+            <strong><%= isNotFound ? 'Ready before you record' : 'Command center still online' %></strong>
+            <p><%= isNotFound ? 'The missing page is gone, not your progress. Your workspace, drafts, and planning flow are still intact.' : 'If this keeps happening, use the Help Center and review the next safe step from there.' %></p>
+          </article>
+        </div>
+      </div>
+
+      <div class="error-visual" aria-hidden="true">
+        <div class="error-orb error-orb-a"></div>
+        <div class="error-orb error-orb-b"></div>
+        <div class="error-orb error-orb-c"></div>
+        <div class="error-grid-glow"></div>
+
+        <div class="error-code-cluster">
+          <span class="error-code-digit">4</span>
+          <div class="error-signal-core">
+            <span class="error-signal-ring error-signal-ring-a"></span>
+            <span class="error-signal-ring error-signal-ring-b"></span>
+            <span class="error-signal-ring error-signal-ring-c"></span>
+            <span class="error-signal-scan"></span>
+            <img class="brand-logo brand-logo-dark error-signal-logo" src="/images/logo/vicpods-icon-circle-dark.svg" alt="" />
+            <img class="brand-logo brand-logo-light error-signal-logo" src="/images/logo/vicpods-icon-circle-light.svg" alt="" />
+          </div>
+          <span class="error-code-digit">4</span>
+        </div>
+
+        <div class="error-wave-panel">
+          <span class="mini-label"><%= isNotFound ? 'Route map offline' : 'Recovery channel live' %></span>
+          <div class="error-wave-bars">
+            <% for (let i = 0; i < 12; i += 1) { %>
+              <span style="--bar-index:<%= i %>"></span>
+            <% } %>
+          </div>
+          <p><%= isNotFound ? 'The requested route is missing from the active VicPods grid.' : 'VicPods hit an unexpected branch, but the system shell is still responding.' %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <% if (errorStack) { %>
-    <pre class="error-stack"><%= errorStack %></pre>
+    <details class="error-debug-card">
+      <summary>Developer stack trace</summary>
+      <pre class="error-stack"><%= errorStack %></pre>
+    </details>
   <% } %>
 </section>

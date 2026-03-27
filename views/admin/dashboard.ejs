@@ -38,6 +38,21 @@
 
 <section class="card-grid stats-grid">
   <article class="card stat-card">
+    <p>Page views (24h)</p>
+    <h3><%= metrics.pageViews24h %></h3>
+    <span class="mini-note">Unique visitors / 7d: <%= metrics.uniqueVisitors7d %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Completed signups (7d)</p>
+    <h3><%= metrics.signupsCompleted7d %></h3>
+    <span class="mini-note">Signup starts / 7d: <%= metrics.signupsStarted7d %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Successful logins (7d)</p>
+    <h3><%= metrics.logins7d %></h3>
+    <span class="mini-note">Tracked across web, API, and Google auth</span>
+  </article>
+  <article class="card stat-card">
     <p><%= t('admin.metric.newUsers7d', 'New users (7d)') %></p>
     <h3><%= metrics.usersLast7d %></h3>
     <span class="mini-note"><%= t('admin.metric.newUsers30d', 'New users (30d)') %>: <%= metrics.usersLast30d %></span>
@@ -56,6 +71,49 @@
     <p><%= t('admin.metric.totalIdeas', 'Pantry ideas') %></p>
     <h3><%= metrics.totalIdeas %></h3>
     <span class="mini-note">+<%= metrics.ideasLast7d %> / 7d</span>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Recent VicPods activity</h3>
+    <span class="mini-label">Visitors + auth events</span>
+  </div>
+  <% if (!recentActivityEvents.length) { %>
+    <p class="empty-state">No visitor activity recorded yet.</p>
+  <% } else { %>
+    <div class="list-stack">
+      <% recentActivityEvents.forEach((event) => { %>
+        <% const eventLabel = String(event.eventType || '').replace(/_/g, ' '); %>
+        <% const actorLabel = event.userEmail || (event.visitorId ? `Visitor ${String(event.visitorId).slice(0, 8)}` : 'Anonymous visitor'); %>
+        <div class="list-item">
+          <div>
+            <h4><%= actorLabel %></h4>
+            <p><%= event.requestPath %> · <%= event.authProvider === 'unknown' ? 'visitor' : event.authProvider %></p>
+            <p class="mini-note">
+              <%= new Date(event.createdAt).toLocaleString() %>
+              <% if (event.statusCode) { %>
+                · status <%= event.statusCode %>
+              <% } %>
+            </p>
+          </div>
+          <span class="mini-label"><%= eventLabel %></span>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="card-grid stats-grid">
+  <article class="card stat-card">
+    <p>Admin link hits (24h)</p>
+    <h3><%= metrics.adminAccessAttempts24h %></h3>
+    <span class="mini-note">Unique IPs / 7d: <%= metrics.uniqueAdminIps7d %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Blocked admin attempts (7d)</p>
+    <h3><%= metrics.blockedAdminAttempts7d %></h3>
+    <span class="mini-note">Guest, unverified, wrong role, wrong key, or invalid config</span>
   </article>
 </section>
 
@@ -104,6 +162,34 @@
       <% }) %>
     </div>
   </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Recent admin access attempts</h3>
+    <span class="mini-label">Visitor tracking</span>
+  </div>
+  <% if (!recentAdminAccess.length) { %>
+    <p class="empty-state">No admin access activity recorded yet.</p>
+  <% } else { %>
+    <div class="list-stack">
+      <% recentAdminAccess.forEach((entry) => { %>
+        <% const outcomeLabel = String(entry.outcome || '').replace(/_/g, ' '); %>
+        <div class="list-item">
+          <div>
+            <h4><%= entry.userEmail || 'Anonymous visitor' %></h4>
+            <p><%= entry.requestPath %> · <%= entry.ipAddress || 'IP unavailable' %></p>
+            <p class="mini-note">
+              <%= new Date(entry.createdAt).toLocaleString() %>
+              · role: <%= entry.userRole || 'guest' %>
+              · key: <%= entry.hasAdminKey ? entry.keySource : 'none' %>
+            </p>
+          </div>
+          <span class="mini-label"><%= outcomeLabel %></span>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
 </section>
 
 <section class="card">

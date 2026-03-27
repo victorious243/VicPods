@@ -29,6 +29,7 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     subtitle: localizedMessage || req.t('error.defaultMessage', 'Something went wrong.'),
     view: 'error',
     authPage: !req.currentUser,
+    authShellClass: statusCode === 404 ? 'auth-shell-error' : 'auth-shell-wide',
     data: {
       errorCode: statusCode,
       errorStack: process.env.NODE_ENV === 'development' ? err.stack : null,

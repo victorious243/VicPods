@@ -12,6 +12,7 @@ const {
   buildGoogleAuthorizationUrl,
   handleGoogleCallback,
 } = require('../services/auth/googleOidcService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const {
   shouldRequireNewUserMfa,
   issueMfaPin,
@@ -108,6 +109,7 @@ function showRegister(req, res) {
     view: 'auth/register',
     authPage: true,
     data: {
+      authShellClass: 'auth-shell-premium',
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
       pendingReferralCode: res.locals.pendingReferralCode || '',
@@ -123,7 +125,7 @@ function showTerms(req, res) {
     view: 'auth/terms',
     authPage: true,
     data: {
-      authShellClass: 'auth-shell-wide',
+      authShellClass: 'auth-shell-premium auth-shell-terms',
     },
   });
 }
@@ -137,6 +139,7 @@ function showLogin(req, res) {
     view: 'auth/login',
     authPage: true,
     data: {
+      authShellClass: 'auth-shell-premium',
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
     },
@@ -215,6 +218,12 @@ async function register(req, res, next) {
     if (result.pinDevOnly) {
       message += ` Dev PIN: ${result.pinDevOnly}`;
     }
+    await recordActivityEvent(req, {
+      eventType: 'signup_started',
+      userEmail: result.email || result.user?.email || req.body.email,
+      authProvider: 'local',
+      metadata: { channel: 'web' },
+    });
     req.flash('success', message);
     return res.redirect(`/auth/verify?email=${encodeURIComponent(result.email || result.user?.email || req.body.email)}`);
   } catch (error) {
@@ -251,6 +260,12 @@ async function login(req, res, next) {
   try {
     const user = await authenticateUser(req.body);
     const loginResult = await finalizeLoginWithMfa(req, user, `Welcome back, ${user.name}.`);
+    await recordActivityEvent(req, {
+      eventType: loginResult.mfaRequired ? 'login_mfa_required' : 'login_success',
+      user,
+      authProvider: user.authProvider,
+      metadata: { channel: 'web' },
+    });
     if (loginResult.mfaRequired) {
       return res.redirect(`/auth/mfa?email=${encodeURIComponent(user.email)}`);
     }
@@ -305,6 +320,12 @@ async function verify(req, res, next) {
     });
 
     await establishUserSession(req, user);
+    await recordActivityEvent(req, {
+      eventType: 'signup_completed',
+      user,
+      authProvider: user.authProvider,
+      metadata: { channel: 'web' },
+    });
     req.flash('success', 'Email verified. Welcome to your Studio.');
     return res.redirect('/studio');
   } catch (error) {
@@ -371,8 +392,23 @@ async function googleCallback(req, res, next) {
       return res.redirect('/auth/login');
     }
 
-    const user = await handleGoogleCallback(req);
+    const authResult = await handleGoogleCallback(req);
+    const user = authResult.user;
     const loginResult = await finalizeLoginWithMfa(req, user, `Welcome, ${user.name}.`);
+    if (authResult.isNewUser) {
+      await recordActivityEvent(req, {
+        eventType: 'signup_completed',
+        user,
+        authProvider: 'google',
+        metadata: { channel: 'web', via: 'google' },
+      });
+    }
+    await recordActivityEvent(req, {
+      eventType: loginResult.mfaRequired ? 'login_mfa_required' : 'login_success',
+      user,
+      authProvider: 'google',
+      metadata: { channel: 'web', via: 'google' },
+    });
     if (loginResult.mfaRequired) {
       return res.redirect(`/auth/mfa?email=${encodeURIComponent(user.email)}`);
     }
@@ -403,6 +439,12 @@ async function verifyMfa(req, res, next) {
     });
 
     await establishUserSession(req, user);
+    await recordActivityEvent(req, {
+      eventType: 'login_success',
+      user,
+      authProvider: user.authProvider,
+      metadata: { channel: 'web', via: 'mfa' },
+    });
     req.flash('success', `Welcome, ${user.name}.`);
     return res.redirect('/studio');
   } catch (error) {
@@ -447,7 +489,14 @@ async function resendMfa(req, res, next) {
   }
 }
 
-function logout(req, res, next) {
+async function logout(req, res, next) {
+  await recordActivityEvent(req, {
+    eventType: 'logout',
+    user: req.currentUser || null,
+    authProvider: req.currentUser?.authProvider,
+    metadata: { channel: 'web' },
+  });
+
   req.session.destroy((error) => {
     if (error) {
       return next(error);

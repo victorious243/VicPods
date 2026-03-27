@@ -195,6 +195,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
       { email },
     ],
   });
+  const isNewUser = !user;
 
   if (!user) {
     user = await User.create({
@@ -213,7 +214,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
     await applyReferralRewardIfEligible(user);
     await sendWelcomeEmailOnce(user);
 
-    return user;
+    return { user, isNewUser };
   }
 
   user.email = email;
@@ -230,7 +231,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
 
   await user.save();
   await applyReferralRewardIfEligible(user);
-  return user;
+  return { user, isNewUser };
 }
 
 async function handleGoogleCallback(req) {

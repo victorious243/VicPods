@@ -1,59 +1,97 @@
-<section class="auth-card">
-  <h3>Create account</h3>
-  <p>Build your podcast workflow from one clean dashboard.</p>
-  <% if (googleAuthEnabled) { %>
-    <a href="/auth/google/signup" class="btn btn-google">
-      <span class="google-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" role="img" focusable="false">
-          <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.4 14.7 2.5 12 2.5 6.9 2.5 2.8 6.6 2.8 11.7S6.9 20.9 12 20.9c6.9 0 9.2-4.8 9.2-7.3 0-.5-.1-.9-.1-1.3H12z" />
-        </svg>
-      </span>
-      <span>Continue with Google</span>
-    </a>
-    <p class="mini-note">By continuing, you agree to the <a href="/auth/terms" target="_blank" rel="noopener">Terms and Conditions</a>.</p>
-  <% } else { %>
-    <button type="button" class="btn btn-google" disabled>
-      <span class="google-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" role="img" focusable="false">
-          <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.4 14.7 2.5 12 2.5 6.9 2.5 2.8 6.6 2.8 11.7S6.9 20.9 12 20.9c6.9 0 9.2-4.8 9.2-7.3 0-.5-.1-.9-.1-1.3H12z" />
-        </svg>
-      </span>
-      <span>Google Sign Up Unavailable</span>
-    </button>
-    <p class="mini-note">
-      Missing env vars:
-      <%= (googleAuthMissing && googleAuthMissing.length) ? googleAuthMissing.join(', ') : 'configuration required' %>
-    </p>
-  <% } %>
+<section class="auth-experience">
+  <%- include('../partials/auth-scene', {
+    kicker: 'Build with structure',
+    heading: 'Launch your podcast workflow with a cleaner starting point.',
+    body: 'Create your VicPods account and move from raw idea to ready-to-record episode with guided templates, AI structure, and launch prep in one system.',
+    featureChips: ['Studio workflow', 'Kitchen organization', 'Launch Pack ready'],
+    metricCards: [
+      { value: 'Start in minutes', label: 'Account setup stays fast and focused' },
+      { value: 'Template-guided', label: 'Solo, interview, storytelling, business' },
+      { value: 'Built to publish', label: 'Planning and launch prep in one workspace' }
+    ],
+    railItems: [
+      { title: 'Create your account', body: 'Set up a secure creator workspace with email or Google.' },
+      { title: 'Verify your email', body: 'Activate access with a quick security PIN.' },
+      { title: 'Open your Studio', body: 'Start structuring episodes, launch assets, and workflow.' }
+    ]
+  }) %>
 
-  <div class="auth-separator" role="presentation">
-    <span>or sign up with email</span>
-  </div>
+  <section class="auth-panel">
+    <div class="auth-panel-header">
+      <span class="auth-panel-eyebrow">Create your VicPods account</span>
+      <h1><%= pageTitle || 'Create your VicPods account' %></h1>
+      <p><%= subtitle || 'Start building premium podcast workflows in minutes.' %> Everything starts with a secure creator workspace built for structure, clarity, and launch prep.</p>
+    </div>
 
-  <form method="POST" action="/auth/register" class="form-grid">
-    <% if (pendingReferralCode) { %>
-      <p class="mini-note auth-referral-note">Invite applied: <strong><%= pendingReferralCode %></strong>. Your signup will be linked when you verify your email.</p>
-    <% } %>
-    <input type="hidden" name="referralCode" value="<%= pendingReferralCode || '' %>" />
-    <label>
-      Name
-      <input type="text" name="name" required maxlength="80" placeholder="Your name" />
-    </label>
-    <label>
-      Email
-      <input type="email" name="email" required placeholder="you@example.com" />
-    </label>
-    <label>
-      Password
-      <input type="password" name="password" required minlength="8" placeholder="At least 8 characters" />
-    </label>
-    <label class="check-item">
-      <input type="checkbox" name="acceptTerms" required />
-      <span>
-        I agree to the <a href="/auth/terms" target="_blank" rel="noopener">Terms and Conditions</a>.
-      </span>
-    </label>
-    <button type="submit" class="btn btn-primary">Create Workspace</button>
-  </form>
-  <p class="auth-foot">Already have an account? <a href="/auth/login">Sign in</a> · <a href="/about"><%= t('page.about.link', 'About VicPods') %></a></p>
+    <div class="auth-panel-stack">
+      <% if (googleAuthEnabled) { %>
+        <a href="/auth/google/signup" class="btn btn-google auth-social-btn">
+          <span class="google-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" focusable="false">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.4 14.7 2.5 12 2.5 6.9 2.5 2.8 6.6 2.8 11.7S6.9 20.9 12 20.9c6.9 0 9.2-4.8 9.2-7.3 0-.5-.1-.9-.1-1.3H12z" />
+            </svg>
+          </span>
+          <span>Continue with Google</span>
+        </a>
+        <p class="mini-note auth-inline-note">By continuing, you agree to the <a href="/auth/terms" target="_blank" rel="noopener">Terms and Conditions</a>.</p>
+      <% } else { %>
+        <button type="button" class="btn btn-google auth-social-btn" disabled>
+          <span class="google-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" focusable="false">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.4 14.7 2.5 12 2.5 6.9 2.5 2.8 6.6 2.8 11.7S6.9 20.9 12 20.9c6.9 0 9.2-4.8 9.2-7.3 0-.5-.1-.9-.1-1.3H12z" />
+            </svg>
+          </span>
+          <span>Google sign up unavailable</span>
+        </button>
+        <p class="mini-note auth-inline-note">
+          Missing env vars:
+          <%= (googleAuthMissing && googleAuthMissing.length) ? googleAuthMissing.join(', ') : 'configuration required' %>
+        </p>
+      <% } %>
+
+      <div class="auth-separator" role="presentation">
+        <span>or create an account with email</span>
+      </div>
+
+      <form method="POST" action="/auth/register" class="form-grid auth-form">
+        <% if (pendingReferralCode) { %>
+          <p class="mini-note auth-referral-note">Invite applied: <strong><%= pendingReferralCode %></strong>. Your signup will be linked as soon as you verify your email.</p>
+        <% } %>
+        <input type="hidden" name="referralCode" value="<%= pendingReferralCode || '' %>" />
+        <label>
+          Name
+          <input type="text" name="name" required maxlength="80" placeholder="Your name" autocomplete="name" />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required minlength="8" placeholder="At least 8 characters" autocomplete="new-password" />
+        </label>
+        <label class="check-item auth-check-item">
+          <input type="checkbox" name="acceptTerms" required />
+          <span>
+            I agree to the <a href="/auth/terms" target="_blank" rel="noopener">Terms and Conditions</a>.
+          </span>
+        </label>
+        <button type="submit" class="btn btn-primary auth-submit-btn">Create account</button>
+      </form>
+    </div>
+
+    <div class="auth-support-grid auth-support-grid-register">
+      <section class="auth-support-card">
+        <span class="auth-support-label">What happens next</span>
+        <p>Verify your email, open your Studio, choose a podcast style, and start structuring your first episode right away.</p>
+      </section>
+      <section class="auth-support-card auth-support-card-soft">
+        <span class="auth-support-label">Already inside VicPods?</span>
+        <div class="auth-link-row">
+          <a href="/auth/login" class="btn btn-ghost">Sign in</a>
+          <a href="/about" class="auth-text-link"><%= t('page.about.link', 'About VicPods') %></a>
+        </div>
+      </section>
+    </div>
+  </section>
 </section>

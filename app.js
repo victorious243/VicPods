@@ -11,6 +11,8 @@ const helmet = require('helmet');
 const { connectDatabase } = require('./config/database');
 const { validateEnvironment } = require('./config/envValidation');
 const { loadCurrentUser, requireAuth } = require('./middleware/auth');
+const { requireAdminEntryAuth } = require('./middleware/adminAccess');
+const { ensureVisitorId, trackPageViews } = require('./middleware/activityTracking');
 const { captureReferralContext } = require('./middleware/referralContext');
 const { applyLanguageContext } = require('./middleware/i18n');
 const { syncPlanStatus } = require('./middleware/requirePlan');
@@ -112,6 +114,7 @@ app.use(session({
   ...sessionConfig,
 }));
 
+app.use(ensureVisitorId);
 app.use(loadCurrentUser);
 app.use(captureReferralContext);
 app.use(applyLanguageContext);
@@ -123,6 +126,7 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.originalUrl || req.path;
   next();
 });
+app.use(trackPageViews);
 
 app.locals.appName = 'VicPods';
 
@@ -138,7 +142,7 @@ app.use('/ai', requireAuth, aiRouter);
 app.use('/billing', requireAuth, billingRouter);
 app.use('/onboarding', requireAuth, onboardingRouter);
 app.use('/settings', requireAuth, settingsRouter);
-app.use(adminDashboardPath, requireAuth, adminRouter);
+app.use(adminDashboardPath, requireAdminEntryAuth, adminRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,11 +1,70 @@
-<div class="help-page-shell about-page-shell">
-  <section class="card help-hero" data-help-reveal>
-    <div class="help-hero-copy">
-      <span class="landing-kicker"><%= t('page.about.link', 'About VicPods') %></span>
-      <h2><%= t('page.about.hero.heading', 'VicPods is a ready-to-record podcast planning and launch-prep app.') %></h2>
-      <p class="help-hero-lead"><%= t('page.about.hero.body', 'It helps creators turn rough ideas into clear episode frameworks, show notes, and episode briefs before they record.') %></p>
+<%
+  const workflowSteps = [
+    {
+      label: 'Capture',
+      title: 'Start with a rough idea, not a blank page.',
+      body: 'Bring in the angle, audience, and outcome you want the episode to deliver. VicPods gives the idea immediate structure instead of asking creators to invent a workflow from scratch.',
+    },
+    {
+      label: 'Shape',
+      title: 'Turn the topic into a strong episode frame.',
+      body: 'Build the title, hook, outline, continuity, and talking flow before recording starts. The goal is clarity, not noise.',
+    },
+    {
+      label: 'Launch',
+      title: 'Leave with assets that feel publish-ready.',
+      body: 'VicPods extends beyond planning into launch prep, with show notes, briefs, exports, and stronger release readiness built into the same system.',
+    },
+  ];
+  const productSurfaces = [
+    {
+      eyebrow: 'Studio',
+      title: 'See the whole command center at a glance.',
+      body: 'Track progress, daily AI capacity, activation, and the next meaningful step without losing the thread of the week.',
+    },
+    {
+      eyebrow: 'Workspace',
+      title: 'Draft inside a workflow built for podcast structure.',
+      body: 'Move through episode planning, themes, continuity, and launch assets in one place instead of scattering the process across notes and docs.',
+    },
+    {
+      eyebrow: 'Pantry',
+      title: 'Keep strong hooks and raw ideas alive.',
+      body: 'Save usable ingredients so the next episode starts with momentum, not a blank canvas.',
+    },
+  ];
+  const manifestoBlocks = [
+    {
+      index: '01',
+      title: t('page.about.what.title', 'What VicPods does'),
+      body: t('page.about.what.body', 'VicPods helps you define show blueprints, shape episode flow, strengthen hooks, generate show notes, and export recording-ready episode briefs.'),
+    },
+    {
+      index: '02',
+      title: t('page.about.for.title', 'Who VicPods is for'),
+      body: t('page.about.for.body', 'It is built for solo podcasters, business creators, and lean producers who want clearer messaging and faster weekly prep.'),
+    },
+    {
+      index: '03',
+      title: t('page.about.textFirst.title', 'Why VicPods starts text-first'),
+      body: t('page.about.textFirst.body', 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and launch prep first so creators can record with more confidence and less wasted time.'),
+    },
+    {
+      index: '04',
+      title: t('page.about.vision.title', 'Where VicPods is going'),
+      body: t('page.about.vision.body', 'VicPods starts with planning, readiness, and launch assets because that is where it can create immediate value. As the business grows, it can expand carefully into deeper workflow and production features.'),
+    },
+  ];
+%>
 
-      <div class="inline-actions">
+<div class="help-page-shell about-page-shell">
+  <section class="about-hero" data-help-reveal>
+    <div class="about-hero-copy">
+      <span class="landing-kicker"><%= t('page.about.link', 'About VicPods') %></span>
+      <h1><%= t('page.about.hero.heading', 'VicPods is a ready-to-record podcast planning and launch-prep app.') %></h1>
+      <p class="about-hero-lead"><%= t('page.about.hero.body', 'It helps creators turn rough ideas into clear episode frameworks, show notes, and episode briefs before they record.') %></p>
+
+      <div class="inline-actions about-hero-actions">
         <% if (currentUser) { %>
           <a href="/studio" class="btn btn-primary"><%= t('page.about.cta.user.primary', 'Open Studio') %></a>
           <a href="/kitchen" class="btn btn-secondary"><%= t('page.about.cta.user.secondary', 'Open Workspace') %></a>
@@ -15,63 +74,126 @@
         <% } %>
         <a href="/auth/terms" class="btn btn-ghost"><%= t('page.about.cta.terms', 'Read terms') %></a>
       </div>
+
+      <div class="about-hero-proof">
+        <span>Structured creation</span>
+        <span>Launch-ready prep</span>
+        <span>Text-first podcast workflow</span>
+      </div>
     </div>
 
-    <div class="help-hero-visual" aria-hidden="true">
-      <div class="help-visual-orb help-visual-orb-a"></div>
-      <div class="help-visual-orb help-visual-orb-b"></div>
-      <div class="help-visual-panel about-visual-panel">
-        <span class="mini-label"><%= t('page.about.what.title', 'What VicPods does') %></span>
-        <strong><%= t('page.about.for.title', 'Who VicPods is for') %></strong>
-        <p><%= t('page.about.textFirst.body', 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and launch prep first so creators can record with more confidence and less wasted time.') %></p>
-        <div class="about-visual-tags">
-          <span class="mini-label"><%= t('page.about.textFirst.title', 'Why VicPods starts text-first') %></span>
-          <span class="mini-label"><%= t('page.about.vision.title', 'Where VicPods is going') %></span>
+    <div class="about-hero-visual" aria-hidden="true">
+      <div class="about-orb about-orb-a"></div>
+      <div class="about-orb about-orb-b"></div>
+      <div class="about-orb about-orb-c"></div>
+      <div class="about-grid-glow"></div>
+
+      <div class="about-command-panel">
+        <div class="about-command-head">
+          <span class="mini-label">VicPods system</span>
+          <span class="about-command-status">Live workflow</span>
+        </div>
+
+        <div class="about-command-core">
+          <div class="about-command-node about-command-node-center">
+            <span class="about-command-node-ring"></span>
+            <img class="brand-logo brand-logo-dark" src="/images/logo/vicpods-icon-circle-dark.svg" alt="" />
+            <img class="brand-logo brand-logo-light" src="/images/logo/vicpods-icon-circle-light.svg" alt="" />
+          </div>
+
+          <div class="about-command-node about-command-node-idea">
+            <span class="mini-label">Idea</span>
+            <strong>Topic</strong>
+          </div>
+          <div class="about-command-node about-command-node-structure">
+            <span class="mini-label">Structure</span>
+            <strong>Outline</strong>
+          </div>
+          <div class="about-command-node about-command-node-launch">
+            <span class="mini-label">Launch</span>
+            <strong>Assets</strong>
+          </div>
+
+          <span class="about-command-line about-command-line-a"></span>
+          <span class="about-command-line about-command-line-b"></span>
+          <span class="about-command-line about-command-line-c"></span>
+        </div>
+
+        <div class="about-command-feed">
+          <article>
+            <span class="mini-label">Studio</span>
+            <strong>Command center for active work</strong>
+          </article>
+          <article>
+            <span class="mini-label">Workspace</span>
+            <strong>Episode shaping + continuity</strong>
+          </article>
+          <article>
+            <span class="mini-label">Launch Pack</span>
+            <strong>Show notes, exports, captions</strong>
+          </article>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="help-story-stack about-story-stack">
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">01</span>
-        <h3><%= t('page.about.what.title', 'What VicPods does') %></h3>
-      </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.about.what.body', 'VicPods helps you define show blueprints, shape episode flow, strengthen hooks, generate show notes, and export recording-ready episode briefs.') %></p>
-      </div>
-    </article>
+  <section class="about-surface-grid" data-help-reveal>
+    <% productSurfaces.forEach((surface) => { %>
+      <article class="card about-surface-card">
+        <span class="mini-label"><%= surface.eyebrow %></span>
+        <h2><%= surface.title %></h2>
+        <p><%= surface.body %></p>
+      </article>
+    <% }) %>
+  </section>
 
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">02</span>
-        <h3><%= t('page.about.for.title', 'Who VicPods is for') %></h3>
+  <section class="about-workflow card" data-help-reveal>
+    <div class="section-head about-workflow-head">
+      <div>
+        <h2>How VicPods moves a creator forward</h2>
+        <p class="mini-note">A tighter workflow from first idea to release-ready prep.</p>
       </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.about.for.body', 'It is built for solo podcasters, business creators, and lean producers who want clearer messaging and faster weekly prep.') %></p>
-      </div>
-    </article>
+      <span class="mini-label">Idea → Structure → Launch</span>
+    </div>
 
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">03</span>
-        <h3><%= t('page.about.textFirst.title', 'Why VicPods starts text-first') %></h3>
-      </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.about.textFirst.body', 'Strong podcasts are built before the microphone turns on. VicPods focuses on planning, scripting, and launch prep first so creators can record with more confidence and less wasted time.') %></p>
-      </div>
-    </article>
+    <div class="about-workflow-grid">
+      <% workflowSteps.forEach((step) => { %>
+        <article class="about-workflow-step">
+          <span class="about-workflow-step-label"><%= step.label %></span>
+          <h3><%= step.title %></h3>
+          <p><%= step.body %></p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
 
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">04</span>
-        <h3><%= t('page.about.vision.title', 'Where VicPods is going') %></h3>
-      </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.about.vision.body', 'VicPods starts with planning, readiness, and launch assets because that is where it can create immediate value. As the business grows, it can expand carefully into deeper workflow and production features.') %></p>
-      </div>
-    </article>
+  <section class="about-manifesto-grid">
+    <% manifestoBlocks.forEach((block) => { %>
+      <article class="card about-manifesto-card" data-help-reveal>
+        <div class="about-manifesto-index"><%= block.index %></div>
+        <div class="about-manifesto-copy">
+          <h3><%= block.title %></h3>
+          <p><%= block.body %></p>
+        </div>
+      </article>
+    <% }) %>
+  </section>
+
+  <section class="about-closing card" data-help-reveal>
+    <div class="about-closing-copy">
+      <span class="mini-label">Ready before you record</span>
+      <h2>VicPods is not trying to be everything in podcasting.</h2>
+      <p>It is designed to be the place where a creator gets clear, structured, and launch-ready before the microphone turns on. That focus is what gives the product its edge.</p>
+    </div>
+    <div class="inline-actions about-closing-actions">
+      <% if (currentUser) { %>
+        <a href="/create/single" class="btn btn-primary">Create your next episode</a>
+        <a href="/examples" class="btn btn-secondary">Open example library</a>
+      <% } else { %>
+        <a href="/" class="btn btn-primary">Try the generator</a>
+        <a href="/podcast-idea-generator" class="btn btn-secondary">Generate podcast ideas</a>
+      <% } %>
+    </div>
   </section>
 </div>
 

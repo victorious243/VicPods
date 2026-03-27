@@ -1,3 +1,5 @@
+const AdminAccessLog = require('../models/AdminAccessLog');
+const AppActivityEvent = require('../models/AppActivityEvent');
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
 const Series = require('../models/Series');
@@ -7,6 +9,7 @@ const { renderPage } = require('../utils/render');
 const PAID_PLANS = ['pro', 'premium'];
 const ACTIVE_PAID_STATUSES = ['active', 'trialing'];
 const PAYMENT_RISK_STATUSES = ['past_due', 'unpaid'];
+const GRANTED_ADMIN_OUTCOMES = ['granted', 'granted_dev'];
 
 function buildCountMap(rows, seed) {
   const output = { ...seed };
@@ -48,6 +51,16 @@ async function showDashboard(req, res, next) {
       recentUsers,
       recentEpisodes,
       recentIdeas,
+      pageViews24h,
+      uniqueVisitors7d,
+      signupsCompleted7d,
+      signupsStarted7d,
+      logins7d,
+      recentActivityEvents,
+      adminAccessAttempts24h,
+      blockedAdminAttempts7d,
+      uniqueAdminIps7d,
+      recentAdminAccess,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ createdAt: { $gte: last24h } }),
@@ -105,6 +118,43 @@ async function showDashboard(req, res, next) {
         .limit(8)
         .select('hook tag updatedAt userId')
         .populate({ path: 'userId', select: 'name email' }),
+      AppActivityEvent.countDocuments({
+        eventType: 'page_view',
+        createdAt: { $gte: last24h },
+      }),
+      AppActivityEvent.distinct('visitorId', {
+        createdAt: { $gte: last7d },
+        visitorId: { $ne: '' },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'signup_completed',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'signup_started',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'login_success',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.find({})
+        .sort({ createdAt: -1 })
+        .limit(16)
+        .select('eventType requestPath visitorId userEmail authProvider statusCode createdAt'),
+      AdminAccessLog.countDocuments({ createdAt: { $gte: last24h } }),
+      AdminAccessLog.countDocuments({
+        createdAt: { $gte: last7d },
+        outcome: { $nin: GRANTED_ADMIN_OUTCOMES },
+      }),
+      AdminAccessLog.distinct('ipAddress', {
+        createdAt: { $gte: last7d },
+        ipAddress: { $ne: '' },
+      }),
+      AdminAccessLog.find({})
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .select('outcome requestPath ipAddress userEmail userRole keySource hasAdminKey createdAt'),
     ]);
 
     const planBreakdown = buildCountMap(planBreakdownRaw, {
@@ -149,6 +199,14 @@ async function showDashboard(req, res, next) {
           ideasLast7d,
           aiCallsToday: aiUsageToday.totalCalls || 0,
           aiActiveUsersToday: aiUsageToday.activeUsers || 0,
+          pageViews24h,
+          uniqueVisitors7d: uniqueVisitors7d.length,
+          signupsCompleted7d,
+          signupsStarted7d,
+          logins7d,
+          adminAccessAttempts24h,
+          blockedAdminAttempts7d,
+          uniqueAdminIps7d: uniqueAdminIps7d.length,
         },
         breakdown: {
           plans: planBreakdown,
@@ -157,6 +215,8 @@ async function showDashboard(req, res, next) {
         recentUsers,
         recentEpisodes,
         recentIdeas,
+        recentActivityEvents,
+        recentAdminAccess,
       },
     });
   } catch (error) {

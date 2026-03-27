@@ -14,6 +14,7 @@ const {
   getBaseDailyLimitForPlan,
   getDailyLimitForUser,
 } = require('../services/limitService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const { getReferralBonusCredits } = require('../services/marketing/referralService');
 const Episode = require('../models/Episode');
 const Series = require('../models/Series');
@@ -214,6 +215,13 @@ async function register(req, res) {
       referralCode: req.body?.referralCode || req.session?.referralCode || '',
     });
 
+    await recordActivityEvent(req, {
+      eventType: 'signup_started',
+      userEmail: verificationResult.email || req.body?.email,
+      authProvider: 'local',
+      metadata: { channel: 'api' },
+    });
+
     return res.status(202).json({
       result: buildVerificationResponse(verificationResult),
     });
@@ -232,6 +240,12 @@ async function login(req, res) {
     });
 
     await establishUserSession(req, user);
+    await recordActivityEvent(req, {
+      eventType: 'login_success',
+      user,
+      authProvider: user.authProvider,
+      metadata: { channel: 'api' },
+    });
 
     return res.json({
       result: {
@@ -254,6 +268,12 @@ async function verifyRegistration(req, res) {
     });
 
     await establishUserSession(req, user);
+    await recordActivityEvent(req, {
+      eventType: 'signup_completed',
+      user,
+      authProvider: user.authProvider,
+      metadata: { channel: 'api' },
+    });
 
     return res.json({
       result: {
@@ -339,7 +359,14 @@ function session(req, res) {
   });
 }
 
-function logout(req, res, next) {
+async function logout(req, res, next) {
+  await recordActivityEvent(req, {
+    eventType: 'logout',
+    user: req.currentUser || null,
+    authProvider: req.currentUser?.authProvider,
+    metadata: { channel: 'api' },
+  });
+
   req.session.destroy((error) => {
     if (error) {
       return next(error);
