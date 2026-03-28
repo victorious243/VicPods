@@ -1,0 +1,171 @@
+<%
+  const cookieSections = [
+    {
+      title: 'Essential cookies and storage',
+      body: 'These technologies are used to keep VicPods functioning and secure. They do not rely on advertising logic and are part of delivering the product you asked to use.',
+      items: [
+        'Session cookie (`vicpods.sid`) keeps signed-in sessions working securely.',
+        'Security and request-protection mechanisms support CSRF protection and safe account activity.',
+        'Cookiebot stores the consent state needed to remember your cookie choices.',
+      ],
+    },
+    {
+      title: 'Preference storage',
+      body: 'VicPods stores product preferences so the app remembers choices you make for your own experience.',
+      items: [
+        'Theme preference can be stored locally so dark or light mode stays consistent.',
+        'Language preference can be stored locally to keep the interface aligned with your choice.',
+      ],
+    },
+    {
+      title: 'First-party analytics and operational measurement',
+      body: 'VicPods uses limited first-party activity tracking for product operations, onboarding, security, and understanding how the product is used. This is not positioned as an ad-tech system.',
+      items: [
+        'A first-party visitor ID cookie (`vicpods_vid`) helps distinguish repeat visits.',
+        'Page views, signups, logins, and product activity may be recorded for product operations and security review.',
+        'VicPods does not currently position this as cross-site ad profiling.',
+      ],
+    },
+    {
+      title: 'Third-party services connected to VicPods',
+      body: 'Some service providers may set or rely on cookies or similar technologies when their features are used.',
+      items: [
+        'Cookiebot is used for consent management.',
+        'Stripe may use cookies or storage where billing or checkout features are opened.',
+        'Google may use cookies or storage if you choose Google sign-in.',
+      ],
+    },
+  ];
+%>
+
+<div class="help-page-shell legal-page-shell">
+  <section class="card legal-hero legal-hero-cookie">
+    <div class="legal-hero-copy">
+      <span class="landing-kicker">Cookie Policy</span>
+      <h1>Cookie controls should be clear, reversible, and easy to reach.</h1>
+      <p class="legal-hero-lead">VicPods uses a limited set of cookies and similar technologies for sessions, preferences, first-party product analytics, and consent management. This page explains what they do and gives you a direct way to review or withdraw optional consent.</p>
+
+      <div class="inline-actions">
+        <button type="button" class="btn btn-primary" data-cookiebot-action="renew">Review consent preferences</button>
+        <button type="button" class="btn btn-secondary" data-cookiebot-action="withdraw">Withdraw optional consent</button>
+        <a href="/privacy-policy" class="btn btn-ghost">Privacy Policy</a>
+        <a href="/data-rights" class="btn btn-ghost">Data Rights</a>
+      </div>
+    </div>
+
+    <div class="legal-hero-rail" aria-hidden="true">
+      <div class="legal-hero-chip">
+        <span class="mini-label">Consent model</span>
+        <strong>Explicit choice</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Manager</span>
+        <strong>Cookiebot</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Position</span>
+        <strong>User-controlled</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal-summary-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Controller</span>
+      <h3><%= legalProfile.controllerIdentity %></h3>
+      <p><%= legalProfile.controllerCountry %><% if (legalProfile.controllerAddressLines.length) { %> · <%= legalProfile.controllerAddressLines.join(', ') %><% } %></p>
+      <p class="mini-note">Privacy contact: <a href="mailto:<%= legalProfile.privacyEmail %>"><%= legalProfile.privacyEmail %></a></p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">What VicPods uses</span>
+      <h3>Sessions, preferences, and limited first-party measurement.</h3>
+      <p>VicPods uses cookies and similar technologies for account sessions, language/theme preferences, consent tracking, and basic product activity measurement.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">What VicPods avoids</span>
+      <h3>Not an advertising-cookie model.</h3>
+      <p>VicPods is not designed around selling audience data or building hidden ad profiles. If this changes in the future, the legal pages and consent setup should change too.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Your controls</span>
+      <h3>Review, withdraw, or clear from your browser.</h3>
+      <p>You can reopen the consent manager from this page, withdraw optional consent, or clear stored cookies and similar technologies from your browser settings.</p>
+    </article>
+  </section>
+
+  <section class="card cookie-consent-panel" data-cookie-consent-panel>
+    <div class="section-head">
+      <h3>Consent Preferences</h3>
+      <span class="mini-label">Live status</span>
+    </div>
+    <p class="mini-note cookie-consent-status" data-cookie-consent-summary>
+      Loading current consent state.
+    </p>
+    <div class="cookie-consent-grid" data-cookie-consent-grid>
+      <article class="cookie-consent-card is-necessary">
+        <span class="mini-label">Necessary</span>
+        <strong>Always active</strong>
+        <p>Required for core site and security functions.</p>
+      </article>
+      <article class="cookie-consent-card" data-cookie-category="preferences">
+        <span class="mini-label">Preferences</span>
+        <strong data-cookie-category-state="preferences">Unknown</strong>
+        <p>Theme and language related storage.</p>
+      </article>
+      <article class="cookie-consent-card" data-cookie-category="statistics">
+        <span class="mini-label">Statistics</span>
+        <strong data-cookie-category-state="statistics">Unknown</strong>
+        <p>First-party measurement for product usage and operations.</p>
+      </article>
+      <article class="cookie-consent-card" data-cookie-category="marketing">
+        <span class="mini-label">Marketing</span>
+        <strong data-cookie-category-state="marketing">Unknown</strong>
+        <p>Currently not part of the main VicPods product model.</p>
+      </article>
+    </div>
+    <div class="inline-actions">
+      <button type="button" class="btn btn-primary" data-cookiebot-action="renew">Change consent</button>
+      <button type="button" class="btn btn-ghost" data-cookiebot-action="withdraw">Withdraw consent</button>
+    </div>
+  </section>
+
+  <section class="legal-policy-grid">
+    <% cookieSections.forEach((section, index) => { %>
+      <article class="card legal-policy-card">
+        <div class="legal-policy-head">
+          <span class="terms-clause-index"><%= String(index + 1).padStart(2, '0') %></span>
+          <div>
+            <h3><%= section.title %></h3>
+            <p><%= section.body %></p>
+          </div>
+        </div>
+        <ul class="legal-policy-list">
+          <% section.items.forEach((item) => { %>
+            <li><%= item %></li>
+          <% }) %>
+        </ul>
+      </article>
+    <% }) %>
+  </section>
+
+  <section class="split-grid legal-cookie-footer-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Browser-level control</span>
+      <h3>You can also clear stored data locally.</h3>
+      <p>If you want a full reset, you can clear cookies and local storage for VicPods from your browser. Cookiebot also notes that removing consent cookies will cause the consent banner to reappear on the next visit.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Related legal pages</span>
+      <h3>Privacy and product terms live together.</h3>
+      <div class="inline-actions">
+        <a href="/privacy-policy" class="btn btn-secondary">Privacy Policy</a>
+        <a href="/terms" class="btn btn-ghost">Terms</a>
+        <a href="/data-rights" class="btn btn-ghost">Data Rights</a>
+      </div>
+    </article>
+  </section>
+</div>

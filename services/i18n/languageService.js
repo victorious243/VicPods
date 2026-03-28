@@ -707,6 +707,21 @@ const TRANSLATIONS = {
     es: 'Terminos',
     pt: 'Termos',
   },
+  'footer.privacy': {
+    en: 'Privacy Policy',
+    es: 'Politica de privacidad',
+    pt: 'Politica de privacidade',
+  },
+  'footer.cookies': {
+    en: 'Cookie Policy',
+    es: 'Politica de cookies',
+    pt: 'Politica de cookies',
+  },
+  'footer.dataRights': {
+    en: 'Data Rights',
+    es: 'Derechos de datos',
+    pt: 'Direitos de dados',
+  },
   'help.chat.open': {
     en: 'Help',
     es: 'Ayuda',

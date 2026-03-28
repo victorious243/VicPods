@@ -9,6 +9,7 @@ const {
   getBillingProofSnippets,
   getFeaturedExamples,
 } = require('../services/marketing/exampleLibraryService');
+const { deleteAccountForUser } = require('../services/account/accountDeletionService');
 
 const SALT_ROUNDS = 12;
 const VALID_SECTIONS = new Set(['profile', 'appearance', 'security', 'billing']);
@@ -207,10 +208,56 @@ async function resetOnboarding(req, res, next) {
   }
 }
 
+async function deleteAccount(req, res, next) {
+  try {
+    const user = req.currentUser;
+    const confirmEmail = normalizeEmail(req.body.confirmEmail);
+    const currentPassword = String(req.body.currentPassword || '');
+
+    if (!confirmEmail) {
+      throw new AppError('Type your account email to confirm deletion.', 400);
+    }
+
+    if (confirmEmail !== normalizeEmail(user.email)) {
+      throw new AppError('The confirmation email does not match your account email.', 400);
+    }
+
+    if (user.authProvider === 'local') {
+      if (!currentPassword) {
+        throw new AppError('Current password is required to delete your account.', 400);
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isMatch) {
+        throw new AppError('Current password is incorrect.', 401);
+      }
+    }
+
+    await deleteAccountForUser(user);
+
+    return req.session.regenerate((error) => {
+      if (error) {
+        return next(error);
+      }
+
+      req.flash('success', 'Your VicPods account has been deleted.');
+      return res.redirect('/');
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect('/settings?section=security');
+    }
+
+    return next(error);
+  }
+}
+
 module.exports = {
   showSettings,
   updateProfile,
   updateAppearance,
   updatePassword,
   resetOnboarding,
+  deleteAccount,
 };

@@ -118,16 +118,7 @@ function showRegister(req, res) {
 }
 
 function showTerms(req, res) {
-  return renderPage(res, {
-    title: req.t('page.auth.terms.title', 'Terms and Conditions - VicPods'),
-    pageTitle: req.t('page.auth.terms.header', 'VicPods Terms and Conditions'),
-    subtitle: req.t('page.auth.terms.subtitle', 'Rules, responsibilities, and subscription terms for using VicPods.'),
-    view: 'auth/terms',
-    authPage: true,
-    data: {
-      authShellClass: 'auth-shell-premium auth-shell-terms',
-    },
-  });
+  return res.redirect('/terms');
 }
 
 function showLogin(req, res) {

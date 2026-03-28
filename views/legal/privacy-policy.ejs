@@ -1,0 +1,176 @@
+<%
+  const policySections = [
+    {
+      title: 'What VicPods collects',
+      body: 'VicPods collects the information needed to run the service: account details such as name and email, authentication data, subscription status, podcast planning content you create inside the product, and limited product activity needed for security and operations.',
+      bullets: [
+        'Account data: name, email, password hash or federated login identity',
+        'Product data: series, themes, episodes, Pantry ideas, launch assets, settings',
+        'Billing data: Stripe customer and subscription references, not raw card numbers',
+        'Operational data: session cookies, visitor identifier, IP address, device/browser metadata, page views, login and signup events',
+      ],
+    },
+    {
+      title: 'Why VicPods processes data',
+      body: 'VicPods processes personal data to provide the product, secure accounts, operate subscriptions, deliver email and support, and improve the service responsibly.',
+      bullets: [
+        'To create and maintain your account',
+        'To authenticate sign-in and verify account ownership',
+        'To generate AI-assisted podcast content you request',
+        'To process subscriptions and billing with Stripe',
+        'To prevent abuse, fraud, or security issues',
+        'To understand product usage through first-party analytics, not ad tracking',
+      ],
+    },
+    {
+      title: 'Lawful bases',
+      body: 'Depending on the context, VicPods relies on contract, legitimate interests, legal obligations, and consent where required. For example, billing and account operations are usually necessary to perform the service, while certain consent-driven technologies may depend on your cookie preferences.',
+      bullets: [
+        'Contract: running your account, billing, and creator workflow',
+        'Legitimate interests: product security, abuse prevention, first-party service analytics, and support',
+        'Legal obligations: financial records, compliance, and dispute handling where required',
+        'Consent: where optional technologies or disclosures require it',
+      ],
+    },
+    {
+      title: 'What VicPods does not do',
+      body: 'VicPods is intended to be closer to a user-first product model than an advertising platform model.',
+      bullets: [
+        'VicPods does not sell personal data',
+        'VicPods does not run third-party ad profiling inside the product',
+        'VicPods does not use creator content as a behavioural ad network feed',
+      ],
+    },
+    {
+      title: 'Who can access data',
+      body: 'Access is limited to authorised people and processors who need it to operate VicPods. Admin access should follow a need-to-know principle and stay restricted to support, security, billing, and product operations.',
+      bullets: [
+        'Internal admin access is restricted and not public',
+        'Stripe processes subscription and billing operations',
+        'Google may process authentication if you choose Google sign-in',
+        'Email delivery providers process service emails',
+        'AI providers may process prompts and content when generation features are used',
+      ],
+    },
+    {
+      title: 'Cookies and first-party analytics',
+      body: 'VicPods uses essential session cookies, a first-party visitor identifier, CSRF protection, and limited product analytics to understand visits, signups, and account activity. Cookiebot is used to manage consent where applicable.',
+      bullets: [
+        'Essential cookies support sign-in, sessions, and security',
+        'A first-party visitor ID helps distinguish repeat visits and product activity',
+        'Analytics are used for product operations and improvement, not ad resale',
+      ],
+    },
+    {
+      title: 'Retention and deletion',
+      body: 'VicPods keeps data only as long as needed for the service, support, security, billing, and legal compliance. Users can delete their account from Settings. In-app account data tied to the user account is removed from VicPods when deletion succeeds, but some processor-side or legally required records may remain for billing, fraud prevention, or compliance.',
+      bullets: [
+        'Active account data is retained while your account is in use',
+        'Users can self-delete their account from Settings',
+        'Some billing or compliance records may remain where legally required',
+      ],
+    },
+    {
+      title: 'Your rights and controls',
+      body: 'If you are in the EU/EEA or another region with similar privacy rights, you may have rights of access, correction, deletion, restriction, objection, and portability, subject to local law and any applicable exceptions.',
+      bullets: [
+        'Edit profile information from Settings',
+        'Change your password and account defaults from Settings',
+        'Manage billing through Stripe',
+        'Delete your account from Settings',
+        `Contact VicPods at ${legalProfile.privacyEmail} for privacy questions or formal data-rights requests`,
+        'Open the dedicated Data Rights page for the request workflow',
+      ],
+    },
+    {
+      title: 'Complaints and supervisory authorities',
+      body: 'If you believe VicPods has handled your personal data incorrectly, contact VicPods first so the issue can be reviewed. If you are in the EU/EEA, you may also complain to your local supervisory authority, including the Irish Data Protection Commission where applicable.',
+      bullets: [
+        'Help Center: first contact point inside the product',
+        'Supervisory authority complaint rights remain available under applicable law',
+      ],
+    },
+  ];
+%>
+
+<div class="help-page-shell legal-page-shell">
+  <section class="card legal-hero legal-hero-privacy">
+    <div class="legal-hero-copy">
+      <span class="landing-kicker">Privacy Policy</span>
+      <h1>Privacy that stays product-minded, not surveillance-minded.</h1>
+      <p class="legal-hero-lead">VicPods should work like a creator tool, not an ad network. This policy explains what data VicPods uses, why it uses it, who can access it, and what controls users can exercise directly.</p>
+
+      <div class="inline-actions">
+        <% if (currentUser) { %>
+          <a href="/settings?section=security" class="btn btn-primary">Manage account privacy</a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary">Create account</a>
+        <% } %>
+        <a href="/terms" class="btn btn-secondary">Read Terms</a>
+        <a href="/cookie-policy" class="btn btn-ghost">Cookie Policy</a>
+        <a href="/data-rights" class="btn btn-ghost">Data Rights</a>
+      </div>
+    </div>
+
+    <div class="legal-hero-rail" aria-hidden="true">
+      <div class="legal-hero-chip">
+        <span class="mini-label">Model</span>
+        <strong>No data sale</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Analytics</span>
+        <strong>First-party only</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Control</span>
+        <strong>Delete from Settings</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal-summary-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Controller</span>
+      <h3><%= legalProfile.controllerIdentity %></h3>
+      <p><%= legalProfile.controllerCountry %><% if (legalProfile.controllerAddressLines.length) { %> · <%= legalProfile.controllerAddressLines.join(', ') %><% } %></p>
+      <p class="mini-note">Privacy contact: <a href="mailto:<%= legalProfile.privacyEmail %>"><%= legalProfile.privacyEmail %></a></p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Privacy promise</span>
+      <h3>VicPods is not built around hidden profiling.</h3>
+      <p>The app uses limited first-party analytics for product operations, support, and security. It is not designed to monetise personal data through ads.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Self-serve controls</span>
+      <h3>Settings should matter.</h3>
+      <p>Users can change profile details, password, theme, language, billing settings, and now delete their account directly.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Admin access</span>
+      <h3>Restricted, need-to-know access only.</h3>
+      <p>Product admins may access limited account and activity data for support, security, billing, and operational needs. That access should stay limited and accountable.</p>
+    </article>
+  </section>
+
+  <section class="legal-policy-grid">
+    <% policySections.forEach((section, index) => { %>
+      <article class="card legal-policy-card">
+        <div class="legal-policy-head">
+          <span class="terms-clause-index"><%= String(index + 1).padStart(2, '0') %></span>
+          <div>
+            <h3><%= section.title %></h3>
+            <p><%= section.body %></p>
+          </div>
+        </div>
+        <ul class="legal-policy-list">
+          <% section.bullets.forEach((bullet) => { %>
+            <li><%= bullet %></li>
+          <% }) %>
+        </ul>
+      </article>
+    <% }) %>
+  </section>
+</div>

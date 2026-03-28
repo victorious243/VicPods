@@ -49,6 +49,7 @@ async function showDashboard(req, res, next) {
       episodeStatusRaw,
       aiUsageTodayRaw,
       recentUsers,
+      userDirectory,
       recentEpisodes,
       recentIdeas,
       pageViews24h,
@@ -105,8 +106,11 @@ async function showDashboard(req, res, next) {
       ]),
       User.find({})
         .sort({ createdAt: -1 })
-        .limit(8)
-        .select('name email createdAt plan planStatus'),
+        .limit(12)
+        .select('name email createdAt plan planStatus emailVerified authProvider'),
+      User.find({})
+        .sort({ createdAt: -1 })
+        .select('name email createdAt plan planStatus emailVerified authProvider'),
       Episode.find({})
         .sort({ updatedAt: -1 })
         .limit(8)
@@ -174,6 +178,11 @@ async function showDashboard(req, res, next) {
       ? aiUsageTodayRaw[0]
       : { totalCalls: 0, activeUsers: 0 };
 
+    const signupEmailList = recentUsers
+      .map((user) => String(user.email || '').trim())
+      .filter(Boolean)
+      .join('\n');
+
     return renderPage(res, {
       title: req.t('page.admin.title', 'Admin Dashboard - VicPods'),
       pageTitle: req.t('page.admin.header', 'Admin Dashboard'),
@@ -213,6 +222,8 @@ async function showDashboard(req, res, next) {
           episodeStatus,
         },
         recentUsers,
+        userDirectory,
+        signupEmailList,
         recentEpisodes,
         recentIdeas,
         recentActivityEvents,

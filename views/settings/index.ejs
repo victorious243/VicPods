@@ -144,28 +144,78 @@
 <% } %>
 
 <% if (selectedSection === 'security') { %>
-  <section class="card">
-    <div class="section-head">
-      <h3>Change Password</h3>
-      <span class="mini-label">Account Security</span>
-    </div>
-    <form method="POST" action="/settings/security/password" class="form-grid">
-      <label>
-        Current Password
-        <input type="password" name="currentPassword" required minlength="8" autocomplete="current-password" />
-      </label>
-      <div class="two-col">
-        <label>
-          New Password
-          <input type="password" name="newPassword" required minlength="8" autocomplete="new-password" />
-        </label>
-        <label>
-          Confirm New Password
-          <input type="password" name="confirmPassword" required minlength="8" autocomplete="new-password" />
-        </label>
+  <section class="split-grid settings-grid">
+    <article class="card">
+      <div class="section-head">
+        <h3>Change Password</h3>
+        <span class="mini-label">Account Security</span>
       </div>
-      <button type="submit" class="btn btn-primary">Update Password</button>
-    </form>
+      <form method="POST" action="/settings/security/password" class="form-grid">
+        <label>
+          Current Password
+          <input type="password" name="currentPassword" required minlength="8" autocomplete="current-password" />
+        </label>
+        <div class="two-col">
+          <label>
+            New Password
+            <input type="password" name="newPassword" required minlength="8" autocomplete="new-password" />
+          </label>
+          <label>
+            Confirm New Password
+            <input type="password" name="confirmPassword" required minlength="8" autocomplete="new-password" />
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Password</button>
+      </form>
+    </article>
+
+    <article class="card settings-logout-card">
+      <div class="section-head">
+        <h3>Logout</h3>
+        <span class="mini-label">Current Session</span>
+      </div>
+      <p class="mini-note">Sign out of VicPods on this browser without changing your account, billing, or saved work.</p>
+      <form method="POST" action="/auth/logout" class="settings-logout-form">
+        <button type="submit" class="btn btn-secondary">Logout</button>
+      </form>
+    </article>
+
+    <article class="card danger-zone-card">
+      <div class="section-head">
+        <h3>Delete Account</h3>
+        <span class="mini-label">Permanent</span>
+      </div>
+      <p class="mini-note">This permanently removes your VicPods account, deletes your Studio, Workspace, Pantry, and analytics records tied to your account, and signs you out immediately.</p>
+      <p class="mini-note">If billing is attached, VicPods will also try to remove the linked Stripe customer before deletion. This action cannot be undone.</p>
+      <form method="POST" action="/settings/security/delete-account" class="form-grid danger-zone-form">
+        <label>
+          Confirm your email
+          <input
+            type="email"
+            name="confirmEmail"
+            required
+            autocomplete="email"
+            placeholder="<%= currentUser.email %>"
+          />
+        </label>
+        <% if ((currentUser.authProvider || 'local') === 'local') { %>
+          <label>
+            Current password
+            <input
+              type="password"
+              name="currentPassword"
+              required
+              minlength="8"
+              autocomplete="current-password"
+              placeholder="Enter your current password"
+            />
+          </label>
+        <% } else { %>
+          <p class="mini-note">Google sign-in account detected. Email confirmation is enough for deletion.</p>
+        <% } %>
+        <button type="submit" class="btn btn-danger">Delete my account</button>
+      </form>
+    </article>
   </section>
 <% } %>
 

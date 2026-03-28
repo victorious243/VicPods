@@ -194,25 +194,74 @@
 
 <section class="card">
   <div class="section-head">
-    <h3><%= t('admin.section.recentSignups', 'Recent signups') %></h3>
+    <h3>Newest signup emails</h3>
+    <span class="mini-label">Admin only</span>
   </div>
   <% if (!recentUsers.length) { %>
     <p class="empty-state"><%= t('admin.empty.recentUsers', 'No users yet.') %></p>
   <% } else { %>
+    <div class="admin-email-export">
+      <p class="mini-note">Latest signup emails. Copy this list if you need a quick export.</p>
+      <pre><%= signupEmailList %></pre>
+    </div>
     <div class="list-stack">
       <% recentUsers.forEach((user) => { %>
-        <div class="list-item">
+        <div class="list-item admin-signup-item">
           <div>
-            <h4><%= user.name || user.email %></h4>
-            <p><%= user.email %></p>
+            <h4><%= user.email %></h4>
+            <p><%= user.name || 'Unnamed user' %></p>
             <p class="mini-note"><%= new Date(user.createdAt).toLocaleString() %></p>
           </div>
-          <div class="inline-actions">
+          <div class="inline-actions admin-signup-meta">
+            <span class="mini-label"><%= user.authProvider || 'local' %></span>
+            <span class="mini-label"><%= user.emailVerified ? 'verified' : 'pending verify' %></span>
             <span class="mini-label"><%= user.plan %></span>
             <span class="mini-label"><%= user.planStatus %></span>
           </div>
         </div>
       <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Users directory</h3>
+    <span class="mini-label"><%= userDirectory.length %> users</span>
+  </div>
+  <% if (!userDirectory.length) { %>
+    <p class="empty-state">No users to list yet.</p>
+  <% } else { %>
+    <p class="mini-note">Newest accounts first. Join date is shown in your local admin timezone.</p>
+    <div class="admin-table-shell">
+      <table class="admin-user-table">
+        <thead>
+          <tr>
+            <th>Joined</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Auth</th>
+            <th>Verified</th>
+            <th>Plan</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% userDirectory.forEach((user) => { %>
+            <tr>
+              <td><span class="admin-table-date"><%= new Date(user.createdAt).toLocaleString() %></span></td>
+              <td><strong><%= user.name || 'Unnamed user' %></strong></td>
+              <td><span class="admin-table-email"><%= user.email %></span></td>
+              <td><span class="mini-label"><%= user.authProvider || 'local' %></span></td>
+              <td>
+                <span class="mini-label"><%= user.emailVerified ? 'verified' : 'pending' %></span>
+              </td>
+              <td><span class="mini-label"><%= user.plan %></span></td>
+              <td><span class="mini-label"><%= user.planStatus %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
     </div>
   <% } %>
 </section>

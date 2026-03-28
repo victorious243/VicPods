@@ -1,0 +1,144 @@
+<%
+  const clauses = [
+    {
+      title: 'What VicPods is',
+      body: 'VicPods is a podcast planning and launch-prep application. It helps users structure episodes, generate AI-assisted drafts, prepare launch assets, and manage show workflow before recording.',
+    },
+    {
+      title: 'Account ownership and eligibility',
+      body: 'You are responsible for your account, credentials, and the information you provide. Use accurate details, keep your login secure, and only use VicPods if you are legally allowed to enter into this agreement.',
+    },
+    {
+      title: 'Verification and account security',
+      body: 'VicPods can require email verification, password checks, or additional sign-in confirmation to protect accounts. Security-related emails and notices are part of operating the service safely.',
+    },
+    {
+      title: 'Your content stays your responsibility',
+      body: 'You keep responsibility for the podcast content you write, generate, publish, or record through VicPods. You should review AI-assisted output for factual accuracy, legal compliance, and brand fit before using it publicly.',
+    },
+    {
+      title: 'Privacy and user control',
+      body: 'VicPods is intended to be user-controlled, not surveillance-driven. Users can manage profile details, passwords, billing, and account deletion from product settings. These terms work together with the Privacy Policy.',
+    },
+    {
+      title: 'Paid plans and billing',
+      body: 'Paid plans are processed through Stripe and renew according to your active subscription unless cancelled. Paid access can change if a subscription becomes unpaid, expires, or is cancelled. Stripe may retain billing records where legally required.',
+    },
+    {
+      title: 'Acceptable use',
+      body: 'Do not use VicPods for unlawful activity, abuse of authentication systems, payment fraud, malware, spam, intellectual property infringement, or harmful platform misuse. We can restrict access where needed to protect the service or other users.',
+    },
+    {
+      title: 'Service changes and availability',
+      body: 'VicPods evolves over time. Features, AI limits, pricing, and workflows may change as the product improves. We aim for reliable availability, but uninterrupted service cannot be guaranteed.',
+    },
+    {
+      title: 'Account deletion and retention',
+      body: 'Users can request deletion directly from Settings. VicPods will remove in-app account data tied to the user account, subject to limited retention needed for billing, fraud prevention, security, or legal compliance.',
+    },
+    {
+      title: 'Liability and complaints',
+      body: 'VicPods is provided on an as-is basis to the extent permitted by law. If you have a privacy or data-rights concern, contact VicPods through the Help Center or your support channel. If you are in the EU/EEA, you may also complain to your supervisory authority, including the Irish Data Protection Commission where relevant.',
+    },
+  ];
+%>
+
+<div class="help-page-shell legal-page-shell">
+  <section class="card legal-hero">
+    <div class="legal-hero-copy">
+      <span class="landing-kicker">Terms and Conditions</span>
+      <h1>Clear product rules, written for creators.</h1>
+      <p class="legal-hero-lead">VicPods should feel structured, predictable, and user-controlled. These terms explain how the service works, what users are responsible for, how billing works, and where privacy rights fit in.</p>
+
+      <div class="inline-actions">
+        <% if (currentUser) { %>
+          <a href="/settings" class="btn btn-primary">Open Settings</a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary">Create account</a>
+          <a href="/auth/login" class="btn btn-secondary">Sign in</a>
+        <% } %>
+        <a href="/privacy-policy" class="btn btn-ghost">Read Privacy Policy</a>
+        <a href="/data-rights" class="btn btn-ghost">Data Rights</a>
+      </div>
+    </div>
+
+    <div class="legal-hero-rail" aria-hidden="true">
+      <div class="legal-hero-chip">
+        <span class="mini-label">Approach</span>
+        <strong>Plain language</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Model</span>
+        <strong>User-controlled</strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Updated</span>
+        <strong>March 28, 2026</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal-summary-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Controller</span>
+      <h3><%= legalProfile.controllerIdentity %></h3>
+      <p><%= legalProfile.controllerCountry %><% if (legalProfile.controllerAddressLines.length) { %> · <%= legalProfile.controllerAddressLines.join(', ') %><% } %></p>
+      <p class="mini-note">Privacy contact: <a href="mailto:<%= legalProfile.privacyEmail %>"><%= legalProfile.privacyEmail %></a></p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Quick summary</span>
+      <h3>VicPods is not an ad platform.</h3>
+      <p>The product exists to help creators plan, structure, and prepare podcast episodes. The service should not depend on hidden profiling or manipulative data practices.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">What users control</span>
+      <h3>Profile, password, billing, and deletion.</h3>
+      <p>Users can update account details, manage billing through Stripe, and delete their VicPods account through Settings.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Related document</span>
+      <h3>Privacy policy</h3>
+      <p>Privacy commitments, lawful bases, retention, analytics, and data-rights controls are explained in the Privacy Policy.</p>
+    </article>
+  </section>
+
+  <section class="terms-layout legal-layout">
+    <aside class="terms-sidebar legal-sidebar">
+      <section class="terms-side-card">
+        <h2>What these terms cover</h2>
+        <ul class="terms-side-list">
+          <li>How VicPods may be used</li>
+          <li>What users remain responsible for</li>
+          <li>How billing and subscriptions work</li>
+          <li>What happens when accounts are deleted</li>
+          <li>How privacy rights connect to product controls</li>
+        </ul>
+      </section>
+
+      <section class="terms-side-card terms-side-card-accent">
+        <h2>GDPR posture</h2>
+        <p>VicPods is designed to support transparency, minimum necessary access, and user choice. Legal rights are not waived by these terms.</p>
+        <div class="auth-link-row terms-link-row">
+          <a href="/privacy-policy" class="btn btn-primary">Privacy Policy</a>
+          <a href="/cookie-policy" class="btn btn-secondary">Cookie Policy</a>
+          <a href="/data-rights" class="btn btn-ghost">Data Rights</a>
+        </div>
+      </section>
+    </aside>
+
+    <div class="terms-document">
+      <% clauses.forEach((clause, index) => { %>
+        <article class="terms-clause-card">
+          <div class="terms-clause-index"><%= String(index + 1).padStart(2, '0') %></div>
+          <div class="terms-clause-copy">
+            <h3><%= clause.title %></h3>
+            <p><%= clause.body %></p>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</div>

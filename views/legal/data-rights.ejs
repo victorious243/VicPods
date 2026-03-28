@@ -1,0 +1,136 @@
+<div class="help-page-shell legal-page-shell">
+  <section class="card legal-hero legal-hero-rights">
+    <div class="legal-hero-copy">
+      <span class="landing-kicker">Data Rights</span>
+      <h1>Users should be able to understand and exercise their rights without friction.</h1>
+      <p class="legal-hero-lead">This page explains the privacy-related rights VicPods supports, which controls are already available inside the product, and how to submit a formal data-rights request if you need more than the in-app tools provide.</p>
+
+      <div class="inline-actions">
+        <% if (currentUser) { %>
+          <a href="/settings?section=profile" class="btn btn-primary">Open Settings</a>
+          <a href="/settings?section=security" class="btn btn-secondary">Security Controls</a>
+        <% } else { %>
+          <a href="/auth/register" class="btn btn-primary">Create account</a>
+          <a href="/auth/login" class="btn btn-secondary">Sign in</a>
+        <% } %>
+        <a href="mailto:<%= legalProfile.privacyEmail %>" class="btn btn-ghost">Email privacy contact</a>
+      </div>
+    </div>
+
+    <div class="legal-hero-rail" aria-hidden="true">
+      <div class="legal-hero-chip">
+        <span class="mini-label">Primary contact</span>
+        <strong><%= legalProfile.privacyEmail %></strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Controller</span>
+        <strong><%= legalProfile.controllerIdentity %></strong>
+      </div>
+      <div class="legal-hero-chip">
+        <span class="mini-label">Response target</span>
+        <strong>1 month</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal-summary-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Self-serve first</span>
+      <h3>Many privacy actions already live in Settings.</h3>
+      <p>Users can edit profile information, update passwords, manage billing, change product defaults, and delete their account directly inside VicPods.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Formal requests</span>
+      <h3>Use the privacy contact for access, objection, or portability requests.</h3>
+      <p>If you need a formal privacy review or a copy of personal data beyond in-app controls, send a request to <a href="mailto:<%= legalProfile.privacyEmail %>"><%= legalProfile.privacyEmail %></a>.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Identity check</span>
+      <h3>VicPods may verify identity before acting.</h3>
+      <p>This helps prevent someone else from accessing or deleting your information by mistake or through deception.</p>
+    </article>
+  </section>
+
+  <section class="legal-policy-grid">
+    <article class="card legal-policy-card">
+      <div class="legal-policy-head">
+        <span class="terms-clause-index">01</span>
+        <div>
+          <h3>Rights supported by VicPods</h3>
+          <p>Depending on applicable law, users may have rights of access, correction, deletion, restriction, objection, and portability.</p>
+        </div>
+      </div>
+      <ul class="legal-policy-list">
+        <li>Access: ask what personal data VicPods holds about you.</li>
+        <li>Correction: ask for inaccurate data to be fixed.</li>
+        <li>Deletion: use the in-app delete-account control or submit a request where needed.</li>
+        <li>Restriction or objection: ask VicPods to pause or stop specific processing where the law allows it.</li>
+        <li>Portability: request a copy of the personal data you provided in a structured form where applicable.</li>
+      </ul>
+    </article>
+
+    <article class="card legal-policy-card">
+      <div class="legal-policy-head">
+        <span class="terms-clause-index">02</span>
+        <div>
+          <h3>How to submit a request</h3>
+          <p>VicPods aims to keep the path straightforward and human-readable.</p>
+        </div>
+      </div>
+      <ul class="legal-policy-list">
+        <li>Email <a href="mailto:<%= legalProfile.privacyEmail %>"><%= legalProfile.privacyEmail %></a> with the subject line `Data rights request`.</li>
+        <li>Explain what right you want to exercise and which account email is affected.</li>
+        <li>Include enough detail for the request to be understood without sharing unnecessary personal data.</li>
+        <li>VicPods may ask for identity confirmation before completing sensitive requests.</li>
+      </ul>
+    </article>
+
+    <article class="card legal-policy-card">
+      <div class="legal-policy-head">
+        <span class="terms-clause-index">03</span>
+        <div>
+          <h3>Expected response timing</h3>
+          <p>VicPods aims to respond within one month for standard privacy requests, subject to complexity and legal exceptions.</p>
+        </div>
+      </div>
+      <ul class="legal-policy-list">
+        <li>Simple in-app changes happen immediately through Settings.</li>
+        <li>Formal requests are reviewed manually.</li>
+        <li>If extra time is needed, VicPods should explain why and communicate the extension.</li>
+      </ul>
+    </article>
+
+    <article class="card legal-policy-card">
+      <div class="legal-policy-head">
+        <span class="terms-clause-index">04</span>
+        <div>
+          <h3>Supervisory authority complaints</h3>
+          <p>If you are in the EU/EEA and believe VicPods handled a request improperly, you may complain to your supervisory authority. Where applicable, this includes the Irish Data Protection Commission.</p>
+        </div>
+      </div>
+      <ul class="legal-policy-list">
+        <li>VicPods prefers to resolve the issue directly first where possible.</li>
+        <li>Using the privacy contact does not remove your right to complain to a regulator.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="split-grid legal-cookie-footer-grid">
+    <article class="card legal-surface-card">
+      <span class="mini-label">Related controls</span>
+      <h3>Account settings</h3>
+      <p>Profile editing, password changes, and account deletion live inside Settings for signed-in users.</p>
+    </article>
+
+    <article class="card legal-surface-card">
+      <span class="mini-label">Related policies</span>
+      <h3>Legal set</h3>
+      <div class="inline-actions">
+        <a href="/privacy-policy" class="btn btn-secondary">Privacy Policy</a>
+        <a href="/cookie-policy" class="btn btn-ghost">Cookie Policy</a>
+      </div>
+    </article>
+  </section>
+</div>

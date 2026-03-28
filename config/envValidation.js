@@ -59,6 +59,10 @@ function validateEnvironment({ isProduction }) {
   const googleClientId = String(process.env.GOOGLE_OIDC_CLIENT_ID || '').trim();
   const googleClientSecret = String(process.env.GOOGLE_OIDC_CLIENT_SECRET || '').trim();
   const googleRedirectUri = String(process.env.GOOGLE_OIDC_REDIRECT_URI || '').trim();
+  const legalEntityName = String(process.env.LEGAL_ENTITY_NAME || '').trim();
+  const privacyContactEmail = String(process.env.PRIVACY_CONTACT_EMAIL || '').trim();
+  const supportContactEmail = String(process.env.SUPPORT_CONTACT_EMAIL || '').trim();
+  const legalContactEmail = String(process.env.LEGAL_CONTACT_EMAIL || '').trim();
 
   if (!mongoUri) {
     errors.push('MONGO_URI is required.');
@@ -165,6 +169,22 @@ function validateEnvironment({ isProduction }) {
       errors.push('GOOGLE_OIDC_REDIRECT_URI must be a valid http(s) URL.');
     }
   }
+
+  if (isProduction && !legalEntityName) {
+    warnings.push('LEGAL_ENTITY_NAME is not set. Public legal pages will fall back to "VicPods" instead of a formal controller identity.');
+  }
+
+  if (isProduction && !privacyContactEmail) {
+    warnings.push('PRIVACY_CONTACT_EMAIL is not set. Public legal pages will fall back to a derived domain email where possible.');
+  }
+
+  [privacyContactEmail, supportContactEmail, legalContactEmail]
+    .filter(Boolean)
+    .forEach((emailValue) => {
+      if (!isValidEmailAddress(emailValue)) {
+        warnings.push(`Legal/support contact email is invalid: ${emailValue}`);
+      }
+    });
 
   return { errors, warnings };
 }

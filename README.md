@@ -71,6 +71,13 @@ GOOGLE_OIDC_CLIENT_ID=
 GOOGLE_OIDC_CLIENT_SECRET=
 GOOGLE_OIDC_REDIRECT_URI=http://localhost:3000/auth/google/callback
 GOOGLE_OIDC_SCOPES=openid email profile
+LEGAL_ENTITY_NAME=VicPods Ltd
+LEGAL_TRADING_NAME=VicPods
+LEGAL_COUNTRY=Ireland
+LEGAL_ADDRESS=Street Line 1|City|Postcode|Ireland
+PRIVACY_CONTACT_EMAIL=privacy@vicpods.com
+SUPPORT_CONTACT_EMAIL=hello@vicpods.com
+LEGAL_CONTACT_EMAIL=legal@vicpods.com
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -98,6 +105,7 @@ If `AI_PROVIDER=openai` but `OPENAI_API_KEY` is empty, VicPods automatically fal
 
 ## Key Routes
 - Auth: `/auth/register`, `/auth/login`, `/auth/google/login`, `/auth/logout`, `/auth/terms`, `/auth/verify`, `/auth/verify/resend`, `/auth/mfa`, `/auth/mfa/resend`
+- Legal: `/terms`, `/privacy-policy`, `/cookie-policy`, `/data-rights`
 - Google callback: `/auth/google/callback` (also supported: `/oauth2callback`)
 - Studio: `/studio`
 - Kitchen: `/kitchen`, `/kitchen/:seriesId`, `/kitchen/:seriesId/themes/:themeId/episodes/:episodeId`
