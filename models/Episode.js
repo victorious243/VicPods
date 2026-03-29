@@ -449,17 +449,12 @@ episodeSchema.methods.ensureShareToken = async function ensureShareToken() {
   return this.shareToken;
 };
 
-episodeSchema.pre('validate', async function assignShareToken(next) {
+episodeSchema.pre('validate', async function assignShareToken() {
   if (!this.isNew || this.shareToken) {
-    return next();
+    return;
   }
 
-  try {
-    this.shareToken = await this.constructor.generateUniqueShareToken();
-    return next();
-  } catch (error) {
-    return next(error);
-  }
+  this.shareToken = await this.constructor.generateUniqueShareToken();
 });
 
 module.exports = mongoose.model('Episode', episodeSchema);
