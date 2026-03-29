@@ -982,6 +982,18 @@ html[data-theme="light"] .auth-scene-rail-copy span {
   word-break: break-word;
 }
 
+.admin-preview-lead-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.admin-preview-lead-item h4,
+.admin-preview-lead-item p {
+  overflow-wrap: anywhere;
+}
+
 .danger-zone-card {
   border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
   background:
@@ -2210,12 +2222,111 @@ html[data-theme="light"] .topbar {
   background: color-mix(in srgb, var(--surface) 78%, var(--primary));
 }
 
+.wizard-progress-quick .step {
+  padding-inline: 12px;
+}
+
 .wizard-step {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
   display: grid;
   gap: 10px;
+}
+
+.single-quick-start-card {
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--primary) 20%, transparent), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--primary) 8%), color-mix(in srgb, var(--bg-2) 90%, var(--surface) 10%));
+}
+
+.single-quick-start-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.single-quick-start-head h4 {
+  margin-bottom: 6px;
+}
+
+.single-quick-start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.single-quick-start-actions .mini-note {
+  max-width: 54ch;
+}
+
+.single-advanced-shell {
+  padding: 0;
+  overflow: hidden;
+}
+
+.single-advanced-shell[open] {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+
+.single-advanced-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.single-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.single-advanced-summary::after {
+  content: '+';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--surface) 84%, var(--primary));
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.single-advanced-shell[open] .single-advanced-summary::after {
+  content: '−';
+}
+
+.single-advanced-body {
+  display: grid;
+  gap: 16px;
+  padding: 0 18px 18px;
+}
+
+.single-advanced-section {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg-2));
+}
+
+.single-advanced-section h4 {
+  margin: 0;
 }
 
 .single-collection-card {
@@ -4633,6 +4744,52 @@ html[data-theme='light'] .onboarding-backdrop {
   color: #fca5a5;
 }
 
+.landing-pricing-shell {
+  display: grid;
+  gap: 20px;
+  padding: clamp(24px, 3vw, 34px);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(8, 13, 26, 0.9), rgba(9, 15, 28, 0.82));
+}
+
+.landing-pricing-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.landing-pricing-head h3 {
+  margin-bottom: 8px;
+}
+
+.landing-pricing-copy {
+  max-width: 64ch;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text) 18%);
+}
+
+.landing-pricing-badges {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.landing-plan-grid {
+  gap: 18px;
+}
+
+.landing-plan-card h4 {
+  margin: 6px 0 0;
+  font-size: 1.18rem;
+}
+
+.landing-pricing-actions {
+  justify-content: center;
+}
+
 .landing-preview-shell {
   opacity: 0;
   transform: translateY(26px);
@@ -5072,6 +5229,24 @@ html[data-theme='light'] .onboarding-backdrop {
     padding: 22px 18px;
   }
 
+  .single-quick-start-head,
+  .landing-pricing-head {
+    grid-template-columns: 1fr;
+  }
+
+  .single-quick-start-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .single-quick-start-actions .btn {
+    width: 100%;
+  }
+
+  .single-advanced-summary {
+    align-items: start;
+  }
+
   .landing-generator-actions {
     flex-direction: column;
     align-items: stretch;
@@ -5084,6 +5259,10 @@ html[data-theme='light'] .onboarding-backdrop {
 
   .landing-generator-submit {
     width: 100%;
+  }
+
+  .landing-pricing-badges {
+    justify-items: start;
   }
 
   .share-link-toolbar .inline-actions {
@@ -7247,6 +7426,7 @@ html[data-theme="light"] .site-footer {
 
 html[data-theme="light"] .tool-hero,
 html[data-theme="light"] .landing-generator-section,
+html[data-theme="light"] .landing-pricing-shell,
 html[data-theme="light"] .shared-episode-doc,
 html[data-theme="light"] .shared-episode-rail-card,
 html[data-theme="light"] .landing-preview-card,
@@ -7263,11 +7443,29 @@ html[data-theme="light"] .help-faq-item {
 }
 
 html[data-theme="light"] .tool-hero,
-html[data-theme="light"] .landing-generator-section {
+html[data-theme="light"] .landing-generator-section,
+html[data-theme="light"] .landing-pricing-shell {
   background:
     radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), transparent 26%),
     radial-gradient(circle at left top, rgba(59, 130, 246, 0.1), transparent 30%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(243, 247, 255, 0.98));
+}
+
+html[data-theme="light"] .single-quick-start-card,
+html[data-theme="light"] .single-advanced-section,
+html[data-theme="light"] .single-advanced-summary::after {
+  border-color: rgba(96, 123, 255, 0.14);
+}
+
+html[data-theme="light"] .single-quick-start-card,
+html[data-theme="light"] .single-advanced-section {
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 255, 0.98));
+}
+
+html[data-theme="light"] .single-advanced-summary::after {
+  background: rgba(96, 123, 255, 0.08);
 }
 
 html[data-theme="light"] .landing-generator-textarea,

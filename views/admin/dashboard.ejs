@@ -53,6 +53,26 @@
     <span class="mini-note">Tracked across web, API, and Google auth</span>
   </article>
   <article class="card stat-card">
+    <p>Episode previews (7d)</p>
+    <h3><%= metrics.publicEpisodePreviews7d %></h3>
+    <span class="mini-note">Podcast idea runs / 7d: <%= metrics.publicPodcastIdeas7d %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Preview leads saved (7d)</p>
+    <h3><%= metrics.publicPreviewSaves7d %></h3>
+    <span class="mini-note">Total lead emails: <%= metrics.totalPreviewLeads %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Drafts generated (7d)</p>
+    <h3><%= metrics.episodeDrafts7d %></h3>
+    <span class="mini-note">Episodes created / 7d: <%= metrics.episodesCreated7d %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Checkout starts (7d)</p>
+    <h3><%= metrics.checkoutStarts7d %></h3>
+    <span class="mini-note">Completed billing returns / 7d: <%= metrics.checkoutCompleted7d %></span>
+  </article>
+  <article class="card stat-card">
     <p><%= t('admin.metric.newUsers7d', 'New users (7d)') %></p>
     <h3><%= metrics.usersLast7d %></h3>
     <span class="mini-note"><%= t('admin.metric.newUsers30d', 'New users (30d)') %>: <%= metrics.usersLast30d %></span>
@@ -72,6 +92,47 @@
     <h3><%= metrics.totalIdeas %></h3>
     <span class="mini-note">+<%= metrics.ideasLast7d %> / 7d</span>
   </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <h3>Public preview leads</h3>
+    <span class="mini-label"><%= metrics.totalPreviewLeads %> saved emails</span>
+  </div>
+  <% if (!recentPreviewLeads.length) { %>
+    <p class="empty-state">No public preview leads captured yet.</p>
+  <% } else { %>
+    <div class="admin-preview-lead-summary">
+      <span class="mini-label">Episode preview leads: <%= breakdown.previewLeads.episode_preview %></span>
+      <span class="mini-label">Podcast idea leads: <%= breakdown.previewLeads.podcast_ideas %></span>
+      <span class="mini-label">Saved in the last 7 days: <%= metrics.recentPreviewLeads7d %></span>
+      <span class="mini-label">Preview exports / 7d: <%= metrics.publicPreviewExports7d %></span>
+      <span class="mini-label">Billing views / 7d: <%= metrics.billingViews7d %></span>
+    </div>
+    <div class="list-stack">
+      <% recentPreviewLeads.forEach((lead) => { %>
+        <div class="list-item admin-preview-lead-item">
+          <div>
+            <h4><%= lead.email %></h4>
+            <p><%= lead.source === 'podcast_ideas' ? 'Podcast idea generator' : 'Idea to episode preview' %></p>
+            <% if (lead.sourceInput) { %>
+              <p class="mini-note"><%= lead.sourceInput %></p>
+            <% } %>
+            <p class="mini-note">
+              Saved: <%= lead.lastSavedAt ? new Date(lead.lastSavedAt).toLocaleString() : 'Not recorded' %>
+              <% if (lead.lastSentAt) { %>
+                · emailed: <%= new Date(lead.lastSentAt).toLocaleString() %>
+              <% } %>
+            </p>
+          </div>
+          <div class="inline-actions admin-signup-meta">
+            <span class="mini-label"><%= lead.source %></span>
+            <span class="mini-label">captures: <%= lead.captureCount || 0 %></span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
 </section>
 
 <section class="card">

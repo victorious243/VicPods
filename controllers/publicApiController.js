@@ -11,6 +11,7 @@ const {
 const { buildLaunchPackView } = require('../services/launch/launchPackService');
 const { sendTxtExport } = require('../services/export/txtExport');
 const { buildPublicPreviewExport } = require('../services/export/watermarkedPreviewExportService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const {
   normalizeEpisodePreviewPayload,
   normalizePodcastIdeasPayload,
@@ -54,6 +55,16 @@ async function generateEpisodePreview(req, res, next) {
     });
     const fullLaunchPackAccess = req.currentUser && (req.effectivePlan === 'pro' || req.effectivePlan === 'premium');
 
+    await recordActivityEvent(req, {
+      eventType: 'public_episode_preview_generated',
+      statusCode: 200,
+      metadata: {
+        ideaLength: idea.length,
+        outlineCount: Array.isArray(preview.outline) ? preview.outline.length : 0,
+        launchPackAccess: fullLaunchPackAccess ? 'full' : 'preview',
+      },
+    });
+
     return res.json({
       title: preview.title,
       hook: preview.hook,
@@ -83,6 +94,15 @@ async function generatePodcastIdeas(req, res, next) {
       language: req.body?.language || req.language || 'en',
     });
 
+    await recordActivityEvent(req, {
+      eventType: 'public_podcast_ideas_generated',
+      statusCode: 200,
+      metadata: {
+        niche,
+        ideaCount: Array.isArray(result.ideas) ? result.ideas.length : 0,
+      },
+    });
+
     return res.json(result);
   } catch (error) {
     if (error.statusCode) {
@@ -106,6 +126,17 @@ async function savePreviewLead(req, res, next) {
       email: req.body?.email,
       source,
       payload,
+    });
+
+    await recordActivityEvent(req, {
+      eventType: 'public_preview_saved',
+      statusCode: 200,
+      userEmail: req.body?.email,
+      metadata: {
+        source,
+        emailDelivered: Boolean(result.emailDelivered),
+        emailFallback: Boolean(result.emailFallback),
+      },
     });
 
     return res.json({
@@ -140,6 +171,16 @@ async function exportPreview(req, res, next) {
     }
     const exportFile = buildPublicPreviewExport(payload, {
       appUrl: process.env.APP_URL || 'http://localhost:3000',
+    });
+
+    await recordActivityEvent(req, {
+      eventType: 'public_preview_exported',
+      statusCode: 200,
+      metadata: {
+        source,
+        outlineCount: payload.outline.length,
+        hasLaunchPackDescription: Boolean(payload.launchPackDescription),
+      },
     });
 
     return sendTxtExport({

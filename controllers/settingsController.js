@@ -10,6 +10,7 @@ const {
   getFeaturedExamples,
 } = require('../services/marketing/exampleLibraryService');
 const { deleteAccountForUser } = require('../services/account/accountDeletionService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 
 const SALT_ROUNDS = 12;
 const VALID_SECTIONS = new Set(['profile', 'appearance', 'security', 'billing']);
@@ -84,6 +85,17 @@ function getBillingViewModel(user, effectivePlan) {
 function showSettings(req, res) {
   const effectivePlan = req.effectivePlan || resolveEffectivePlan(req.currentUser);
   const selectedSection = resolveSection(req.query.section);
+
+  if (selectedSection === 'billing') {
+    void recordActivityEvent(req, {
+      eventType: 'billing_page_viewed',
+      user: req.currentUser,
+      statusCode: 200,
+      metadata: {
+        effectivePlan,
+      },
+    });
+  }
 
   return renderPage(res, {
     title: req.t('page.settings.title', 'Settings - VicPods'),

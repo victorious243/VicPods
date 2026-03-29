@@ -1,23 +1,29 @@
 <section class="card" id="onboarding-single-wizard">
   <div class="section-head">
-    <h3>Single Episode Wizard</h3>
+    <div>
+      <h3>Generate a single episode faster</h3>
+      <p class="mini-note">Pick a style, add the topic, and let VicPods draft the structure before you fine-tune anything else.</p>
+    </div>
     <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
   </div>
 
-  <div class="wizard-progress" role="list" aria-label="Single mode steps">
+  <div class="wizard-progress wizard-progress-quick" role="list" aria-label="Single mode steps">
     <span class="step active" role="listitem">1. Style</span>
     <span class="step active" role="listitem">2. Topic</span>
-    <span class="step active" role="listitem">3. Blueprint</span>
-    <span class="step active" role="listitem">4. Tone</span>
-    <span class="step active" role="listitem">5. Structure</span>
-    <span class="step active" role="listitem">6. Generate</span>
+    <span class="step active" role="listitem">3. Generate</span>
   </div>
 
   <form method="POST" action="/create/single" class="form-grid" data-ai-loading="true">
     <%- include('../partials/podcast-template-selector') %>
 
-    <section class="wizard-step">
-      <h4>Step 2 - Topic</h4>
+    <section class="wizard-step single-quick-start-card">
+      <div class="single-quick-start-head">
+        <div>
+          <h4>Add the episode topic</h4>
+          <p class="mini-note">Keep it simple. VicPods will use the selected template to prefill structure, tone, and CTA defaults automatically.</p>
+        </div>
+        <span class="mini-label">Fast path</span>
+      </div>
       <label>
         Topic Title
         <input
@@ -30,199 +36,207 @@
           data-template-title-input
         />
       </label>
-      <label>
-        Description (optional)
-        <textarea
-          name="description"
-          rows="2"
-          maxlength="400"
-          placeholder="<%= singleTemplateDefaults.descriptionPlaceholder %>"
-          data-template-description-input
-        ></textarea>
-      </label>
-      <div class="two-col">
-        <label>
-          Audience Type
-          <select name="audienceType">
-            <% audienceTypes.forEach((type) => { %>
-              <option value="<%= type %>" <%= type === 'Mixed' ? 'selected' : '' %>><%= type %></option>
-            <% }) %>
-          </select>
-        </label>
-        <label>
-          Intent
-          <select name="intent">
-            <% intentOptions.forEach((intent) => { %>
-              <option value="<%= intent %>" <%= intent === 'educate' ? 'selected' : '' %>><%= intent %></option>
-            <% }) %>
-          </select>
-        </label>
+      <div class="single-quick-start-actions">
+        <button id="onboarding-single-generate" type="submit" class="btn btn-primary">Generate Episode Draft</button>
+        <p class="mini-note">Creates the episode in your Single Episodes collection and opens the editor with a structured draft.</p>
       </div>
-      <label>
-        Custom Audience Type (optional)
-        <input type="text" name="audienceTypeCustom" maxlength="120" placeholder="e.g. first-time podcast hosts" />
-      </label>
-      <label>
-        Audience Notes (optional)
-        <input type="text" name="audienceNotes" maxlength="240" placeholder="What this audience cares about most" />
-      </label>
-      <label>
-        Outcome Goal (optional)
-        <input type="text" name="goal" maxlength="320" placeholder="What this standalone episode should help listeners achieve" />
-      </label>
     </section>
 
-    <section class="wizard-step">
-      <h4>Step 3 - Show Blueprint</h4>
-      <div class="two-col">
-        <label>
-          Audience Problem
-          <input type="text" name="audienceProblem" maxlength="240" placeholder="What struggle is this episode solving?" />
-        </label>
-        <label>
-          Listener Transformation
-          <input type="text" name="listenerTransformation" maxlength="240" placeholder="What should listeners be able to do after this?" />
-        </label>
-      </div>
-      <label>
-        Content Pillars
-        <textarea name="contentPillars" rows="3" maxlength="480" placeholder="One pillar per line&#10;Audience growth&#10;Show positioning&#10;Publishing consistency"></textarea>
-      </label>
-      <div class="two-col">
-        <label>
-          CTA Style
-          <select name="ctaStyle">
-            <% ctaStyleOptions.forEach((option, index) => { %>
-              <option
-                value="<%= option.value %>"
-                <%= option.value === singleTemplateDefaults.ctaStyle || (!singleTemplateDefaults.ctaStyle && index === 0) ? 'selected' : '' %>
-              ><%= option.label %></option>
-            <% }) %>
-          </select>
-        </label>
-        <label>
-          Brand Voice Rules
-          <textarea name="brandVoiceRules" rows="3" maxlength="480" placeholder="One rule per line&#10;Keep it practical&#10;Never sound preachy&#10;Use plain language"></textarea>
-        </label>
-      </div>
-      <label>
-        Banned Words or Phrases
-        <textarea name="bannedWords" rows="2" maxlength="240" placeholder="Comma or line separated words to avoid"></textarea>
-      </label>
-    </section>
+    <details class="wizard-step single-advanced-shell">
+      <summary class="single-advanced-summary">
+        <span>Refine blueprint, tone, and structure</span>
+        <span class="mini-note">Optional advanced controls</span>
+      </summary>
 
-    <section class="wizard-step">
-      <h4>Step 4 - Tone</h4>
-      <div class="tone-grid">
-        <% tonePresets.forEach((preset, index) => { %>
-          <label class="tone-card">
-            <input
-              type="radio"
-              name="tonePreset"
-              value="<%= preset.name %>"
-              <%= preset.name === singleTemplateDefaults.tonePreset || (!singleTemplateDefaults.tonePreset && (index === 7 || (!index && !tonePresets[7]))) ? 'checked' : '' %>
-            />
-            <span class="tone-card-title"><%= preset.name %></span>
-            <span class="tone-card-desc"><%= preset.description %></span>
-            <span class="tone-card-example">"<%= preset.exampleHook %>"</span>
+      <div class="single-advanced-body">
+        <label>
+          Description (optional)
+          <textarea
+            name="description"
+            rows="2"
+            maxlength="400"
+            placeholder="<%= singleTemplateDefaults.descriptionPlaceholder %>"
+            data-template-description-input
+          ></textarea>
+        </label>
+        <div class="two-col">
+          <label>
+            Audience Type
+            <select name="audienceType">
+              <% audienceTypes.forEach((type) => { %>
+                <option value="<%= type %>" <%= type === 'Mixed' ? 'selected' : '' %>><%= type %></option>
+              <% }) %>
+            </select>
           </label>
-        <% }) %>
-      </div>
-      <label>
-        Tone Intensity (<span data-range-value="single-tone-intensity"><%= singleTemplateDefaults.toneIntensity %></span>/5)
-        <input
-          id="single-tone-intensity"
-          type="range"
-          name="toneIntensity"
-          min="1"
-          max="<%= maxToneIntensity || 3 %>"
-          value="<%= singleTemplateDefaults.toneIntensity %>"
-          data-range-source="single-tone-intensity"
-        />
-      </label>
-      <% if (effectivePlan === 'premium') { %>
+          <label>
+            Intent
+            <select name="intent">
+              <% intentOptions.forEach((intent) => { %>
+                <option value="<%= intent %>" <%= intent === 'educate' ? 'selected' : '' %>><%= intent %></option>
+              <% }) %>
+            </select>
+          </label>
+        </div>
         <label>
-          Voice Persona (Premium)
-          <textarea name="voicePersona" rows="2" maxlength="400" data-char-count="single-persona" placeholder="Describe how you speak. Keep it short."></textarea>
-          <small class="mini-note"><span data-char-count-label="single-persona">0</span>/400</small>
+          Custom Audience Type (optional)
+          <input type="text" name="audienceTypeCustom" maxlength="120" placeholder="e.g. first-time podcast hosts" />
         </label>
-      <% } else { %>
         <label>
-          Voice Persona (Premium)
-          <textarea rows="2" disabled placeholder="Upgrade to Premium to use a custom persona."></textarea>
-          <small class="mini-note">Premium only. <a href="/settings?section=billing">Upgrade</a></small>
+          Audience Notes (optional)
+          <input type="text" name="audienceNotes" maxlength="240" placeholder="What this audience cares about most" />
         </label>
-      <% } %>
-    </section>
+        <label>
+          Outcome Goal (optional)
+          <input type="text" name="goal" maxlength="320" placeholder="What this standalone episode should help listeners achieve" />
+        </label>
 
-    <section class="wizard-step">
-      <h4>Step 5 - Structure</h4>
-      <div class="two-col">
-        <label>
-          Format Template
-          <select name="formatTemplate">
-            <% formatTemplateOptions.forEach((option, index) => { %>
-              <option
-                value="<%= option.value %>"
-                <%= option.value === singleTemplateDefaults.formatTemplate || (!singleTemplateDefaults.formatTemplate && index === 0) ? 'selected' : '' %>
-              ><%= option.label %></option>
-            <% }) %>
-          </select>
-        </label>
-        <label>
-          Hook Style
-          <select name="hookStyle">
-            <% hookStyleOptions.forEach((option, index) => { %>
-              <option
-                value="<%= option.value %>"
-                <%= option.value === singleTemplateDefaults.hookStyle || (!singleTemplateDefaults.hookStyle && index === 0) ? 'selected' : '' %>
-              ><%= option.label %></option>
-            <% }) %>
-          </select>
-        </label>
-      </div>
-      <label>
-        Delivery Style
-        <select name="deliveryStyle">
-          <% deliveryStyleOptions.forEach((option, index) => { %>
-            <option
-              value="<%= option.value %>"
-              <%= option.value === singleTemplateDefaults.deliveryStyle || (!singleTemplateDefaults.deliveryStyle && (option.value === 'friendly' || (!index && !deliveryStyleOptions.some((item) => item.value === 'friendly')))) ? 'selected' : '' %>
-            ><%= option.label %></option>
-          <% }) %>
-        </select>
-      </label>
-      <div class="two-col">
-        <label>
-          Episode Type
-          <select name="episodeType">
-            <% episodeTypeOptions.forEach((option) => { %>
-              <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.episodeType ? 'selected' : '' %>><%= option.label %></option>
-            <% }) %>
-          </select>
-        </label>
-        <label>
-          Duration Preset
-          <select name="targetLength">
-            <% targetLengthOptions.forEach((option) => { %>
-              <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.targetLength ? 'selected' : '' %>><%= option.label %></option>
-            <% }) %>
-          </select>
-        </label>
-      </div>
-      <label class="check-item">
-        <input type="hidden" name="includeFunSegment" value="off" />
-        <input type="checkbox" name="includeFunSegment" <%= singleTemplateDefaults.includeFunSegment ? 'checked' : '' %> />
-        <span>Include a fun segment</span>
-      </label>
-      <p class="mini-note">VicPods will follow your blueprint, hook style, and episode architecture when it generates the draft.</p>
-    </section>
+        <section class="single-advanced-section">
+          <h4>Show Blueprint</h4>
+          <div class="two-col">
+            <label>
+              Audience Problem
+              <input type="text" name="audienceProblem" maxlength="240" placeholder="What struggle is this episode solving?" />
+            </label>
+            <label>
+              Listener Transformation
+              <input type="text" name="listenerTransformation" maxlength="240" placeholder="What should listeners be able to do after this?" />
+            </label>
+          </div>
+          <label>
+            Content Pillars
+            <textarea name="contentPillars" rows="3" maxlength="480" placeholder="One pillar per line&#10;Audience growth&#10;Show positioning&#10;Publishing consistency"></textarea>
+          </label>
+          <div class="two-col">
+            <label>
+              CTA Style
+              <select name="ctaStyle">
+                <% ctaStyleOptions.forEach((option, index) => { %>
+                  <option
+                    value="<%= option.value %>"
+                    <%= option.value === singleTemplateDefaults.ctaStyle || (!singleTemplateDefaults.ctaStyle && index === 0) ? 'selected' : '' %>
+                  ><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Brand Voice Rules
+              <textarea name="brandVoiceRules" rows="3" maxlength="480" placeholder="One rule per line&#10;Keep it practical&#10;Never sound preachy&#10;Use plain language"></textarea>
+            </label>
+          </div>
+          <label>
+            Banned Words or Phrases
+            <textarea name="bannedWords" rows="2" maxlength="240" placeholder="Comma or line separated words to avoid"></textarea>
+          </label>
+        </section>
 
-    <section class="wizard-step">
-      <h4>Step 6 - Generate</h4>
-      <p class="mini-note">This creates the episode in your Single Episodes collection and opens the editor with a structured draft.</p>
-      <button id="onboarding-single-generate" type="submit" class="btn btn-primary">Generate Episode Draft</button>
-    </section>
+        <section class="single-advanced-section">
+          <h4>Tone</h4>
+          <div class="tone-grid">
+            <% tonePresets.forEach((preset, index) => { %>
+              <label class="tone-card">
+                <input
+                  type="radio"
+                  name="tonePreset"
+                  value="<%= preset.name %>"
+                  <%= preset.name === singleTemplateDefaults.tonePreset || (!singleTemplateDefaults.tonePreset && (index === 7 || (!index && !tonePresets[7]))) ? 'checked' : '' %>
+                />
+                <span class="tone-card-title"><%= preset.name %></span>
+                <span class="tone-card-desc"><%= preset.description %></span>
+                <span class="tone-card-example">"<%= preset.exampleHook %>"</span>
+              </label>
+            <% }) %>
+          </div>
+          <label>
+            Tone Intensity (<span data-range-value="single-tone-intensity"><%= singleTemplateDefaults.toneIntensity %></span>/5)
+            <input
+              id="single-tone-intensity"
+              type="range"
+              name="toneIntensity"
+              min="1"
+              max="<%= maxToneIntensity || 3 %>"
+              value="<%= singleTemplateDefaults.toneIntensity %>"
+              data-range-source="single-tone-intensity"
+            />
+          </label>
+          <% if (effectivePlan === 'premium') { %>
+            <label>
+              Voice Persona (Premium)
+              <textarea name="voicePersona" rows="2" maxlength="400" data-char-count="single-persona" placeholder="Describe how you speak. Keep it short."></textarea>
+              <small class="mini-note"><span data-char-count-label="single-persona">0</span>/400</small>
+            </label>
+          <% } else { %>
+            <label>
+              Voice Persona (Premium)
+              <textarea rows="2" disabled placeholder="Upgrade to Premium to use a custom persona."></textarea>
+              <small class="mini-note">Premium only. <a href="/settings?section=billing">Upgrade</a></small>
+            </label>
+          <% } %>
+        </section>
+
+        <section class="single-advanced-section">
+          <h4>Structure</h4>
+          <div class="two-col">
+            <label>
+              Format Template
+              <select name="formatTemplate">
+                <% formatTemplateOptions.forEach((option, index) => { %>
+                  <option
+                    value="<%= option.value %>"
+                    <%= option.value === singleTemplateDefaults.formatTemplate || (!singleTemplateDefaults.formatTemplate && index === 0) ? 'selected' : '' %>
+                  ><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Hook Style
+              <select name="hookStyle">
+                <% hookStyleOptions.forEach((option, index) => { %>
+                  <option
+                    value="<%= option.value %>"
+                    <%= option.value === singleTemplateDefaults.hookStyle || (!singleTemplateDefaults.hookStyle && index === 0) ? 'selected' : '' %>
+                  ><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+          </div>
+          <label>
+            Delivery Style
+            <select name="deliveryStyle">
+              <% deliveryStyleOptions.forEach((option, index) => { %>
+                <option
+                  value="<%= option.value %>"
+                  <%= option.value === singleTemplateDefaults.deliveryStyle || (!singleTemplateDefaults.deliveryStyle && (option.value === 'friendly' || (!index && !deliveryStyleOptions.some((item) => item.value === 'friendly')))) ? 'selected' : '' %>
+                ><%= option.label %></option>
+              <% }) %>
+            </select>
+          </label>
+          <div class="two-col">
+            <label>
+              Episode Type
+              <select name="episodeType">
+                <% episodeTypeOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.episodeType ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>
+              Duration Preset
+              <select name="targetLength">
+                <% targetLengthOptions.forEach((option) => { %>
+                  <option value="<%= option.value %>" <%= option.value === singleTemplateDefaults.targetLength ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+            </label>
+          </div>
+          <label class="check-item">
+            <input type="hidden" name="includeFunSegment" value="off" />
+            <input type="checkbox" name="includeFunSegment" <%= singleTemplateDefaults.includeFunSegment ? 'checked' : '' %> />
+            <span>Include a fun segment</span>
+          </label>
+          <p class="mini-note">VicPods will follow your blueprint, hook style, and episode architecture when it generates the draft.</p>
+        </section>
+      </div>
+    </details>
   </form>
 </section>
 

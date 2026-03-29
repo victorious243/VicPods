@@ -7,6 +7,15 @@ const EVENT_TYPES = [
   'login_success',
   'login_mfa_required',
   'logout',
+  'public_episode_preview_generated',
+  'public_podcast_ideas_generated',
+  'public_preview_saved',
+  'public_preview_exported',
+  'episode_created',
+  'episode_draft_generated',
+  'billing_page_viewed',
+  'billing_checkout_started',
+  'billing_checkout_completed',
 ];
 
 const AUTH_PROVIDERS = ['local', 'google', 'unknown'];

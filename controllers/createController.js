@@ -35,6 +35,7 @@ const {
   normalizeSeriesBibleInput,
 } = require('../services/series/seriesPlanningService');
 const { sendEpisodeReadyEmailForEpisode } = require('../services/email/liveLifecycleEmailService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const {
   DEFAULT_PODCAST_TEMPLATE_KEY,
   buildPodcastTemplateClientPayload,
@@ -116,7 +117,7 @@ async function showSingleWizard(req, res, next) {
     return renderPage(res, {
       title: req.t('page.create.single.title', 'Create Single Episode - VicPods'),
       pageTitle: req.t('page.create.single.header', 'Create: Single Episode'),
-      subtitle: req.t('page.create.single.subtitle', 'Fast path for standalone, high-quality episodes.'),
+      subtitle: req.t('page.create.single.subtitle', 'Choose a style, add a topic, and generate a structured draft in one pass.'),
       view: 'create/single',
       data: {
         tonePresets: TONE_PRESETS,
@@ -265,6 +266,37 @@ async function createSingleEpisode(req, res, next) {
     refreshEpisodeWritingIntelligence(episode, req.language);
 
     await episode.save();
+
+    await Promise.all([
+      recordActivityEvent(req, {
+        eventType: 'episode_created',
+        user: req.currentUser,
+        statusCode: 302,
+        requestPath: '/create/single',
+        metadata: {
+          source: 'single_create',
+          templateType: fallbackTemplate.key,
+          episodeId: String(episode._id),
+          seriesId: String(series._id),
+          themeId: String(theme._id),
+          episodeType: episode.episodeType || 'solo',
+          targetLength: episode.targetLength || '',
+        },
+      }),
+      recordActivityEvent(req, {
+        eventType: 'episode_draft_generated',
+        user: req.currentUser,
+        statusCode: 302,
+        requestPath: '/create/single',
+        metadata: {
+          source: 'single_create',
+          templateType: fallbackTemplate.key,
+          episodeId: String(episode._id),
+          outlineCount: Array.isArray(episode.outline) ? episode.outline.length : 0,
+          hasLaunchPack: Boolean(episode.launchPack?.titles?.length || episode.launchPack?.description),
+        },
+      }),
+    ]);
 
     try {
       await sendEpisodeReadyEmailForEpisode(episode);

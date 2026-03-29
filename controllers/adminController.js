@@ -2,6 +2,7 @@ const AdminAccessLog = require('../models/AdminAccessLog');
 const AppActivityEvent = require('../models/AppActivityEvent');
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
+const PublicPreviewLead = require('../models/PublicPreviewLead');
 const Series = require('../models/Series');
 const User = require('../models/User');
 const { renderPage } = require('../utils/render');
@@ -57,6 +58,19 @@ async function showDashboard(req, res, next) {
       signupsCompleted7d,
       signupsStarted7d,
       logins7d,
+      publicEpisodePreviews7d,
+      publicPodcastIdeas7d,
+      publicPreviewSaves7d,
+      publicPreviewExports7d,
+      episodesCreated7d,
+      episodeDrafts7d,
+      billingViews7d,
+      checkoutStarts7d,
+      checkoutCompleted7d,
+      totalPreviewLeads,
+      recentPreviewLeads7d,
+      previewLeadBreakdownRaw,
+      recentPreviewLeads,
       recentActivityEvents,
       adminAccessAttempts24h,
       blockedAdminAttempts7d,
@@ -142,6 +156,53 @@ async function showDashboard(req, res, next) {
         eventType: 'login_success',
         createdAt: { $gte: last7d },
       }),
+      AppActivityEvent.countDocuments({
+        eventType: 'public_episode_preview_generated',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'public_podcast_ideas_generated',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'public_preview_saved',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'public_preview_exported',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'episode_created',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'episode_draft_generated',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'billing_page_viewed',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'billing_checkout_started',
+        createdAt: { $gte: last7d },
+      }),
+      AppActivityEvent.countDocuments({
+        eventType: 'billing_checkout_completed',
+        createdAt: { $gte: last7d },
+      }),
+      PublicPreviewLead.countDocuments({}),
+      PublicPreviewLead.countDocuments({
+        lastSavedAt: { $gte: last7d },
+      }),
+      PublicPreviewLead.aggregate([
+        { $group: { _id: '$source', count: { $sum: 1 } } },
+      ]),
+      PublicPreviewLead.find({})
+        .sort({ lastSavedAt: -1, updatedAt: -1 })
+        .limit(12)
+        .select('email source sourceInput captureCount lastSavedAt lastSentAt'),
       AppActivityEvent.find({})
         .sort({ createdAt: -1 })
         .limit(16)
@@ -177,6 +238,10 @@ async function showDashboard(req, res, next) {
     const aiUsageToday = aiUsageTodayRaw && aiUsageTodayRaw[0]
       ? aiUsageTodayRaw[0]
       : { totalCalls: 0, activeUsers: 0 };
+    const previewLeadBreakdown = buildCountMap(previewLeadBreakdownRaw, {
+      episode_preview: 0,
+      podcast_ideas: 0,
+    });
 
     const signupEmailList = recentUsers
       .map((user) => String(user.email || '').trim())
@@ -213,6 +278,17 @@ async function showDashboard(req, res, next) {
           signupsCompleted7d,
           signupsStarted7d,
           logins7d,
+          publicEpisodePreviews7d,
+          publicPodcastIdeas7d,
+          publicPreviewSaves7d,
+          publicPreviewExports7d,
+          episodesCreated7d,
+          episodeDrafts7d,
+          billingViews7d,
+          checkoutStarts7d,
+          checkoutCompleted7d,
+          totalPreviewLeads,
+          recentPreviewLeads7d,
           adminAccessAttempts24h,
           blockedAdminAttempts7d,
           uniqueAdminIps7d: uniqueAdminIps7d.length,
@@ -220,10 +296,12 @@ async function showDashboard(req, res, next) {
         breakdown: {
           plans: planBreakdown,
           episodeStatus,
+          previewLeads: previewLeadBreakdown,
         },
         recentUsers,
         userDirectory,
         signupEmailList,
+        recentPreviewLeads,
         recentEpisodes,
         recentIdeas,
         recentActivityEvents,

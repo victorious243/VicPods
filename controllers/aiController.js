@@ -39,6 +39,7 @@ const {
   markLaunchPackStale,
 } = require('../services/launch/launchPackService');
 const { sendEpisodeReadyEmailForEpisode } = require('../services/email/liveLifecycleEmailService');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 
@@ -325,6 +326,21 @@ async function generateEpisode(req, res, next) {
     });
 
     await Promise.all([episode.save(), series.save(), theme.save()]);
+
+    await recordActivityEvent(req, {
+      eventType: 'episode_draft_generated',
+      user: req.currentUser,
+      statusCode: wantsJson(req) ? 200 : 302,
+      metadata: {
+        source: 'workspace_ai',
+        episodeId: String(episode._id),
+        seriesId: String(series._id),
+        themeId: String(theme._id),
+        isSingle: Boolean(episode.isSingle),
+        outlineCount: Array.isArray(episode.outline) ? episode.outline.length : 0,
+        hasLaunchPack: Boolean(episode.launchPack?.titles?.length || episode.launchPack?.description),
+      },
+    });
 
     try {
       await sendEpisodeReadyEmailForEpisode(episode);

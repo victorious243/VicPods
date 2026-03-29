@@ -4,6 +4,7 @@ const { ensureStripeCustomerForUser, createPortalSession } = require('../service
 const { getPricingDisplay } = require('../services/billing/pricing');
 const { reconcileCheckoutSession } = require('../services/stripe/webhookHandlers');
 const { resolveEffectivePlan } = require('../middleware/requirePlan');
+const { recordActivityEvent } = require('../services/analytics/appActivityService');
 
 const ACTIVE_BILLING_STATUSES = new Set(['active', 'trialing']);
 
@@ -93,6 +94,16 @@ async function createCheckout(req, res, next) {
       appUrl: process.env.APP_URL || 'http://localhost:3000',
     });
 
+    await recordActivityEvent(req, {
+      eventType: 'billing_checkout_started',
+      user: req.currentUser,
+      statusCode: 302,
+      metadata: {
+        plan,
+        checkoutSessionId: String(session.id || ''),
+      },
+    });
+
     return res.redirect(session.url);
   } catch (error) {
     if (error.statusCode) {
@@ -153,6 +164,20 @@ async function showSuccess(req, res, next) {
       syncResult,
       billing,
     });
+
+    if (checkoutSessionId) {
+      await recordActivityEvent(req, {
+        eventType: 'billing_checkout_completed',
+        user: req.currentUser,
+        statusCode: 200,
+        metadata: {
+          sessionId: checkoutSessionId,
+          effectivePlan: billing.effectivePlan,
+          planStatus: billing.planStatus,
+          syncState: checkoutSync.state,
+        },
+      });
+    }
 
     return renderPage(res, {
       title: req.t('page.billing.success.title', 'Billing Success - VicPods'),

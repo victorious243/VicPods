@@ -7,16 +7,21 @@
 
       <div class="inline-actions landing-actions">
         <% if (currentUser) { %>
-          <a href="/kitchen" class="btn btn-primary"><%= t('page.landing.cta.primary.user', 'Open Workspace') %></a>
+          <a href="/create/single" class="btn btn-primary"><%= t('page.landing.cta.primary.user', 'New Episode') %></a>
           <a href="/studio" class="btn btn-secondary"><%= t('page.landing.cta.secondary.user', 'Go to Studio') %></a>
         <% } else { %>
-          <a href="/auth/register" class="btn btn-primary"><%= t('page.landing.cta.primary.guest', 'Create account') %></a>
-          <a href="/auth/login" class="btn btn-secondary"><%= t('page.landing.cta.secondary.guest', 'Sign in') %></a>
+          <a href="#idea-to-episode-generator" class="btn btn-primary"><%= t('page.landing.cta.primary.guest', 'Generate Episode') %></a>
+          <a href="#vicpods-pricing" class="btn btn-secondary">View pricing</a>
+          <a href="/auth/register" class="btn btn-ghost">Create account</a>
         <% } %>
-        <a href="/help" class="btn btn-ghost"><%= t('page.landing.cta.help', 'See how it works') %></a>
+        <% if (currentUser) { %>
+          <a href="/help" class="btn btn-ghost"><%= t('page.landing.cta.help', 'See how it works') %></a>
+        <% } else { %>
+          <a href="/auth/login" class="btn btn-ghost"><%= t('page.landing.cta.help', 'Sign in') %></a>
+        <% } %>
       </div>
 
-      <p class="mini-note"><%= t('page.landing.launch.note', 'Founding launch pricing runs through March 31, 2026.') %></p>
+      <p class="mini-note">Generate the episode preview first. Create an account only when you want to keep building inside Studio or unlock the full Launch Pack.</p>
 
       <div class="landing-proof">
         <span class="mini-label"><%= t('page.landing.proof.one', 'Ready-to-record workflow') %></span>
@@ -107,6 +112,58 @@
     }) %>
   </section>
 
+  <section class="card landing-pricing-shell" id="vicpods-pricing" data-help-reveal>
+    <div class="section-head landing-pricing-head">
+      <div>
+        <span class="landing-kicker">Pricing built around momentum</span>
+        <h3>Start with the free preview. Upgrade when you want the full launch workflow.</h3>
+        <p class="landing-pricing-copy">
+          VicPods is designed to prove value early. Generate the episode first, then move into Studio when you want to keep refining, package the launch assets, and publish faster.
+        </p>
+      </div>
+      <div class="landing-pricing-badges">
+        <span class="mini-label">Founding pricing through <%= pricing.foundingDeadlineLabel %></span>
+        <span class="mini-label">No login needed for the public generator</span>
+      </div>
+    </div>
+
+    <div class="card-grid premium-plan-grid landing-plan-grid">
+      <% publicPricingPlans.forEach((plan) => { %>
+        <article class="card premium-plan-card landing-plan-card <%= plan.key === 'pro' ? 'premium-plan-card-featured' : '' %>">
+          <div class="premium-plan-card-top">
+            <div>
+              <span class="mini-label"><%= plan.eyebrow %></span>
+              <h4><%= plan.title %></h4>
+            </div>
+            <% if (plan.key === 'pro') { %>
+              <span class="mini-label">Best unlock</span>
+            <% } %>
+          </div>
+          <p class="premium-price"><%= plan.price %></p>
+          <p class="premium-plan-tagline"><%= plan.summary %></p>
+          <ul class="premium-plan-feature-list">
+            <% plan.features.forEach((feature) => { %>
+              <li>
+                <span class="premium-feature-dot" aria-hidden="true"></span>
+                <span><%= feature %></span>
+              </li>
+            <% }) %>
+          </ul>
+          <p class="mini-note"><%= plan.note %></p>
+        </article>
+      <% }) %>
+    </div>
+
+    <div class="inline-actions landing-pricing-actions">
+      <a href="#idea-to-episode-generator" class="btn btn-primary">Generate Episode</a>
+      <% if (currentUser) { %>
+        <a href="/settings?section=billing" class="btn btn-secondary">Open Billing</a>
+      <% } else { %>
+        <a href="/auth/register" class="btn btn-secondary">Create account to keep it</a>
+      <% } %>
+    </div>
+  </section>
+
   <section class="landing-proof-shell" data-help-reveal>
     <div class="section-head">
       <div>
@@ -136,7 +193,7 @@
         <h3><%= t('page.landing.card.single.title', 'Start a single episode') %></h3>
       </div>
       <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Move from one topic to a ready-to-record draft with a clear hook, stronger structure, show notes, and an episode brief.') %></p>
+        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Choose a podcast style, add the topic, and let VicPods generate the structure, hook, and launch direction in one pass.') %></p>
         <div class="inline-actions">
           <a href="/create/single" class="btn btn-ghost"><%= t('page.landing.card.single.cta', 'Open single flow') %></a>
         </div>

@@ -1,5 +1,6 @@
 const { renderPage } = require('../utils/render');
 const { normalizeNiche } = require('../services/public/publicPodcastIdeaService');
+const { getPricingDisplay } = require('../services/billing/pricing');
 const {
   getExampleLibraryPageData,
   getFeaturedExamples,
@@ -12,10 +13,59 @@ function normalizeAppUrl() {
     .replace(/\/+$/, '');
 }
 
+function buildPublicPricingPlans(pricing) {
+  return [
+    {
+      key: 'free',
+      eyebrow: 'Start here',
+      title: 'Free',
+      price: pricing.free,
+      summary: 'Prove the workflow before you spend anything.',
+      note: 'No card required. Use the public generator first, then move into Studio when you want to keep building.',
+      features: [
+        'Public idea-to-episode preview with no login',
+        'Core Studio + Workspace + Pantry access',
+        '5 AI generations each day',
+        'Show Notes Pack + TXT episode brief export',
+      ],
+    },
+    {
+      key: 'pro',
+      eyebrow: 'Best for momentum',
+      title: 'Pro',
+      price: pricing.pro,
+      summary: 'Unlock the full launch workflow for serious weekly publishing.',
+      note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.proStandard}.`,
+      features: [
+        'Full Launch Pack access after each draft',
+        '50 AI generations each day',
+        'Continuity refresh + tone consistency scoring',
+        'TXT + PDF episode brief exports',
+      ],
+    },
+    {
+      key: 'premium',
+      eyebrow: 'Maximum control',
+      title: 'Premium',
+      price: pricing.premium,
+      summary: 'Go deeper with unlimited generation and advanced voice control.',
+      note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.premiumStandard}.`,
+      features: [
+        'Unlimited AI generations',
+        'Tone Fix + Voice Persona controls',
+        'Highest continuity workflow access',
+        'TXT + PDF + DOCX exports',
+      ],
+    },
+  ];
+}
+
 function showLanding(req, res) {
   if (req.currentUser?.emailVerified === false) {
     return res.redirect(`/auth/verify?email=${encodeURIComponent(req.currentUser.email)}`);
   }
+
+  const pricing = getPricingDisplay();
 
   return renderPage(res, {
     title: req.t('page.landing.title', 'VicPods - Podcast Planning + Launch Prep'),
@@ -27,6 +77,8 @@ function showLanding(req, res) {
       effectivePlan: req.effectivePlan || req.currentUser?.plan || 'free',
       featuredExamples: getFeaturedExamples({ limit: 3 }),
       landingProofSnippets: getLandingProofSnippets(),
+      pricing,
+      publicPricingPlans: buildPublicPricingPlans(pricing),
     },
   });
 }
