@@ -10,16 +10,23 @@ function isApiRequest(req) {
   return path === '/api' || path.startsWith('/api/');
 }
 
-function getExpectedOrigin(req) {
+function getAllowedOrigins(req) {
+  const origins = new Set();
+
   if (process.env.APP_URL) {
     try {
-      return new URL(process.env.APP_URL).origin;
+      origins.add(new URL(process.env.APP_URL).origin);
     } catch (_error) {
       // Ignore malformed APP_URL and fall back to request host.
     }
   }
 
-  return `${req.protocol}://${req.get('host')}`;
+  const requestHost = String(req.get('host') || '').trim();
+  if (requestHost) {
+    origins.add(`${req.protocol}://${requestHost}`);
+  }
+
+  return origins;
 }
 
 function ensureCsrfToken(req, res, next) {
@@ -55,16 +62,18 @@ function readSubmittedToken(req) {
 }
 
 function hasSameOriginHeaders(req) {
-  const expectedOrigin = getExpectedOrigin(req);
+  const allowedOrigins = getAllowedOrigins(req);
   const origin = req.get('origin');
   const referer = req.get('referer');
 
   if (origin) {
-    return origin === expectedOrigin;
+    return allowedOrigins.has(origin);
   }
 
   if (referer) {
-    return referer.startsWith(`${expectedOrigin}/`) || referer === expectedOrigin;
+    return Array.from(allowedOrigins).some((allowedOrigin) => (
+      referer.startsWith(`${allowedOrigin}/`) || referer === allowedOrigin
+    ));
   }
 
   return false;

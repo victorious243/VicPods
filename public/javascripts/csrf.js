@@ -33,6 +33,34 @@
     });
   }
 
+  function attachSubmitGuard(token) {
+    if (!token) {
+      return;
+    }
+
+    document.addEventListener('submit', function onSubmit(event) {
+      var form = event.target;
+      if (!form || form.nodeName !== 'FORM') {
+        return;
+      }
+
+      var method = form.getAttribute('method') || 'GET';
+      if (!isUnsafeMethod(method)) {
+        return;
+      }
+
+      if (form.querySelector('input[name="_csrf"]')) {
+        return;
+      }
+
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = '_csrf';
+      input.value = token;
+      form.appendChild(input);
+    }, true);
+  }
+
   function patchFetch(token) {
     if (!token || typeof window.fetch !== 'function') {
       return;
@@ -67,6 +95,7 @@
   document.addEventListener('DOMContentLoaded', function onReady() {
     var token = getToken();
     ensureFormTokens(token);
+    attachSubmitGuard(token);
     patchFetch(token);
   });
 }());
