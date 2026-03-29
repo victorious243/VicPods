@@ -1,5 +1,6 @@
 <%
-  const normalizedPath = (currentPath || '').split('?')[0];
+  const resolvedCurrentPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '';
+  const normalizedPath = String(resolvedCurrentPath).split('?')[0];
   const sidebarName = currentUser
     ? (currentUser.name || currentUser.email || t('generic.user', 'User')).trim()
     : '';

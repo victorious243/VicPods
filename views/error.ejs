@@ -6,7 +6,8 @@
   const secondaryLabel = currentUser ? 'Start New Episode' : 'Try Idea Generator';
   const supportHref = '/help';
   const supportLabel = 'Visit Help Center';
-  const requestedPath = String(currentPath || '/').split('?')[0] || '/';
+  const resolvedCurrentPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '/';
+  const requestedPath = String(resolvedCurrentPath).split('?')[0] || '/';
 %>
 
 <section class="error-shell <%= isNotFound ? 'error-shell-404' : 'error-shell-generic' %>">
