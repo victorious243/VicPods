@@ -1,5 +1,6 @@
 const AdminAccessLog = require('../../models/AdminAccessLog');
 const AppActivityEvent = require('../../models/AppActivityEvent');
+const { CreatorPartner } = require('../../models/CreatorPartner');
 const Episode = require('../../models/Episode');
 const Idea = require('../../models/Idea');
 const Series = require('../../models/Series');
@@ -93,6 +94,14 @@ async function deleteAccountForUser(user) {
         $set: {
           referredByUserId: null,
           referredByCode: '',
+        },
+      }
+    ),
+    CreatorPartner.updateMany(
+      { assignedUserId: userId },
+      {
+        $set: {
+          assignedUserId: null,
         },
       }
     ),

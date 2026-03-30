@@ -675,7 +675,7 @@ async function registerUser({ name, email, password, acceptedTerms, requestIp, r
       existingUser.termsAcceptedAt = new Date();
       existingUser.termsAcceptedVersion = TERMS_VERSION;
       existingUser.termsAcceptedIp = normalizeIp(requestIp);
-      if (!existingUser.referredByUserId && !existingUser.referralRewardAppliedAt) {
+      if (!existingUser.referredByUserId && !existingUser.referredByCreatorPartnerId && !existingUser.referralRewardAppliedAt) {
         existingUser.referredByCode = normalizedReferralCode || existingUser.referredByCode || '';
       }
       return issueVerificationPinForUser(existingUser);

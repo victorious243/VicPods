@@ -94,6 +94,230 @@
   </article>
 </section>
 
+<section class="card-grid stats-grid">
+  <article class="card stat-card">
+    <p>Creator partners</p>
+    <h3><%= metrics.creatorPartnersTotal %></h3>
+    <span class="mini-note">Active pipeline: <%= metrics.creatorPartnersActivePipeline %></span>
+  </article>
+  <article class="card stat-card">
+    <p>Creator posts / approvals</p>
+    <h3><%= metrics.creatorPartnersPosted %></h3>
+    <span class="mini-note">Ready to push audience traffic</span>
+  </article>
+  <article class="card stat-card">
+    <p>Creator-attributed signups</p>
+    <h3><%= metrics.creatorPartnerSignups %></h3>
+    <span class="mini-note">Paid conversions: <%= metrics.creatorPartnerPaid %></span>
+  </article>
+</section>
+
+<section class="card creator-admin-shell">
+  <div class="section-head">
+    <h3>Creator partnerships</h3>
+    <span class="mini-label">Outreach + creator links</span>
+  </div>
+  <div class="creator-admin-intro">
+    <p class="mini-note">Use this for TikTok, YouTube, podcast, or newsletter creators you want testing and sharing VicPods. Every creator gets one unique referral link and one place to track relationship status.</p>
+  </div>
+
+  <form method="POST" action="<%= `${dashboardPath}/creator-partners${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>" class="creator-admin-form">
+    <div class="creator-admin-form-grid">
+      <label>
+        Creator name
+        <input type="text" name="name" maxlength="80" required placeholder="e.g. Sarah Johnson" />
+      </label>
+      <label>
+        Contact email
+        <input type="email" name="contactEmail" maxlength="255" placeholder="creator@example.com" />
+      </label>
+      <label>
+        Platform
+        <input type="text" name="platform" maxlength="40" placeholder="TikTok" />
+      </label>
+      <label>
+        Handle
+        <input type="text" name="handle" maxlength="80" placeholder="@creatorname" />
+      </label>
+      <label>
+        Followers
+        <input type="number" name="followerCount" min="0" step="1" placeholder="1800" />
+      </label>
+      <label>
+        Status
+        <select name="status">
+          <% creatorPartnerStatuses.forEach((status) => { %>
+            <option value="<%= status %>"><%= String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label class="creator-admin-form-span">
+        Audience niche
+        <input type="text" name="audienceNiche" maxlength="160" placeholder="Podcast creators, faith podcast, business podcasters" />
+      </label>
+      <label class="creator-admin-form-span">
+        Notes
+        <textarea name="notes" rows="3" maxlength="2400" placeholder="What they said, when you contacted them, what they need to test, what you promised them."></textarea>
+      </label>
+    </div>
+    <div class="inline-actions">
+      <label class="check-item">
+        <input type="checkbox" name="markContacted" />
+        <span>Mark contacted today</span>
+      </label>
+      <button type="submit" class="btn btn-primary">Add Creator</button>
+    </div>
+  </form>
+
+  <% if (!creatorPartners.length) { %>
+    <p class="empty-state">No creator partnerships yet. Add the first creator here so the outreach pipeline lives inside VicPods.</p>
+  <% } else { %>
+    <div class="creator-admin-list">
+      <% creatorPartners.forEach((partner) => { %>
+        <article class="card creator-admin-card">
+          <div class="creator-admin-card-head">
+            <div>
+              <h4><%= partner.name %></h4>
+              <p>
+                <%= partner.platform || 'Platform pending' %>
+                <% if (partner.handle) { %>
+                  · <%= partner.handle %>
+                <% } %>
+                <% if (partner.followerCount) { %>
+                  · <%= partner.followerCount.toLocaleString() %> followers
+                <% } %>
+              </p>
+              <% if (partner.contactEmail) { %>
+                <p class="mini-note"><%= partner.contactEmail %></p>
+              <% } %>
+            </div>
+            <div class="inline-actions admin-signup-meta">
+              <span class="mini-label"><%= partner.statusLabel %></span>
+              <% if (partner.audienceNiche) { %>
+                <span class="mini-label"><%= partner.audienceNiche %></span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="creator-admin-metrics">
+            <article>
+              <span class="mini-label">Creator link</span>
+              <strong><%= partner.referralCode %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Attributed signups</span>
+              <strong><%= partner.signupCount %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Paid conversions</span>
+              <strong><%= partner.paidConversionCount %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Latest signup</span>
+              <strong><%= partner.latestSignupAt ? new Date(partner.latestSignupAt).toLocaleDateString() : 'None yet' %></strong>
+            </article>
+          </div>
+
+          <div class="creator-admin-link-row">
+            <input
+              type="text"
+              value="<%= partner.inviteUrl %>"
+              readonly
+              data-copy-source="creator-link-<%= partner._id %>"
+            />
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-copy-trigger="creator-link-<%= partner._id %>"
+              data-copy-label="Copy Creator Link"
+            >Copy Link</button>
+          </div>
+
+          <div class="creator-admin-account-row">
+            <% if (partner.hasAssignedUser) { %>
+              <p class="mini-note">
+                VicPods account linked:
+                <strong><%= partner.assignedUser.name || partner.assignedUser.email %></strong>
+                · <%= partner.assignedUser.email %>
+                · <%= partner.assignedUser.plan %> / <%= partner.assignedUser.planStatus %>
+              </p>
+            <% } else { %>
+              <p class="mini-note">No VicPods account found yet for this email. They need to sign up with <%= partner.contactEmail || 'their creator email' %> first before you can grant Premium access.</p>
+            <% } %>
+            <% if (partner.premiumAccessGrantedAt) { %>
+              <p class="mini-note">
+                Premium access granted:
+                <strong><%= new Date(partner.premiumAccessGrantedAt).toLocaleDateString() %></strong>
+                <% if (partner.premiumAccessExpiresAt) { %>
+                  · expires <strong><%= new Date(partner.premiumAccessExpiresAt).toLocaleDateString() %></strong>
+                  <% if (partner.premiumAccessActive) { %>
+                    · active now
+                  <% } %>
+                <% } %>
+              </p>
+            <% } %>
+          </div>
+
+          <form method="POST" action="<%= `${dashboardPath}/creator-partners${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>" class="creator-admin-update-form">
+            <input type="hidden" name="partnerId" value="<%= partner._id %>" />
+            <div class="creator-admin-form-grid">
+              <label>
+                Creator name
+                <input type="text" name="name" maxlength="80" required value="<%= partner.name %>" />
+              </label>
+              <label>
+                Contact email
+                <input type="email" name="contactEmail" maxlength="255" value="<%= partner.contactEmail || '' %>" />
+              </label>
+              <label>
+                Platform
+                <input type="text" name="platform" maxlength="40" value="<%= partner.platform || '' %>" />
+              </label>
+              <label>
+                Handle
+                <input type="text" name="handle" maxlength="80" value="<%= partner.handle || '' %>" />
+              </label>
+              <label>
+                Followers
+                <input type="number" name="followerCount" min="0" step="1" value="<%= partner.followerCount || 0 %>" />
+              </label>
+              <label>
+                Status
+                <select name="status">
+                  <% creatorPartnerStatuses.forEach((status) => { %>
+                    <option value="<%= status %>" <%= status === partner.status ? 'selected' : '' %>><%= String(status).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) %></option>
+                  <% }) %>
+                </select>
+              </label>
+              <label class="creator-admin-form-span">
+                Audience niche
+                <input type="text" name="audienceNiche" maxlength="160" value="<%= partner.audienceNiche || '' %>" />
+              </label>
+              <label class="creator-admin-form-span">
+                Notes
+                <textarea name="notes" rows="3" maxlength="2400"><%= partner.notes || '' %></textarea>
+              </label>
+            </div>
+            <div class="inline-actions">
+              <label class="check-item">
+                <input type="checkbox" name="markContacted" />
+                <span>Mark contacted today</span>
+              </label>
+              <button type="submit" class="btn btn-secondary">Save Creator</button>
+            </div>
+          </form>
+
+          <form method="POST" action="<%= `${dashboardPath}/creator-partners/${partner._id}/grant-access${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>">
+            <button type="submit" class="btn btn-primary" <%= !partner.contactEmail ? 'disabled' : '' %>>
+              Grant <%= creatorDefaultPremiumDays %>-day Premium
+            </button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
 <section class="card">
   <div class="section-head">
     <h3>Public preview leads</h3>

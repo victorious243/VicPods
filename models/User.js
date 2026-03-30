@@ -150,6 +150,12 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    referredByCreatorPartnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CreatorPartner',
+      default: null,
+      index: true,
+    },
     referredByCode: {
       type: String,
       default: '',

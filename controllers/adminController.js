@@ -1,10 +1,19 @@
 const AdminAccessLog = require('../models/AdminAccessLog');
 const AppActivityEvent = require('../models/AppActivityEvent');
+const { CreatorPartner } = require('../models/CreatorPartner');
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
 const PublicPreviewLead = require('../models/PublicPreviewLead');
 const Series = require('../models/Series');
 const User = require('../models/User');
+const {
+  CREATOR_PARTNER_STATUSES,
+  DEFAULT_CREATOR_PREMIUM_DAYS,
+  buildCreatorPartnerInviteUrl,
+  grantCreatorPartnerPremiumAccess,
+  upsertCreatorPartnerFromAdmin,
+} = require('../services/marketing/creatorPartnerService');
+const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
 const { renderPage } = require('../utils/render');
 
 const PAID_PLANS = ['pro', 'premium'];
@@ -20,6 +29,17 @@ function buildCountMap(rows, seed) {
     }
   });
   return output;
+}
+
+function buildDashboardUrl(req) {
+  const key = String(req.query?.key || '').trim();
+  return `${req.baseUrl || '/control-room-ops'}${key ? `?key=${encodeURIComponent(key)}` : ''}`;
+}
+
+function formatCreatorStatusLabel(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 async function showDashboard(req, res, next) {
@@ -71,6 +91,8 @@ async function showDashboard(req, res, next) {
       recentPreviewLeads7d,
       previewLeadBreakdownRaw,
       recentPreviewLeads,
+      creatorPartnersRaw,
+      creatorAttributionRaw,
       recentActivityEvents,
       adminAccessAttempts24h,
       blockedAdminAttempts7d,
@@ -203,6 +225,38 @@ async function showDashboard(req, res, next) {
         .sort({ lastSavedAt: -1, updatedAt: -1 })
         .limit(12)
         .select('email source sourceInput captureCount lastSavedAt lastSentAt'),
+      CreatorPartner.find({})
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .populate({ path: 'assignedUserId', select: 'name email plan planStatus currentPeriodEnd' })
+        .lean(),
+      User.aggregate([
+        {
+          $match: {
+            referredByCreatorPartnerId: { $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: '$referredByCreatorPartnerId',
+            signups: { $sum: 1 },
+            paid: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $in: ['$plan', PAID_PLANS] },
+                      { $in: ['$planStatus', ACTIVE_PAID_STATUSES] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            latestSignupAt: { $max: '$createdAt' },
+          },
+        },
+      ]),
       AppActivityEvent.find({})
         .sort({ createdAt: -1 })
         .limit(16)
@@ -242,6 +296,47 @@ async function showDashboard(req, res, next) {
       episode_preview: 0,
       podcast_ideas: 0,
     });
+    const creatorAttributionMap = new Map(
+      (creatorAttributionRaw || []).map((row) => [String(row._id), row])
+    );
+    const creatorPartners = (creatorPartnersRaw || []).map((partner) => {
+      const attribution = creatorAttributionMap.get(String(partner._id)) || {};
+      const assignedUser = partner.assignedUserId || null;
+      const premiumAccessExpiresAt = partner.premiumAccessExpiresAt ? new Date(partner.premiumAccessExpiresAt) : null;
+      const premiumAccessActive = Boolean(
+        premiumAccessExpiresAt && premiumAccessExpiresAt.getTime() > now.getTime()
+      );
+
+      return {
+        ...partner,
+        inviteUrl: buildCreatorPartnerInviteUrl(partner, { appUrl: process.env.APP_URL }),
+        statusLabel: formatCreatorStatusLabel(partner.status),
+        signupCount: Number(attribution.signups || 0),
+        paidConversionCount: Number(attribution.paid || 0),
+        latestSignupAt: attribution.latestSignupAt || null,
+        assignedUser,
+        hasAssignedUser: Boolean(assignedUser?._id),
+        premiumAccessActive,
+      };
+    });
+    const creatorMetrics = creatorPartners.reduce((summary, partner) => {
+      summary.total += 1;
+      summary.signups += partner.signupCount;
+      summary.paid += partner.paidConversionCount;
+      if (['access_sent', 'testing', 'approved', 'posted', 'converted'].includes(partner.status)) {
+        summary.activePipeline += 1;
+      }
+      if (partner.status === 'posted' || partner.status === 'converted') {
+        summary.posted += 1;
+      }
+      return summary;
+    }, {
+      total: 0,
+      activePipeline: 0,
+      posted: 0,
+      signups: 0,
+      paid: 0,
+    });
 
     const signupEmailList = recentUsers
       .map((user) => String(user.email || '').trim())
@@ -255,7 +350,11 @@ async function showDashboard(req, res, next) {
       view: 'admin/dashboard',
       data: {
         dashboardPath: req.baseUrl || '/control-room-ops',
+        dashboardUrl: buildDashboardUrl(req),
+        adminKey: String(req.query?.key || '').trim(),
         secretKeyEnabled: Boolean(String(process.env.ADMIN_DASHBOARD_KEY || '').trim()),
+        creatorPartnerStatuses: CREATOR_PARTNER_STATUSES,
+        creatorDefaultPremiumDays: DEFAULT_CREATOR_PREMIUM_DAYS,
         metrics: {
           totalUsers,
           usersLast24h,
@@ -289,6 +388,11 @@ async function showDashboard(req, res, next) {
           checkoutCompleted7d,
           totalPreviewLeads,
           recentPreviewLeads7d,
+          creatorPartnersTotal: creatorMetrics.total,
+          creatorPartnersActivePipeline: creatorMetrics.activePipeline,
+          creatorPartnersPosted: creatorMetrics.posted,
+          creatorPartnerSignups: creatorMetrics.signups,
+          creatorPartnerPaid: creatorMetrics.paid,
           adminAccessAttempts24h,
           blockedAdminAttempts7d,
           uniqueAdminIps7d: uniqueAdminIps7d.length,
@@ -301,6 +405,7 @@ async function showDashboard(req, res, next) {
         recentUsers,
         userDirectory,
         signupEmailList,
+        creatorPartners,
         recentPreviewLeads,
         recentEpisodes,
         recentIdeas,
@@ -313,6 +418,74 @@ async function showDashboard(req, res, next) {
   }
 }
 
+async function upsertCreatorPartner(req, res, next) {
+  try {
+    const partnerId = String(req.body.partnerId || '').trim();
+    const partner = await upsertCreatorPartnerFromAdmin({
+      partnerId,
+      body: req.body,
+      adminUser: req.currentUser,
+    });
+
+    req.flash('success', `${partner.name} saved in the creator pipeline.`);
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    return next(error);
+  }
+}
+
+async function grantCreatorPartnerAccess(req, res, next) {
+  try {
+    const result = await grantCreatorPartnerPremiumAccess({
+      partnerId: req.params.partnerId,
+      adminUser: req.currentUser,
+      durationDays: DEFAULT_CREATOR_PREMIUM_DAYS,
+    });
+
+    const creatorInviteUrl = buildCreatorPartnerInviteUrl(result.partner, { appUrl: process.env.APP_URL });
+    let emailDelivered = false;
+    let emailErrorMessage = '';
+
+    try {
+      const emailResult = await sendCreatorPremiumWelcomeEmail({
+        to: result.user.email,
+        name: result.user.name || result.partner.name,
+        appUrl: process.env.APP_URL,
+        expiresAt: result.expiresAt,
+        creatorInviteUrl,
+      });
+      emailDelivered = Boolean(emailResult?.delivered);
+    } catch (emailError) {
+      emailErrorMessage = emailError.message;
+    }
+
+    req.flash(
+      'success',
+      result.alreadyActive
+        ? `${result.partner.name} already has active Premium access through ${new Date(result.expiresAt).toLocaleDateString()}.${emailDelivered ? ' Creator welcome email sent.' : ''}`
+        : `Premium access granted to ${result.partner.name} until ${new Date(result.expiresAt).toLocaleDateString()}.${emailDelivered ? ' Creator welcome email sent.' : ''}`
+    );
+    if (emailErrorMessage) {
+      req.flash('error', `Premium access was granted, but the creator email could not be sent: ${emailErrorMessage}`);
+    }
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    return next(error);
+  }
+}
+
 module.exports = {
   showDashboard,
+  upsertCreatorPartner,
+  grantCreatorPartnerAccess,
 };

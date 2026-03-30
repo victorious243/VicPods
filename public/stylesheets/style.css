@@ -994,6 +994,96 @@ html[data-theme="light"] .auth-scene-rail-copy span {
   overflow-wrap: anywhere;
 }
 
+.creator-admin-shell {
+  gap: 18px;
+}
+
+.creator-admin-intro {
+  margin-top: -4px;
+}
+
+.creator-admin-form,
+.creator-admin-update-form {
+  display: grid;
+  gap: 14px;
+}
+
+.creator-admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.creator-admin-form-span {
+  grid-column: 1 / -1;
+}
+
+.creator-admin-list {
+  display: grid;
+  gap: 16px;
+}
+
+.creator-admin-card {
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  border-color: color-mix(in srgb, var(--border) 82%, rgba(99, 102, 241, 0.18));
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--bg-2)), color-mix(in srgb, var(--bg-2) 92%, var(--surface)));
+}
+
+.creator-admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.creator-admin-card-head h4,
+.creator-admin-card-head p {
+  overflow-wrap: anywhere;
+}
+
+.creator-admin-card-head h4 {
+  margin-bottom: 6px;
+}
+
+.creator-admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.creator-admin-metrics article {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--surface) 84%, var(--bg-2));
+}
+
+.creator-admin-metrics strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.creator-admin-link-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.creator-admin-link-row input {
+  flex: 1 1 auto;
+}
+
+.creator-admin-account-row {
+  display: grid;
+  gap: 6px;
+}
+
 .danger-zone-card {
   border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
   background:
@@ -5225,6 +5315,21 @@ html[data-theme='light'] .onboarding-backdrop {
 }
 
 @media (max-width: 900px) {
+  .creator-admin-form-grid,
+  .creator-admin-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .creator-admin-card-head,
+  .creator-admin-link-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .creator-admin-link-row .btn {
+    width: 100%;
+  }
+
   .landing-generator-section {
     padding: 22px 18px;
   }

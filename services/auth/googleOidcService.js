@@ -225,7 +225,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
     user.authProvider = 'google';
   }
 
-  if (!user.referredByUserId && !user.referralRewardAppliedAt) {
+  if (!user.referredByUserId && !user.referredByCreatorPartnerId && !user.referralRewardAppliedAt) {
     await attachReferralToUser(user, normalizedReferralCode);
   }
 

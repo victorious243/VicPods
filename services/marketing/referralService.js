@@ -1,13 +1,24 @@
 const crypto = require('crypto');
 const User = require('../../models/User');
+const { CreatorPartner } = require('../../models/CreatorPartner');
 
 const REFERRAL_CODE_MAX_LENGTH = 18;
 const REFERRAL_BONUS_CREDITS = 10;
 
-function normalizeAppUrl(value = process.env.APP_URL || 'http://localhost:3000') {
-  return String(value || 'http://localhost:3000')
+function normalizeAppUrl(value = process.env.APP_URL || '') {
+  const normalized = String(value || '')
     .trim()
     .replace(/\/+$/, '');
+
+  if (normalized) {
+    return normalized;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('APP_URL is required to build real referral invite links in production.');
+  }
+
+  return 'http://localhost:3000';
 }
 
 function normalizeReferralCode(value) {
@@ -41,8 +52,11 @@ async function generateUniqueReferralCode(seedInput = 'VICPODS') {
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const code = buildCandidate(seed);
-    const existingUser = await User.exists({ referralCode: code });
-    if (!existingUser) {
+    const [existingUser, existingCreator] = await Promise.all([
+      User.exists({ referralCode: code }),
+      CreatorPartner.exists({ referralCode: code }),
+    ]);
+    if (!existingUser && !existingCreator) {
       return code;
     }
   }
@@ -68,6 +82,25 @@ async function ensureUserReferralCode(user) {
   user.referralCode = await generateUniqueReferralCode(seed);
   await user.save();
   return user.referralCode;
+}
+
+async function ensureCreatorPartnerReferralCode(partner) {
+  if (!partner) {
+    return '';
+  }
+
+  const existingCode = normalizeReferralCode(partner.referralCode);
+  if (existingCode) {
+    if (existingCode !== partner.referralCode) {
+      partner.referralCode = existingCode;
+      await partner.save();
+    }
+    return existingCode;
+  }
+
+  const seed = cleanReferralSeed(partner.name || partner.contactEmail || partner.handle || 'VICPODS');
+  partner.referralCode = await generateUniqueReferralCode(seed);
+  return partner.referralCode;
 }
 
 function buildReferralInviteUrl(referralCode, appUrl) {
@@ -96,8 +129,17 @@ async function resolveReferrerByCode(referralCode) {
   return User.findOne({ referralCode: normalizedCode }).select('_id email referralCode referralCount referralBonusCredits');
 }
 
+async function resolveCreatorPartnerByCode(referralCode) {
+  const normalizedCode = normalizeReferralCode(referralCode);
+  if (!normalizedCode) {
+    return null;
+  }
+
+  return CreatorPartner.findOne({ referralCode: normalizedCode }).select('_id contactEmail referralCode name status');
+}
+
 async function attachReferralToUser(user, referralCode) {
-  if (!user || user.referredByUserId || user.referralRewardAppliedAt) {
+  if (!user || user.referredByUserId || user.referredByCreatorPartnerId || user.referralRewardAppliedAt) {
     return null;
   }
 
@@ -121,7 +163,49 @@ async function attachReferralToUser(user, referralCode) {
 
   user.referredByUserId = referrer._id;
   user.referredByCode = referrer.referralCode;
-  return referrer;
+  return {
+    type: 'user',
+    referrer,
+  };
+}
+
+async function attachCreatorPartnerReferralToUser(user, referralCode) {
+  if (!user || user.referredByUserId || user.referredByCreatorPartnerId || user.referralRewardAppliedAt) {
+    return null;
+  }
+
+  const normalizedCode = normalizeReferralCode(referralCode);
+  if (!normalizedCode) {
+    return null;
+  }
+
+  const creatorPartner = await resolveCreatorPartnerByCode(normalizedCode);
+  if (!creatorPartner) {
+    return null;
+  }
+
+  if (
+    String(creatorPartner.contactEmail || '').trim().toLowerCase()
+    && String(creatorPartner.contactEmail || '').trim().toLowerCase() === String(user.email || '').trim().toLowerCase()
+  ) {
+    return null;
+  }
+
+  user.referredByCreatorPartnerId = creatorPartner._id;
+  user.referredByCode = creatorPartner.referralCode;
+  return {
+    type: 'creator_partner',
+    creatorPartner,
+  };
+}
+
+async function attachAnyReferralToUser(user, referralCode) {
+  const userReferral = await attachReferralToUser(user, referralCode);
+  if (userReferral) {
+    return userReferral;
+  }
+
+  return attachCreatorPartnerReferralToUser(user, referralCode);
 }
 
 async function applyReferralRewardIfEligible(user) {
@@ -177,13 +261,16 @@ async function buildReferralProgramViewModel(user, { appUrl } = {}) {
 
 module.exports = {
   REFERRAL_BONUS_CREDITS,
-  attachReferralToUser,
+  attachReferralToUser: attachAnyReferralToUser,
+  attachCreatorPartnerReferralToUser,
   applyReferralRewardIfEligible,
   buildReferralInviteUrl,
   buildReferralProgramViewModel,
+  ensureCreatorPartnerReferralCode,
   ensureUserReferralCode,
   getReferralBonusCredits,
   normalizeReferralCode,
   normalizeAppUrl,
+  resolveCreatorPartnerByCode,
   resolveReferrerByCode,
 };
