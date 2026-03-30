@@ -61,6 +61,8 @@ function buildCreatorPremiumWelcomeEmail({
   appUrl,
   expiresAt,
   creatorInviteUrl,
+  accessMode,
+  currentPlan,
   logoCid,
 }) {
   const safeName = String(name || 'there').trim() || 'there';
@@ -71,17 +73,36 @@ function buildCreatorPremiumWelcomeEmail({
   const helpUrl = `${normalizedAppUrl}/help`;
   const formattedExpiry = formatDate(expiresAt);
   const safeCreatorInviteUrl = String(creatorInviteUrl || '').trim();
-  const subject = 'Your VicPods Premium creator access is live';
-  const previewText = 'Premium is on. Test one real episode workflow in VicPods, then share your creator link when you are ready.';
+  const normalizedAccessMode = String(accessMode || 'granted_premium_trial').trim().toLowerCase();
+  const normalizedPlan = String(currentPlan || '').trim().toLowerCase();
+  const planLabel = normalizedPlan ? `${normalizedPlan.charAt(0).toUpperCase()}${normalizedPlan.slice(1)}` : 'Premium';
+  const hasPremiumAccess = normalizedAccessMode !== 'existing_paid';
+  const subject = hasPremiumAccess
+    ? 'Your VicPods Premium creator access is live'
+    : 'Your VicPods creator access is live';
+  const previewText = hasPremiumAccess
+    ? 'Premium is on. Test one real episode workflow in VicPods, then share your creator link when you are ready.'
+    : 'Your creator access is ready. Your current plan stays unchanged while you test VicPods and share your creator link.';
+  const accessIntro = normalizedAccessMode === 'existing_paid'
+    ? `Your creator setup is ready, and your current <strong>${escapeHtml(planLabel)}</strong> plan stays unchanged.`
+    : formattedExpiry
+      ? `Your Premium creator access is now live through <strong>${escapeHtml(formattedExpiry)}</strong>.`
+      : 'Your Premium creator access is now live.';
+  const accessIntroText = normalizedAccessMode === 'existing_paid'
+    ? `Your creator setup is ready, and your current ${planLabel} plan stays unchanged.`
+    : formattedExpiry
+      ? `Your Premium creator access is now live through ${formattedExpiry}.`
+      : 'Your Premium creator access is now live.';
+  const capabilityHeading = hasPremiumAccess
+    ? 'What Premium unlocks during your test'
+    : 'What to test in VicPods';
 
   const textLines = [
     `Hi ${safeName},`,
     '',
     'Thanks again for checking out VicPods.',
     '',
-    formattedExpiry
-      ? `Your Premium creator access is now live through ${formattedExpiry}.`
-      : 'Your Premium creator access is now live.',
+    accessIntroText,
     '',
     'VicPods helps you turn a rough podcast idea into a structured, ready-to-record episode and launch prep without getting stuck in a blank page.',
     '',
@@ -102,7 +123,7 @@ function buildCreatorPremiumWelcomeEmail({
   textLines.push(
     `Help Center: ${helpUrl}`,
     '',
-    'What Premium unlocks during your test:',
+    `${capabilityHeading}:`,
     '- full draft generation workflow',
     '- Launch Pack output',
     '- stronger continuity and refinement tools',
@@ -138,7 +159,7 @@ function buildCreatorPremiumWelcomeEmail({
                 </p>
                 <p style="margin:0 0 14px; font-size:16px; line-height:1.7; color:#334155;">
                   Thanks again for checking out VicPods.
-                  ${formattedExpiry ? `Your Premium creator access is now live through <strong>${escapeHtml(formattedExpiry)}</strong>.` : 'Your Premium creator access is now live.'}
+                  ${accessIntro}
                 </p>
                 <p style="margin:0 0 24px; font-size:16px; line-height:1.7; color:#334155;">
                   VicPods helps podcasters go from a rough idea to a structured, ready-to-record episode with launch-ready content around it, so the planning work is already done before recording day.
@@ -200,7 +221,7 @@ function buildCreatorPremiumWelcomeEmail({
                   <tr>
                     <td style="padding:20px;">
                       <p style="margin:0 0 12px; font-size:13px; line-height:1.5; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#475569;">
-                        What Premium unlocks during your test
+                        ${escapeHtml(capabilityHeading)}
                       </p>
                       <p style="margin:0 0 10px; font-size:15px; line-height:1.7; color:#1e293b;">
                         Full draft generation workflow
@@ -260,6 +281,8 @@ async function sendCreatorPremiumWelcomeEmail({
   appUrl,
   expiresAt,
   creatorInviteUrl,
+  accessMode,
+  currentPlan,
 }) {
   const logoAttachment = buildEmailLogoAttachment();
   const email = buildCreatorPremiumWelcomeEmail({
@@ -267,6 +290,8 @@ async function sendCreatorPremiumWelcomeEmail({
     appUrl,
     expiresAt,
     creatorInviteUrl,
+    accessMode,
+    currentPlan,
     logoCid: logoAttachment ? EMAIL_LOGO_CID : '',
   });
 

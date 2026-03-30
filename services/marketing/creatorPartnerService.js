@@ -127,16 +127,16 @@ async function grantCreatorPartnerPremiumAccess({ partnerId, adminUser, duration
 
   const now = new Date();
   const hasPaidAccess = hasActivePaidAccess(user, now);
-
-  if (hasPaidAccess && user.plan !== 'premium') {
-    throw new AppError('This creator already has an active paid subscription. Keep billing unchanged or upgrade them directly in Stripe.', 400);
-  }
+  const currentPlan = String(user.plan || 'free').trim().toLowerCase();
+  let accessMode = 'granted_premium_trial';
 
   const expiresAt = hasPaidAccess
     ? new Date(user.currentPeriodEnd)
     : new Date(now.getTime() + (Math.max(1, durationDays) * 24 * 60 * 60 * 1000));
 
-  if (!hasPaidAccess) {
+  if (hasPaidAccess) {
+    accessMode = currentPlan === 'premium' ? 'existing_premium' : 'existing_paid';
+  } else {
     user.plan = 'premium';
     user.planStatus = 'trialing';
     user.currentPeriodStart = now;
@@ -162,6 +162,8 @@ async function grantCreatorPartnerPremiumAccess({ partnerId, adminUser, duration
     user,
     expiresAt,
     alreadyActive: hasPaidAccess,
+    accessMode,
+    currentPlan,
   };
 }
 

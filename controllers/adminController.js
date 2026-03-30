@@ -458,17 +458,23 @@ async function grantCreatorPartnerAccess(req, res, next) {
         appUrl: process.env.APP_URL,
         expiresAt: result.expiresAt,
         creatorInviteUrl,
+        accessMode: result.accessMode,
+        currentPlan: result.currentPlan,
       });
       emailDelivered = Boolean(emailResult?.delivered);
     } catch (emailError) {
       emailErrorMessage = emailError.message;
     }
 
+    const successPrefix = result.accessMode === 'existing_paid'
+      ? `${result.partner.name} is already on an active ${String(result.currentPlan || 'paid').toUpperCase()} plan. Creator access was linked without changing billing.`
+      : result.alreadyActive
+        ? `${result.partner.name} already has active Premium access through ${new Date(result.expiresAt).toLocaleDateString()}.`
+        : `Premium access granted to ${result.partner.name} until ${new Date(result.expiresAt).toLocaleDateString()}.`;
+
     req.flash(
       'success',
-      result.alreadyActive
-        ? `${result.partner.name} already has active Premium access through ${new Date(result.expiresAt).toLocaleDateString()}.${emailDelivered ? ' Creator welcome email sent.' : ''}`
-        : `Premium access granted to ${result.partner.name} until ${new Date(result.expiresAt).toLocaleDateString()}.${emailDelivered ? ' Creator welcome email sent.' : ''}`
+      `${successPrefix}${emailDelivered ? ' Creator welcome email sent.' : ''}`
     );
     if (emailErrorMessage) {
       req.flash('error', `Premium access was granted, but the creator email could not be sent: ${emailErrorMessage}`);
