@@ -1,6 +1,6 @@
 <%
   const isPublicShell = (typeof publicShell !== 'undefined') && publicShell;
-  const topbarPlanKey = effectivePlan || currentUser?.plan || 'free';
+  const topbarPlanKey = (((typeof effectivePlan !== 'undefined') && effectivePlan) || currentUser?.plan || 'free');
   const topbarPlanLabel = t(`plan.${topbarPlanKey}`, topbarPlanKey.charAt(0).toUpperCase() + topbarPlanKey.slice(1));
   const userDisplayName = currentUser
     ? (currentUser.name || currentUser.email || t('generic.user', 'User')).trim()
@@ -13,6 +13,19 @@
   const publicPrimaryHref = currentUser ? '/studio' : '/auth/register';
   const publicPrimaryLabelFull = currentUser ? 'Open Studio' : t('page.about.cta.guest.primary', 'Create account');
   const publicPrimaryLabelCompact = currentUser ? 'Studio' : 'Create';
+  const topbarRedirectPath = ((typeof currentPath !== 'undefined') && currentPath) ? currentPath : '/';
+  const topbarLanguageOptions = (languageOptions || [
+    { value: 'en', label: 'English', flag: '🇬🇧', shortLabel: 'EN' },
+    { value: 'es', label: 'Espanol', flag: '🇪🇸', shortLabel: 'ES' },
+    { value: 'pt', label: 'Portugues', flag: '🇵🇹', shortLabel: 'PT' },
+  ]).map((option) => ({
+    value: option.value,
+    label: option.label,
+    flag: option.flag,
+    shortLabel: option.shortLabel || String(option.value || '').toUpperCase(),
+  }));
+  const currentLanguageValue = String(((typeof language !== 'undefined') && language) || currentUser?.languagePreference || 'en').toLowerCase();
+  const currentLanguageOption = topbarLanguageOptions.find((option) => option.value === currentLanguageValue) || topbarLanguageOptions[0];
 %>
 
 <header
@@ -58,17 +71,51 @@
       <% } %>
 
       <div class="topbar-quick-actions">
-        <button
-          id="theme-toggle"
-          data-theme-toggle
-          type="button"
-          class="btn btn-ghost theme-toggle topbar-theme-toggle"
-          aria-label="<%= t('topbar.toggleTheme', 'Toggle theme') %>"
-          title="<%= t('topbar.toggleTheme', 'Toggle theme') %>"
-        >
-          <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
-          <span class="theme-toggle-label"><%= t('theme.dark', 'Dark') %></span>
-        </button>
+        <div class="topbar-language" data-language>
+          <button
+            id="language-switcher"
+            type="button"
+            class="topbar-language-trigger"
+            data-language-trigger
+            data-topbar-open-label="<%= t('topbar.language.switch', 'Change language') %>"
+            data-topbar-close-label="<%= t('topbar.language.panel', 'Choose language') %>"
+            aria-label="<%= t('topbar.language.switch', 'Change language') %>"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="topbar-language-panel"
+            title="<%= t('topbar.language.switch', 'Change language') %>"
+          >
+            <span class="topbar-language-flag" aria-hidden="true"><%= currentLanguageOption.flag %></span>
+            <span class="topbar-language-code"><%= currentLanguageOption.shortLabel %></span>
+            <span class="topbar-language-caret" aria-hidden="true"></span>
+          </button>
+
+          <div id="topbar-language-panel" class="topbar-language-panel" data-language-panel hidden>
+            <p class="topbar-language-heading"><%= t('topbar.language.panel', 'Choose language') %></p>
+            <% topbarLanguageOptions.forEach((option) => { %>
+              <form method="POST" action="/language" class="topbar-language-form">
+                <input type="hidden" name="languagePreference" value="<%= option.value %>" />
+                <input type="hidden" name="redirectTo" value="<%= topbarRedirectPath %>" />
+                <button
+                  type="submit"
+                  class="topbar-language-option <%= option.value === currentLanguageValue ? 'is-active' : '' %>"
+                  data-language-option
+                  data-language-value="<%= option.value %>"
+                  data-language-close
+                >
+                  <span class="topbar-language-option-flag" aria-hidden="true"><%= option.flag %></span>
+                  <span class="topbar-language-option-copy">
+                    <strong><%= option.label %></strong>
+                    <small><%= option.shortLabel %></small>
+                  </span>
+                  <% if (option.value === currentLanguageValue) { %>
+                    <span class="topbar-language-check" aria-hidden="true"></span>
+                  <% } %>
+                </button>
+              </form>
+            <% }) %>
+          </div>
+        </div>
 
         <% if (isPublicShell) { %>
           <a href="<%= publicPrimaryHref %>" class="btn btn-primary topbar-primary-cta">

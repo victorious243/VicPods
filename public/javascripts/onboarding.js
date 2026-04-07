@@ -58,9 +58,9 @@
           ],
         },
         {
-          title: 'Control lighting systems',
-          description: 'Your lighting is the theme system. Use quick toggle or appearance settings.',
-          target: '#theme-toggle',
+          title: 'Switch the app language fast',
+          description: 'Use the language switcher to move between English, Spanish, and Portuguese without leaving the page.',
+          target: '#language-switcher',
           links: [
             { label: 'Open Appearance', href: '/settings?section=appearance', childTour: 'settingsAppearance' },
           ],
@@ -174,8 +174,8 @@
         },
         {
           title: 'Quick switch from topbar',
-          description: 'The topbar toggle changes theme instantly from any page.',
-          target: '#theme-toggle',
+          description: 'The topbar language switcher updates the app instantly from any page.',
+          target: '#language-switcher',
           links: [
             { label: 'Back to Studio Tour', href: '/studio', resumeMain: true },
           ],

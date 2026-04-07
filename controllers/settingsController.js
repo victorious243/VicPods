@@ -50,6 +50,15 @@ function resolveSection(input) {
   return VALID_SECTIONS.has(section) ? section : 'profile';
 }
 
+function resolveRedirectPath(input) {
+  const value = String(input || '').trim();
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return '/';
+  }
+
+  return value;
+}
+
 function normalizeTheme(theme) {
   return theme === 'light' ? 'light' : 'dark';
 }
@@ -168,6 +177,26 @@ async function updateAppearance(req, res, next) {
   }
 }
 
+async function updateLanguagePreference(req, res, next) {
+  try {
+    const nextLanguage = normalizeLanguage(req.body.languagePreference || req.body.language);
+    const redirectTo = resolveRedirectPath(req.body.redirectTo || req.originalUrl || '/');
+
+    if (req.session) {
+      req.session.languagePreference = nextLanguage;
+    }
+
+    if (req.currentUser) {
+      req.currentUser.languagePreference = nextLanguage;
+      await req.currentUser.save();
+    }
+
+    return res.redirect(redirectTo);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function updatePassword(req, res, next) {
   try {
     const user = req.currentUser;
@@ -269,6 +298,7 @@ module.exports = {
   showSettings,
   updateProfile,
   updateAppearance,
+  updateLanguagePreference,
   updatePassword,
   resetOnboarding,
   deleteAccount,

@@ -32,15 +32,8 @@
         var stored = localStorage.getItem('vicpods_theme');
         var theme = stored === 'light' || stored === 'dark' ? stored : serverDefault;
         document.documentElement.setAttribute('data-theme', theme);
-
-        var storedLanguage = localStorage.getItem('vicpods_language');
-        var language = serverLanguage;
-        if (hasCurrentUser) {
-          localStorage.setItem('vicpods_language', serverLanguage);
-        } else if (storedLanguage === 'es' || storedLanguage === 'pt' || storedLanguage === 'en') {
-          language = storedLanguage;
-        }
-        document.documentElement.setAttribute('lang', language);
+        localStorage.setItem('vicpods_language', serverLanguage);
+        document.documentElement.setAttribute('lang', serverLanguage);
       } catch (error) {
         document.documentElement.setAttribute('data-theme', serverDefault);
         document.documentElement.setAttribute('lang', serverLanguage);

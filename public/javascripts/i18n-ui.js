@@ -161,7 +161,7 @@
       'Configure your workspace': 'Configura tu espacio de trabajo',
       'Open Settings to manage profile, security, and account-level preferences.': 'Abre Configuracion para gestionar perfil, seguridad y preferencias.',
       'Control lighting systems': 'Controlar sistema de iluminacion',
-      'Your lighting is the theme system. Use quick toggle or appearance settings.': 'La iluminacion es el sistema de tema. Usa cambio rapido o apariencia.',
+      'Use the language switcher to move between English, Spanish, and Portuguese without leaving the page.': 'Usa el selector de idioma para cambiar entre ingles, espanol y portugues sin salir de la pagina.',
       'You are onboarded': 'Onboarding completado',
       'Tour complete. Your workflow is ready. Start creating and shipping episodes.': 'Tour completado. Tu flujo esta listo. Empieza a crear y publicar.',
       'Open Single Wizard': 'Abrir wizard de episodio unico',
@@ -191,7 +191,7 @@
       'Save default lighting': 'Guardar iluminacion por defecto',
       'Set your default mode in Appearance for every future session.': 'Define tu modo por defecto en Apariencia para futuras sesiones.',
       'Quick switch from topbar': 'Cambio rapido desde topbar',
-      'The topbar toggle changes theme instantly from any page.': 'El boton del topbar cambia tema al instante desde cualquier pagina.',
+      'The topbar language switcher updates the app instantly from any page.': 'El selector de idioma del topbar actualiza la app al instante desde cualquier pagina.',
     },
     pt: {
       'Verify your email': 'Verifique seu email',
@@ -348,7 +348,7 @@
       'Configure your workspace': 'Configure seu workspace',
       'Open Settings to manage profile, security, and account-level preferences.': 'Abra Configuracoes para gerir perfil, seguranca e preferencias da conta.',
       'Control lighting systems': 'Controlar sistema de iluminacao',
-      'Your lighting is the theme system. Use quick toggle or appearance settings.': 'A iluminacao e o sistema de tema. Use alternancia rapida ou aparencia.',
+      'Use the language switcher to move between English, Spanish, and Portuguese without leaving the page.': 'Use o seletor de idioma para alternar entre ingles, espanhol e portugues sem sair da pagina.',
       'You are onboarded': 'Onboarding concluido',
       'Tour complete. Your workflow is ready. Start creating and shipping episodes.': 'Tour concluido. Seu fluxo esta pronto. Comece a criar e publicar.',
       'Open Single Wizard': 'Abrir wizard de episodio unico',
@@ -378,7 +378,7 @@
       'Save default lighting': 'Salvar iluminacao padrao',
       'Set your default mode in Appearance for every future session.': 'Defina o modo padrao em Aparencia para futuras sessoes.',
       'Quick switch from topbar': 'Troca rapida no topbar',
-      'The topbar toggle changes theme instantly from any page.': 'O botao do topbar muda o tema instantaneamente em qualquer pagina.',
+      'The topbar language switcher updates the app instantly from any page.': 'O seletor de idioma do topbar atualiza o app instantaneamente em qualquer pagina.',
     },
   };
 

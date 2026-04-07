@@ -3,16 +3,22 @@ const LANGUAGE_META = {
     code: 'en',
     label: 'English',
     aiLabel: 'English',
+    flag: '🇬🇧',
+    shortLabel: 'EN',
   },
   es: {
     code: 'es',
     label: 'Espanol',
     aiLabel: 'Spanish',
+    flag: '🇪🇸',
+    shortLabel: 'ES',
   },
   pt: {
     code: 'pt',
     label: 'Portugues',
     aiLabel: 'Portuguese',
+    flag: '🇵🇹',
+    shortLabel: 'PT',
   },
 };
 
@@ -106,6 +112,16 @@ const TRANSLATIONS = {
     en: 'Toggle theme',
     es: 'Cambiar tema',
     pt: 'Alternar tema',
+  },
+  'topbar.language.switch': {
+    en: 'Change language',
+    es: 'Cambiar idioma',
+    pt: 'Mudar idioma',
+  },
+  'topbar.language.panel': {
+    en: 'Choose language',
+    es: 'Elegir idioma',
+    pt: 'Escolher idioma',
   },
   'topbar.profile.aria': {
     en: 'Open profile settings',
@@ -1613,6 +1629,8 @@ function getLanguageOptions() {
   return Object.values(LANGUAGE_META).map((item) => ({
     value: item.code,
     label: item.label,
+    flag: item.flag,
+    shortLabel: item.shortLabel,
   }));
 }
 

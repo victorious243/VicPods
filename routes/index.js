@@ -5,9 +5,11 @@ const helpController = require('../controllers/helpController');
 const legalController = require('../controllers/legalController');
 const landingController = require('../controllers/landingController');
 const shareController = require('../controllers/shareController');
+const settingsController = require('../controllers/settingsController');
 const { requireGuest } = require('../middleware/auth');
 
 const router = express.Router();
+router.post('/language', settingsController.updateLanguagePreference);
 router.get('/oauth2callback', requireGuest, authController.googleCallback);
 router.get('/lab', landingController.showLanding);
 router.get('/podcast-idea-generator', landingController.showPodcastIdeaGenerator);
