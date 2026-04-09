@@ -1,4 +1,5 @@
 const AppActivityEvent = require('../../models/AppActivityEvent');
+const { extractTrafficSignals, isTrackableHumanTraffic } = require('./trafficQualityService');
 
 function normalizePath(req, explicitPath = '') {
   const provided = String(explicitPath || '').trim();
@@ -34,6 +35,11 @@ function normalizeAuthProvider(user, provided) {
 
 async function recordActivityEvent(req, options = {}) {
   try {
+    const trafficSignals = extractTrafficSignals(req);
+    if (!options.allowNonHumanTraffic && !isTrackableHumanTraffic(trafficSignals)) {
+      return;
+    }
+
     const user = options.user || req.currentUser || null;
     await AppActivityEvent.create({
       eventType: String(options.eventType || '').trim(),
@@ -42,9 +48,9 @@ async function recordActivityEvent(req, options = {}) {
       requestPath: normalizePath(req, options.requestPath),
       method: String(options.method || req.method || 'GET').toUpperCase(),
       statusCode: Number.isInteger(options.statusCode) ? options.statusCode : null,
-      ipAddress: resolveIpAddress(req),
+      ipAddress: trafficSignals.ipAddress || resolveIpAddress(req),
       forwardedFor: String(req.get('x-forwarded-for') || '').trim(),
-      userAgent: String(req.get('user-agent') || '').trim(),
+      userAgent: trafficSignals.userAgent,
       referer: String(req.get('referer') || '').trim(),
       userId: user?._id || options.userId || null,
       userEmail: String(options.userEmail || user?.email || '').trim().toLowerCase(),

@@ -14,6 +14,7 @@ const {
   upsertCreatorPartnerFromAdmin,
 } = require('../services/marketing/creatorPartnerService');
 const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
+const { buildHumanActivityMatch } = require('../services/analytics/trafficQualityService');
 const { renderPage } = require('../utils/render');
 
 const PAID_PLANS = ['pro', 'premium'];
@@ -158,62 +159,62 @@ async function showDashboard(req, res, next) {
         .limit(8)
         .select('hook tag updatedAt userId')
         .populate({ path: 'userId', select: 'name email' }),
-      AppActivityEvent.countDocuments({
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'page_view',
         createdAt: { $gte: last24h },
-      }),
-      AppActivityEvent.distinct('visitorId', {
+      })),
+      AppActivityEvent.distinct('visitorId', buildHumanActivityMatch({
         createdAt: { $gte: last7d },
         visitorId: { $ne: '' },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'signup_completed',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'signup_started',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'login_success',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'public_episode_preview_generated',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'public_podcast_ideas_generated',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'public_preview_saved',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'public_preview_exported',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'episode_created',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'episode_draft_generated',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'billing_page_viewed',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'billing_checkout_started',
         createdAt: { $gte: last7d },
-      }),
-      AppActivityEvent.countDocuments({
+      })),
+      AppActivityEvent.countDocuments(buildHumanActivityMatch({
         eventType: 'billing_checkout_completed',
         createdAt: { $gte: last7d },
-      }),
+      })),
       PublicPreviewLead.countDocuments({}),
       PublicPreviewLead.countDocuments({
         lastSavedAt: { $gte: last7d },
@@ -257,7 +258,7 @@ async function showDashboard(req, res, next) {
           },
         },
       ]),
-      AppActivityEvent.find({})
+      AppActivityEvent.find(buildHumanActivityMatch({}))
         .sort({ createdAt: -1 })
         .limit(16)
         .select('eventType requestPath visitorId userEmail authProvider statusCode createdAt'),

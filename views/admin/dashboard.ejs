@@ -38,9 +38,9 @@
 
 <section class="card-grid stats-grid">
   <article class="card stat-card">
-    <p>Page views (24h)</p>
+    <p>Human page views (24h)</p>
     <h3><%= metrics.pageViews24h %></h3>
-    <span class="mini-note">Unique visitors / 7d: <%= metrics.uniqueVisitors7d %></span>
+    <span class="mini-note">Human visitors / 7d: <%= metrics.uniqueVisitors7d %></span>
   </article>
   <article class="card stat-card">
     <p>Completed signups (7d)</p>
@@ -361,8 +361,8 @@
 
 <section class="card">
   <div class="section-head">
-    <h3>Recent VicPods activity</h3>
-    <span class="mini-label">Visitors + auth events</span>
+    <h3>Recent human activity</h3>
+    <span class="mini-label">Filtered for real visitors</span>
   </div>
   <% if (!recentActivityEvents.length) { %>
     <p class="empty-state">No visitor activity recorded yet.</p>
