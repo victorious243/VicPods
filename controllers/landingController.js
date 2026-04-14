@@ -20,13 +20,13 @@ function buildPublicPricingPlans(pricing) {
       eyebrow: 'Start here',
       title: 'Free',
       price: pricing.free,
-      summary: 'Prove the workflow before you spend anything.',
-      note: 'No card required. Use the public generator first, then move into Studio when you want to keep building.',
+      summary: 'See whether the workflow fits before you spend anything.',
+      note: 'No card required. Generate the preview first, then create an account only when you want to keep building.',
       features: [
         'Public idea-to-episode preview with no login',
         'Core Studio + Workspace + Pantry access',
         '5 AI generations each day',
-        'Show Notes Pack + TXT episode brief export',
+        'TXT episode brief + starter launch workflow',
       ],
     },
     {
@@ -34,10 +34,10 @@ function buildPublicPricingPlans(pricing) {
       eyebrow: 'Best for momentum',
       title: 'Pro',
       price: pricing.pro,
-      summary: 'Unlock the full launch workflow for serious weekly publishing.',
+      summary: 'Unlock the full draft and launch workflow for serious weekly publishing.',
       note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.proStandard}.`,
       features: [
-        'Full Launch Pack access after each draft',
+        'Full Launch Pack after each draft',
         '50 AI generations each day',
         'Continuity refresh + tone consistency scoring',
         'TXT + PDF episode brief exports',
@@ -48,7 +48,7 @@ function buildPublicPricingPlans(pricing) {
       eyebrow: 'Maximum control',
       title: 'Premium',
       price: pricing.premium,
-      summary: 'Go deeper with unlimited generation and advanced voice control.',
+      summary: 'Go deeper with unlimited generation, stronger control, and richer exports.',
       note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.premiumStandard}.`,
       features: [
         'Unlimited AI generations',
@@ -60,23 +60,54 @@ function buildPublicPricingPlans(pricing) {
   ];
 }
 
+function buildLandingMomentumCards() {
+  return [
+    {
+      eyebrow: 'See value first',
+      title: 'Generate before you sign up',
+      body: 'Paste the idea you were planning to record next. VicPods shows the structure before asking for commitment.',
+    },
+    {
+      eyebrow: 'Built for real formats',
+      title: 'Made for the shows creators actually publish',
+      body: 'Solo educators, interview shows, business podcasts, coaches, and personal-brand creators all start from a clearer episode shape.',
+    },
+    {
+      eyebrow: 'Upgrade when it clicks',
+      title: 'Unlock the full draft and launch pack only when it saves you time',
+      body: 'Free proves the workflow. Pro and Premium turn the preview into publish-ready drafting, launch assets, and higher-volume output.',
+    },
+  ];
+}
+
 function showLanding(req, res) {
   if (req.currentUser?.emailVerified === false) {
     return res.redirect(`/auth/verify?email=${encodeURIComponent(req.currentUser.email)}`);
   }
 
   const pricing = getPricingDisplay();
+  const normalizedAppUrl = normalizeAppUrl();
+  const isPerformanceLanding = req.path === '/generate-episode';
 
   return renderPage(res, {
-    title: req.t('page.landing.title', 'VicPods - Podcast Planning + Launch Prep'),
+    title: isPerformanceLanding
+      ? 'Generate a Podcast Episode Preview - VicPods'
+      : req.t('page.landing.title', 'VicPods - Turn podcast ideas into ready-to-record episodes'),
     pageTitle: req.t('page.landing.header', 'VicPods'),
-    subtitle: req.t('page.landing.subtitle', 'Go from podcast idea to ready-to-record episode.'),
+    subtitle: req.t('page.landing.subtitle', 'Turn one podcast idea into a ready-to-record episode.'),
     view: 'landing/index',
     data: {
       publicShell: true,
       effectivePlan: req.effectivePlan || req.currentUser?.plan || 'free',
+      metaDescription: 'Turn a rough podcast idea into a stronger title, sharper hook, structured outline, and launch-ready direction with VicPods. Generate the preview before you sign up.',
+      canonicalUrl: `${normalizedAppUrl}/`,
+      metaRobots: isPerformanceLanding ? 'noindex,follow' : undefined,
+      ogTitle: 'VicPods - Turn podcast ideas into ready-to-record episodes',
+      ogDescription: 'Generate a podcast episode preview with a stronger title, hook, outline, and launch-ready direction before you create an account.',
+      ogType: 'website',
       featuredExamples: getFeaturedExamples({ limit: 3 }),
       landingProofSnippets: getLandingProofSnippets(),
+      landingMomentumCards: buildLandingMomentumCards(),
       pricing,
       publicPricingPlans: buildPublicPricingPlans(pricing),
     },

@@ -12,6 +12,7 @@ const router = express.Router();
 router.post('/language', settingsController.updateLanguagePreference);
 router.get('/oauth2callback', requireGuest, authController.googleCallback);
 router.get('/lab', landingController.showLanding);
+router.get('/generate-episode', landingController.showLanding);
 router.get('/podcast-idea-generator', landingController.showPodcastIdeaGenerator);
 router.get('/examples', landingController.showExampleLibrary);
 router.get('/share/:token', shareController.showSharedEpisode);

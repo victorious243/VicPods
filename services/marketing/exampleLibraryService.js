@@ -74,25 +74,25 @@ const EXAMPLE_EPISODES = [
 
 const LANDING_PROOF_SNIPPETS = [
   {
-    eyebrow: 'Example workflow',
-    title: 'Go from raw topic to structured episode fast',
-    body: 'Use the public generator to see the hook, outline, CTA, and launch preview before you even sign up.',
+    eyebrow: 'Fast first win',
+    title: 'See the shape of the episode before you commit',
+    body: 'The public generator gives you the title, hook, outline, CTA, and launch preview first. The account comes after the value.',
+    ctaLabel: 'Generate episode',
+    ctaHref: '/#idea-to-episode-generator',
+  },
+  {
+    eyebrow: 'Real creator fit',
+    title: 'Built for the formats podcasters actually publish',
+    body: 'Solo, interview, business, coaching, and educator-led shows all start from a structure instead of a blank page.',
     ctaLabel: 'See examples',
     ctaHref: '/examples',
   },
   {
-    eyebrow: 'Creator fit',
-    title: 'Built for solo, interview, and business formats',
-    body: 'VicPods already models podcast styles that creators actually publish, so you start from a shape instead of a blank page.',
-    ctaLabel: 'Explore templates',
-    ctaHref: '/create/single',
-  },
-  {
     eyebrow: 'Launch prep',
-    title: 'Episodes leave with publish-ready assets',
-    body: 'Launch Packs turn a generated episode into title options, a description, and lightweight launch copy you can use today.',
-    ctaLabel: 'Try the generator',
-    ctaHref: '/#idea-to-episode-generator',
+    title: 'When the preview clicks, the full workflow gets you ready to publish faster',
+    body: 'Launch Packs turn a strong episode into titles, a description, show notes, captions, and a better close without rebuilding the angle.',
+    ctaLabel: 'View pricing',
+    ctaHref: '/#vicpods-pricing',
   },
 ];
 

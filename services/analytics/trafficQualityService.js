@@ -5,7 +5,7 @@ const LOCAL_IP_ADDRESSES = new Set([
   'localhost',
 ]);
 
-const BOT_USER_AGENT_REGEX = /(bot\b|crawler|spider|curl\/|wget\/|python-requests|python-urllib|httpclient|go-http-client|axios\/|node-fetch|headlesschrome|phantomjs|applebot|bingbot|googlebot|slurp|duckduckbot|baiduspider|yandexbot|semrushbot|ahrefsbot|facebookexternalhit|meta-externalagent)/i;
+const BOT_USER_AGENT_REGEX = /(bot\b|crawler|spider|curl\/|wget\/|python-requests|python-urllib|httpclient|go-http-client|axios\/|node-fetch|headlesschrome|phantomjs|applebot|bingbot|googlebot|slurp|duckduckbot|baiduspider|yandexbot|semrushbot|ahrefsbot|facebookexternalhit|meta-externalagent|zgrab|shodan-pull|visionheight\.com\/scan|cortex-xpanse|palo alto networks)/i;
 
 function normalizeIpAddress(value) {
   return String(value || '')
