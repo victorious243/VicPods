@@ -14,7 +14,7 @@
   const publicPrimaryLabelFull = currentUser ? 'Open Studio' : t('page.about.cta.guest.primary', 'Create account');
   const publicPrimaryLabelCompact = currentUser ? 'Studio' : 'Create';
   const topbarRedirectPath = ((typeof currentPath !== 'undefined') && currentPath) ? currentPath : '/';
-  const topbarLanguageOptions = (languageOptions || [
+  const topbarLanguageOptions = (((typeof languageOptions !== 'undefined') && languageOptions) || [
     { value: 'en', label: 'English', flag: '🇬🇧', shortLabel: 'EN' },
     { value: 'es', label: 'Espanol', flag: '🇪🇸', shortLabel: 'ES' },
     { value: 'pt', label: 'Portugues', flag: '🇵🇹', shortLabel: 'PT' },

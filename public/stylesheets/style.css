@@ -4039,7 +4039,61 @@ html[data-theme='light'] .onboarding-backdrop {
   position: relative;
   width: min(100%, 620px);
   height: 620px;
+  overflow: hidden;
   animation: landing-float 7s ease-in-out infinite;
+}
+
+.hero-model-shell {
+  position: relative;
+}
+
+.hero-model-shell model-viewer {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.hero-model-shell.is-model-ready model-viewer {
+  opacity: 1;
+}
+
+.hero-model-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.hero-model-shell.is-model-ready .hero-model-fallback {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.hero-model-fallback-ring {
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 0 0 18px rgba(97, 126, 255, 0.06),
+    0 24px 80px rgba(29, 78, 216, 0.18);
+  animation: landing-pulse 4.6s ease-out infinite;
+}
+
+.hero-model-fallback-logo {
+  position: relative;
+  z-index: 1;
+  width: min(34%, 170px);
+  height: auto;
+  filter: drop-shadow(0 18px 42px rgba(37, 99, 235, 0.24));
+}
+
+.hero-model-fallback-logo-light {
+  display: none;
 }
 
 .landing-orb {
@@ -4439,10 +4493,12 @@ html[data-theme='light'] .onboarding-backdrop {
   will-change: transform;
 }
 
-.help-mic-motion model-viewer {
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+.hero-model-shell--help .hero-model-fallback-ring {
+  inset: 18%;
+  border-color: rgba(97, 126, 255, 0.18);
+  box-shadow:
+    0 0 0 14px rgba(97, 126, 255, 0.06),
+    0 22px 72px rgba(15, 23, 42, 0.16);
 }
 
 .help-mic-chip {
@@ -7879,6 +7935,14 @@ html[data-theme="light"] .auth-referral-note {
   box-shadow:
     0 14px 34px rgba(15, 23, 42, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+html[data-theme="light"] .hero-model-fallback-logo-dark {
+  display: none;
+}
+
+html[data-theme="light"] .hero-model-fallback-logo-light {
+  display: block;
 }
 
 html[data-theme="light"] .help-visual-panel {

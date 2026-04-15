@@ -29,16 +29,32 @@
         <span class="mini-label help-mic-chip help-mic-chip-f"><%= t('page.help.quick.settings', 'Language, settings, billing') %></span>
 
         <div class="help-mic-shell">
-          <div class="help-mic-motion" data-help-mic-motion>
-            <model-viewer
-              src="/models/help-center-mic.glb"
-              shadow-intensity="1"
-              exposure="1.05"
-              environment-image="neutral"
-              interaction-prompt="none"
-              touch-action="pan-y"
-              style="width: 100%; height: 100%; background: transparent;"
-            ></model-viewer>
+          <div
+            class="help-mic-motion hero-model-shell hero-model-shell--help"
+            data-help-mic-motion
+            data-lazy-model
+            data-model-src="/models/help-center-mic.glb"
+            data-model-min-width="1280"
+            data-model-root-margin="120px"
+            data-model-aria-label="VicPods help center microphone"
+          >
+            <div class="hero-model-fallback" data-model-fallback aria-hidden="true">
+              <span class="hero-model-fallback-ring"></span>
+              <img
+                src="/images/logo/vicpods-icon-circle-dark.svg"
+                alt=""
+                class="hero-model-fallback-logo hero-model-fallback-logo-dark"
+                width="150"
+                height="150"
+              />
+              <img
+                src="/images/logo/vicpods-icon-circle-light.svg"
+                alt=""
+                class="hero-model-fallback-logo hero-model-fallback-logo-light"
+                width="150"
+                height="150"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -182,4 +198,4 @@
 </div>
 
 <script src="/javascripts/help-center.js" defer></script>
-<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<script src="/javascripts/lazy-hero-model.js" defer></script>

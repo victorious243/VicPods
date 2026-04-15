@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const session = require('express-session');
 const { MongoStore } = require('connect-mongo');
+const compression = require('compression');
 const helmet = require('helmet');
 
 const { connectDatabase } = require('./config/database');
@@ -37,6 +38,11 @@ const adminRouter = require('./routes/admin');
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = String(process.env.SESSION_SECRET || '').trim();
+const STATIC_CACHE = {
+  hour: 60 * 60,
+  day: 60 * 60 * 24,
+  week: 60 * 60 * 24 * 7,
+};
 const adminDashboardPath = (() => {
   const configuredPath = String(process.env.ADMIN_DASHBOARD_PATH || '/control-room-ops').trim();
   return configuredPath.startsWith('/') ? configuredPath : '/control-room-ops';
@@ -81,11 +87,45 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
+app.use(compression({
+  threshold: 1024,
+  filter(req, res) {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+
+    return compression.filter(req, res);
+  },
+}));
 app.use('/webhooks', webhooksRouter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  lastModified: true,
+  maxAge: isProduction ? STATIC_CACHE.day * 1000 : 0,
+  setHeaders(res, filePath) {
+    if (!isProduction) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+      return;
+    }
+
+    const extension = path.extname(filePath).toLowerCase();
+
+    if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.svg', '.ico', '.woff', '.woff2', '.glb', '.gltf'].includes(extension)) {
+      res.setHeader('Cache-Control', `public, max-age=${STATIC_CACHE.week}, stale-while-revalidate=${STATIC_CACHE.day}`);
+      return;
+    }
+
+    if (['.css', '.js'].includes(extension)) {
+      res.setHeader('Cache-Control', `public, max-age=${STATIC_CACHE.day}, stale-while-revalidate=${STATIC_CACHE.hour}`);
+      return;
+    }
+
+    res.setHeader('Cache-Control', `public, max-age=${STATIC_CACHE.hour}, stale-while-revalidate=${STATIC_CACHE.hour}`);
+  },
+}));
 
 const sessionConfig = {
   name: 'vicpods.sid',

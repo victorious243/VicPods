@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="<%= language || 'en' %>" data-theme="dark">
 <head>
+  <%
+    const currentView = typeof view === 'string' ? view : '';
+    const needsSettingsScript = currentView === 'settings/index';
+    const needsCreateScripts = currentView === 'create/single' || currentView === 'create/series';
+    const needsAiLoader = needsCreateScripts || currentView === 'kitchen/episode';
+    const needsEpisodeTools = currentView === 'studio/index' || currentView === 'kitchen/episode' || currentView === 'admin/dashboard';
+    const needsI18nUi = (language || 'en') !== 'en';
+  %>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="<%= csrfToken || '' %>" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/images/logo/vicpods-icon-circle-dark.svg" />
   <link rel="shortcut icon" href="/images/logo/vicpods-icon-circle-dark.svg" />
+  <link rel="dns-prefetch" href="//consent.cookiebot.com" />
+  <link rel="preconnect" href="https://consent.cookiebot.com" crossorigin />
   <title><%= title || 'VicPods' %></title>
   <meta name="description" content="<%= ((typeof metaDescription !== 'undefined') && metaDescription) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
   <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
@@ -64,49 +74,67 @@
       </div>
     </div>
     <%- include('../partials/help-chat') %>
-    <div id="ai-loader-overlay" class="ai-loader-overlay" hidden aria-hidden="true">
-      <div class="ai-loader-card" role="status" aria-live="polite" aria-atomic="true">
-        <div class="ai-loader-logo-wrap" aria-hidden="true">
-          <span class="ai-loader-ring"></span>
-          <img
-            src="/images/logo/vicpods-icon-circle-dark.svg"
-            alt=""
-            class="ai-loader-logo ai-loader-logo-dark"
-            width="58"
-            height="58"
-          />
-          <img
-            src="/images/logo/vicpods-icon-circle-light.svg"
-            alt=""
-            class="ai-loader-logo ai-loader-logo-light"
-            width="58"
-            height="58"
-          />
-        </div>
-        <h3>Chef AI is cooking your draft</h3>
-        <p data-ai-loader-status>Analyzing your episode context and goals.</p>
-        <div class="ai-loader-steps" aria-hidden="true">
-          <span class="ai-loader-step is-active">Context</span>
-          <span class="ai-loader-step">Tone</span>
-          <span class="ai-loader-step">Draft</span>
+    <% if (needsAiLoader) { %>
+      <div id="ai-loader-overlay" class="ai-loader-overlay" hidden aria-hidden="true">
+        <div class="ai-loader-card" role="status" aria-live="polite" aria-atomic="true">
+          <div class="ai-loader-logo-wrap" aria-hidden="true">
+            <span class="ai-loader-ring"></span>
+            <img
+              src="/images/logo/vicpods-icon-circle-dark.svg"
+              alt=""
+              class="ai-loader-logo ai-loader-logo-dark"
+              width="58"
+              height="58"
+            />
+            <img
+              src="/images/logo/vicpods-icon-circle-light.svg"
+              alt=""
+              class="ai-loader-logo ai-loader-logo-light"
+              width="58"
+              height="58"
+            />
+          </div>
+          <h3>Chef AI is cooking your draft</h3>
+          <p data-ai-loader-status>Analyzing your episode context and goals.</p>
+          <div class="ai-loader-steps" aria-hidden="true">
+            <span class="ai-loader-step is-active">Context</span>
+            <span class="ai-loader-step">Tone</span>
+            <span class="ai-loader-step">Draft</span>
+          </div>
         </div>
       </div>
-    </div>
+    <% } %>
 
     <%- include('../partials/onboarding') %>
   <% } %>
 
   <script src="/javascripts/theme.js" defer></script>
-  <script src="/javascripts/topbar.js" defer></script>
   <script src="/javascripts/csrf.js" defer></script>
-  <script src="/javascripts/settings.js" defer></script>
-  <script src="/javascripts/tone.js" defer></script>
-  <script src="/javascripts/create.js" defer></script>
-  <script src="/javascripts/ai-loading.js" defer></script>
-  <script src="/javascripts/onboarding.js" defer></script>
-  <script src="/javascripts/i18n-ui.js" defer></script>
-  <script src="/javascripts/help-chat.js" defer></script>
-  <script src="/javascripts/episode-tools.js" defer></script>
+  <% if (!authPage) { %>
+    <script src="/javascripts/topbar.js" defer></script>
+  <% } %>
+  <% if (needsSettingsScript) { %>
+    <script src="/javascripts/settings.js" defer></script>
+  <% } %>
+  <% if (needsCreateScripts) { %>
+    <script src="/javascripts/tone.js" defer></script>
+    <script src="/javascripts/create.js" defer></script>
+  <% } %>
+  <% if (needsAiLoader) { %>
+    <script src="/javascripts/ai-loading.js" defer></script>
+  <% } %>
+  <% if (showOnboarding) { %>
+    <script src="/javascripts/onboarding.js" defer></script>
+  <% } %>
+  <% if (needsI18nUi) { %>
+    <script src="/javascripts/i18n-ui.js" defer></script>
+  <% } %>
+  <% if (currentUser && !authPage) { %>
+    <script src="/javascripts/help-chat.js" defer></script>
+  <% } %>
+  <% if (needsEpisodeTools) { %>
+    <script src="/javascripts/episode-tools.js" defer></script>
+  <% } %>
   <script src="/javascripts/cookie-consent.js" defer></script>
 </body>
 </html>

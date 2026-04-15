@@ -4,11 +4,13 @@ const aboutController = require('../controllers/aboutController');
 const helpController = require('../controllers/helpController');
 const legalController = require('../controllers/legalController');
 const landingController = require('../controllers/landingController');
+const seoController = require('../controllers/seoController');
 const shareController = require('../controllers/shareController');
 const settingsController = require('../controllers/settingsController');
 const { requireGuest } = require('../middleware/auth');
 
 const router = express.Router();
+router.get('/robots.txt', seoController.showRobotsTxt);
 router.post('/language', settingsController.updateLanguagePreference);
 router.get('/oauth2callback', requireGuest, authController.googleCallback);
 router.get('/lab', landingController.showLanding);
