@@ -21,6 +21,45 @@ const PAID_PLANS = ['pro', 'premium'];
 const ACTIVE_PAID_STATUSES = ['active', 'trialing'];
 const PAYMENT_RISK_STATUSES = ['past_due', 'unpaid'];
 const GRANTED_ADMIN_OUTCOMES = ['granted', 'granted_dev'];
+const ANALYTICS_TIME_ZONE = String(process.env.ADMIN_ANALYTICS_TIMEZONE || process.env.TZ || 'Europe/Dublin').trim() || 'Europe/Dublin';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+const dayKeyFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ANALYTICS_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+const dayLabelFormatter = new Intl.DateTimeFormat('en-IE', {
+  timeZone: ANALYTICS_TIME_ZONE,
+  month: 'short',
+  day: 'numeric',
+});
+
+const dayFullLabelFormatter = new Intl.DateTimeFormat('en-IE', {
+  timeZone: ANALYTICS_TIME_ZONE,
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
+const hourKeyFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ANALYTICS_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  hourCycle: 'h23',
+});
+
+const hourLabelFormatter = new Intl.DateTimeFormat('en-IE', {
+  timeZone: ANALYTICS_TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
 
 function buildCountMap(rows, seed) {
   const output = { ...seed };
@@ -43,12 +82,154 @@ function formatCreatorStatusLabel(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function formatterPartsToObject(formatter, date) {
+  return formatter.formatToParts(new Date(date)).reduce((parts, part) => {
+    if (part.type !== 'literal') {
+      parts[part.type] = part.value;
+    }
+    return parts;
+  }, {});
+}
+
+function formatDayKey(date) {
+  const parts = formatterPartsToObject(dayKeyFormatter, date);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function formatHourKey(date) {
+  const parts = formatterPartsToObject(hourKeyFormatter, date);
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}`;
+}
+
+function formatDelta(current, previous) {
+  if (!previous) {
+    return current > 0 ? '+100%' : '0%';
+  }
+
+  const delta = ((current - previous) / previous) * 100;
+  const rounded = Math.round(delta);
+  return `${rounded > 0 ? '+' : ''}${rounded}%`;
+}
+
+function buildTrafficChart(pageViewEvents, now) {
+  const dailyBuckets = [];
+  const dailyBucketMap = new Map();
+
+  for (let offset = 13; offset >= 0; offset -= 1) {
+    const date = new Date(now.getTime() - (offset * DAY_MS));
+    const key = formatDayKey(date);
+    const bucket = {
+      key,
+      shortLabel: dayLabelFormatter.format(date),
+      fullLabel: dayFullLabelFormatter.format(date),
+      pageViews: 0,
+      visitors: new Set(),
+    };
+    dailyBuckets.push(bucket);
+    dailyBucketMap.set(key, bucket);
+  }
+
+  const hourlyBuckets = [];
+  const hourlyBucketMap = new Map();
+
+  for (let offset = 23; offset >= 0; offset -= 1) {
+    const date = new Date(now.getTime() - (offset * HOUR_MS));
+    const key = formatHourKey(date);
+    const bucket = {
+      key,
+      shortLabel: hourLabelFormatter.format(date),
+      pageViews: 0,
+    };
+    hourlyBuckets.push(bucket);
+    hourlyBucketMap.set(key, bucket);
+  }
+
+  const last24hStart = now.getTime() - DAY_MS;
+  const previous24hStart = now.getTime() - (2 * DAY_MS);
+  let previous24hPageViews = 0;
+
+  (pageViewEvents || []).forEach((event) => {
+    const createdAt = new Date(event.createdAt);
+    const visitorId = String(event.visitorId || '').trim();
+    const dayBucket = dailyBucketMap.get(formatDayKey(createdAt));
+
+    if (dayBucket) {
+      dayBucket.pageViews += 1;
+      if (visitorId) {
+        dayBucket.visitors.add(visitorId);
+      }
+    }
+
+    const hourBucket = hourlyBucketMap.get(formatHourKey(createdAt));
+    if (hourBucket) {
+      hourBucket.pageViews += 1;
+    }
+
+    const createdAtMs = createdAt.getTime();
+    if (createdAtMs >= previous24hStart && createdAtMs < last24hStart) {
+      previous24hPageViews += 1;
+    }
+  });
+
+  const dailyMaxPageViews = Math.max(...dailyBuckets.map((bucket) => bucket.pageViews), 1);
+  const dailyMaxVisitors = Math.max(...dailyBuckets.map((bucket) => bucket.visitors.size), 1);
+  const hourlyMaxPageViews = Math.max(...hourlyBuckets.map((bucket) => bucket.pageViews), 1);
+  const dailyPageViewTotal = dailyBuckets.reduce((sum, bucket) => sum + bucket.pageViews, 0);
+  const averageDailyPageViews = Math.round(dailyPageViewTotal / dailyBuckets.length);
+  const busiestDay = dailyBuckets.reduce((best, bucket) => (
+    !best || bucket.pageViews > best.pageViews ? bucket : best
+  ), null);
+
+  return {
+    timeZone: ANALYTICS_TIME_ZONE,
+    last24hDelta: formatDelta(hourlyBuckets.reduce((sum, bucket) => sum + bucket.pageViews, 0), previous24hPageViews),
+    previous24hPageViews,
+    averageDailyPageViews,
+    busiestDay: busiestDay
+      ? {
+        label: busiestDay.fullLabel,
+        pageViews: busiestDay.pageViews,
+      }
+      : null,
+    dailyPageViews: dailyBuckets.map((bucket) => ({
+      key: bucket.key,
+      label: bucket.shortLabel,
+      fullLabel: bucket.fullLabel,
+      value: bucket.pageViews,
+      height: bucket.pageViews > 0
+        ? Math.max(8, Math.round((bucket.pageViews / dailyMaxPageViews) * 100))
+        : 0,
+      isToday: bucket.key === formatDayKey(now),
+    })),
+    dailyVisitors: dailyBuckets.map((bucket) => ({
+      key: bucket.key,
+      label: bucket.shortLabel,
+      fullLabel: bucket.fullLabel,
+      value: bucket.visitors.size,
+      height: bucket.visitors.size > 0
+        ? Math.max(8, Math.round((bucket.visitors.size / dailyMaxVisitors) * 100))
+        : 0,
+      isToday: bucket.key === formatDayKey(now),
+    })),
+    hourlyPageViews: hourlyBuckets.map((bucket, index) => ({
+      key: bucket.key,
+      label: index % 4 === 0 ? bucket.shortLabel : '',
+      fullLabel: bucket.shortLabel,
+      value: bucket.pageViews,
+      height: bucket.pageViews > 0
+        ? Math.max(6, Math.round((bucket.pageViews / hourlyMaxPageViews) * 100))
+        : 0,
+    })),
+  };
+}
+
 async function showDashboard(req, res, next) {
   try {
     const now = new Date();
     const last24h = new Date(now.getTime() - (24 * 60 * 60 * 1000));
     const last7d = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
     const last30d = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const last14d = new Date(now.getTime() - (14 * DAY_MS));
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
 
@@ -88,6 +269,7 @@ async function showDashboard(req, res, next) {
       billingViews7d,
       checkoutStarts7d,
       checkoutCompleted7d,
+      humanPageViewEvents14d,
       totalPreviewLeads,
       recentPreviewLeads7d,
       previewLeadBreakdownRaw,
@@ -215,6 +397,13 @@ async function showDashboard(req, res, next) {
         eventType: 'billing_checkout_completed',
         createdAt: { $gte: last7d },
       })),
+      AppActivityEvent.find(buildHumanActivityMatch({
+        eventType: 'page_view',
+        createdAt: { $gte: last14d },
+      }))
+        .select('createdAt visitorId')
+        .sort({ createdAt: 1 })
+        .lean(),
       PublicPreviewLead.countDocuments({}),
       PublicPreviewLead.countDocuments({
         lastSavedAt: { $gte: last7d },
@@ -338,6 +527,7 @@ async function showDashboard(req, res, next) {
       signups: 0,
       paid: 0,
     });
+    const trafficChart = buildTrafficChart(humanPageViewEvents14d, now);
 
     const signupEmailList = recentUsers
       .map((user) => String(user.email || '').trim())
@@ -407,6 +597,7 @@ async function showDashboard(req, res, next) {
         userDirectory,
         signupEmailList,
         creatorPartners,
+        trafficChart,
         recentPreviewLeads,
         recentEpisodes,
         recentIdeas,

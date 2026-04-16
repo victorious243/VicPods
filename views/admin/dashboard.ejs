@@ -94,6 +94,98 @@
   </article>
 </section>
 
+<section class="card admin-traffic-shell">
+  <div class="section-head">
+    <div>
+      <h3>Human traffic trend</h3>
+      <p class="mini-note">Bars are grouped in <%= trafficChart.timeZone %> time so you can track actual movement instead of reading raw events.</p>
+    </div>
+    <span class="mini-label">Last 14 days + last 24 hours</span>
+  </div>
+
+  <div class="admin-traffic-summary">
+    <article class="card admin-traffic-summary-card">
+      <span class="mini-label">Last 24h vs previous 24h</span>
+      <strong><%= trafficChart.last24hDelta %></strong>
+      <p class="mini-note">Previous 24h page views: <%= trafficChart.previous24hPageViews %></p>
+    </article>
+    <article class="card admin-traffic-summary-card">
+      <span class="mini-label">14-day daily average</span>
+      <strong><%= trafficChart.averageDailyPageViews %></strong>
+      <p class="mini-note">Human page views per day</p>
+    </article>
+    <article class="card admin-traffic-summary-card">
+      <span class="mini-label">Busiest day</span>
+      <strong><%= trafficChart.busiestDay ? trafficChart.busiestDay.pageViews : 0 %></strong>
+      <p class="mini-note"><%= trafficChart.busiestDay ? trafficChart.busiestDay.label : 'No data yet' %></p>
+    </article>
+  </div>
+
+  <div class="admin-chart-grid">
+    <article class="card admin-chart-panel">
+      <div class="admin-chart-head">
+        <div>
+          <h4>Daily page views</h4>
+          <p class="mini-note">Human traffic only</p>
+        </div>
+        <span class="mini-label">14 days</span>
+      </div>
+      <div class="admin-bar-chart">
+        <% trafficChart.dailyPageViews.forEach((point) => { %>
+          <div class="admin-bar-chart-column">
+            <div class="admin-bar-chart-track" title="<%= `${point.fullLabel}: ${point.value} page views` %>">
+              <span class="admin-bar-chart-bar <%= point.isToday ? 'is-today' : '' %>" style="height: <%= point.height %>%"></span>
+            </div>
+            <span class="admin-bar-chart-value"><%= point.value %></span>
+            <span class="admin-bar-chart-label"><%= point.label %></span>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+
+    <article class="card admin-chart-panel">
+      <div class="admin-chart-head">
+        <div>
+          <h4>Daily unique visitors</h4>
+          <p class="mini-note">Visitors seen through page views</p>
+        </div>
+        <span class="mini-label">14 days</span>
+      </div>
+      <div class="admin-bar-chart admin-bar-chart-visitors">
+        <% trafficChart.dailyVisitors.forEach((point) => { %>
+          <div class="admin-bar-chart-column">
+            <div class="admin-bar-chart-track" title="<%= `${point.fullLabel}: ${point.value} visitors` %>">
+              <span class="admin-bar-chart-bar admin-bar-chart-bar-alt <%= point.isToday ? 'is-today' : '' %>" style="height: <%= point.height %>%"></span>
+            </div>
+            <span class="admin-bar-chart-value"><%= point.value %></span>
+            <span class="admin-bar-chart-label"><%= point.label %></span>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+  </div>
+
+  <article class="card admin-chart-panel admin-chart-panel-wide">
+    <div class="admin-chart-head">
+      <div>
+        <h4>Hourly page views</h4>
+        <p class="mini-note">Rolling last 24 hours</p>
+      </div>
+      <span class="mini-label">24 hours</span>
+    </div>
+    <div class="admin-hour-chart">
+      <% trafficChart.hourlyPageViews.forEach((point) => { %>
+        <div class="admin-hour-chart-column">
+          <div class="admin-hour-chart-track" title="<%= `${point.fullLabel}: ${point.value} page views` %>">
+            <span class="admin-hour-chart-bar" style="height: <%= point.height %>%"></span>
+          </div>
+          <span class="admin-hour-chart-label"><%= point.label %></span>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+</section>
+
 <section class="card-grid stats-grid">
   <article class="card stat-card">
     <p>Creator partners</p>

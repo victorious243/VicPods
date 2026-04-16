@@ -67,7 +67,6 @@ const creatorPartnerSchema = new mongoose.Schema(
       default: null,
       trim: true,
       maxlength: 18,
-      index: true,
     },
     assignedUserId: {
       type: mongoose.Schema.Types.ObjectId,
