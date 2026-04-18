@@ -994,6 +994,163 @@ html[data-theme="light"] .auth-scene-rail-copy span {
   overflow-wrap: anywhere;
 }
 
+.guides-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.guide-card,
+.guide-section,
+.guide-side-card,
+.guide-article-hero {
+  display: grid;
+  gap: 14px;
+}
+
+.guide-card-head,
+.guide-article-meta,
+.guide-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guide-card-intent,
+.guide-related-link span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.guide-card h2,
+.guide-card p,
+.guide-section h2,
+.guide-section p,
+.guide-side-card h3,
+.guide-side-card p {
+  margin: 0;
+}
+
+.guide-card h2 a,
+.guide-related-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.guide-card h2 a:hover,
+.guide-related-link:hover strong {
+  color: var(--primary-2);
+}
+
+.guide-article-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.guide-article-main,
+.guide-article-side {
+  display: grid;
+  gap: 16px;
+}
+
+.guide-article-lead {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 1.05rem;
+  color: var(--text-soft);
+}
+
+.guide-section-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border));
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.guide-bullet-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--text-soft);
+}
+
+.guide-related-list {
+  display: grid;
+  gap: 10px;
+}
+
+.guide-related-link {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.05));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    color-mix(in srgb, var(--surface) 94%, rgba(255, 255, 255, 0.02));
+}
+
+.admin-seo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-seo-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-seo-table {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-seo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, auto);
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.05));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    color-mix(in srgb, var(--surface) 94%, rgba(255, 255, 255, 0.02));
+}
+
+.admin-seo-row h4,
+.admin-seo-row p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-seo-metric {
+  text-align: right;
+}
+
+.admin-seo-metric strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.admin-seo-metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .admin-traffic-shell {
   display: grid;
   gap: 16px;
@@ -5557,9 +5714,20 @@ html[data-theme='light'] .onboarding-backdrop {
 }
 
 @media (max-width: 900px) {
+  .guides-grid,
+  .guide-article-grid,
+  .admin-seo-grid,
   .admin-traffic-summary,
   .admin-chart-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-seo-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-seo-metric {
+    text-align: left;
   }
 
   .admin-bar-chart {

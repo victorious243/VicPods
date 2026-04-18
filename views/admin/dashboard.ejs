@@ -186,6 +186,43 @@
   </article>
 </section>
 
+<section class="card admin-seo-panel">
+  <div class="section-head">
+    <div>
+      <h3>SEO content report</h3>
+      <p class="mini-note">30-day performance for indexed public pages and guides. Organic views are based on search-engine referrers. Signup metrics are tied to the landing page cookie captured before registration.</p>
+    </div>
+    <span class="mini-label">Search + signup view</span>
+  </div>
+
+  <% if (!seoContentReport.length) { %>
+    <p class="empty-state">No SEO content activity recorded yet.</p>
+  <% } else { %>
+    <div class="admin-seo-table">
+      <% seoContentReport.forEach((item) => { %>
+        <div class="admin-seo-row">
+          <div>
+            <h4><%= item.label %></h4>
+            <p class="mini-note"><%= item.path %></p>
+          </div>
+          <div class="admin-seo-metric">
+            <strong><%= item.pageViews %></strong>
+            <span>All views</span>
+          </div>
+          <div class="admin-seo-metric">
+            <strong><%= item.organicViews %></strong>
+            <span>Search views</span>
+          </div>
+          <div class="admin-seo-metric">
+            <strong><%= item.signupStarts %> / <%= item.signupCompleted %></strong>
+            <span>Starts / completed</span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
 <section class="card-grid stats-grid">
   <article class="card stat-card">
     <p>Creator partners</p>

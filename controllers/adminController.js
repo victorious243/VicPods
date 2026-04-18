@@ -15,6 +15,8 @@ const {
 } = require('../services/marketing/creatorPartnerService');
 const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
 const { buildHumanActivityMatch } = require('../services/analytics/trafficQualityService');
+const { SEARCH_ENGINE_REGEX, SEO_CONTENT_PATH_REGEX } = require('../services/analytics/contentAttributionService');
+const { getSeoGuidePathLabelMap } = require('../services/seo/guideLibraryService');
 const { renderPage } = require('../utils/render');
 
 const PAID_PLANS = ['pro', 'premium'];
@@ -223,6 +225,68 @@ function buildTrafficChart(pageViewEvents, now) {
   };
 }
 
+function buildSeoContentReport({ pageViews = [], organicViews = [], signupStarts = [], signupCompleted = [] }) {
+  const pathLabels = getSeoGuidePathLabelMap();
+  const report = new Map();
+
+  function ensureRow(path) {
+    const normalizedPath = String(path || '').trim();
+    if (!normalizedPath) {
+      return null;
+    }
+
+    if (!report.has(normalizedPath)) {
+      report.set(normalizedPath, {
+        path: normalizedPath,
+        label: pathLabels[normalizedPath] || normalizedPath,
+        pageViews: 0,
+        organicViews: 0,
+        signupStarts: 0,
+        signupCompleted: 0,
+      });
+    }
+
+    return report.get(normalizedPath);
+  }
+
+  pageViews.forEach((row) => {
+    const entry = ensureRow(row._id);
+    if (entry) {
+      entry.pageViews = Number(row.count || row.pageViews || 0);
+    }
+  });
+
+  organicViews.forEach((row) => {
+    const entry = ensureRow(row._id);
+    if (entry) {
+      entry.organicViews = Number(row.count || row.pageViews || 0);
+    }
+  });
+
+  signupStarts.forEach((row) => {
+    const entry = ensureRow(row._id);
+    if (entry) {
+      entry.signupStarts = Number(row.count || 0);
+    }
+  });
+
+  signupCompleted.forEach((row) => {
+    const entry = ensureRow(row._id);
+    if (entry) {
+      entry.signupCompleted = Number(row.count || 0);
+    }
+  });
+
+  return Array.from(report.values())
+    .sort((left, right) => (
+      right.organicViews - left.organicViews
+      || right.pageViews - left.pageViews
+      || right.signupStarts - left.signupStarts
+      || left.path.localeCompare(right.path)
+    ))
+    .slice(0, 12);
+}
+
 async function showDashboard(req, res, next) {
   try {
     const now = new Date();
@@ -270,6 +334,10 @@ async function showDashboard(req, res, next) {
       checkoutStarts7d,
       checkoutCompleted7d,
       humanPageViewEvents14d,
+      seoPageViews30dRaw,
+      seoOrganicPageViews30dRaw,
+      seoSignupStarts30dRaw,
+      seoSignupCompleted30dRaw,
       totalPreviewLeads,
       recentPreviewLeads7d,
       previewLeadBreakdownRaw,
@@ -404,6 +472,67 @@ async function showDashboard(req, res, next) {
         .select('createdAt visitorId')
         .sort({ createdAt: 1 })
         .lean(),
+      AppActivityEvent.aggregate([
+        {
+          $match: buildHumanActivityMatch({
+            eventType: 'page_view',
+            createdAt: { $gte: last30d },
+            requestPath: SEO_CONTENT_PATH_REGEX,
+          }),
+        },
+        {
+          $group: {
+            _id: '$requestPath',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      AppActivityEvent.aggregate([
+        {
+          $match: buildHumanActivityMatch({
+            eventType: 'page_view',
+            createdAt: { $gte: last30d },
+            requestPath: SEO_CONTENT_PATH_REGEX,
+            referer: SEARCH_ENGINE_REGEX,
+          }),
+        },
+        {
+          $group: {
+            _id: '$requestPath',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      AppActivityEvent.aggregate([
+        {
+          $match: buildHumanActivityMatch({
+            eventType: 'signup_started',
+            createdAt: { $gte: last30d },
+            'metadata.landingPath': SEO_CONTENT_PATH_REGEX,
+          }),
+        },
+        {
+          $group: {
+            _id: '$metadata.landingPath',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      AppActivityEvent.aggregate([
+        {
+          $match: buildHumanActivityMatch({
+            eventType: 'signup_completed',
+            createdAt: { $gte: last30d },
+            'metadata.landingPath': SEO_CONTENT_PATH_REGEX,
+          }),
+        },
+        {
+          $group: {
+            _id: '$metadata.landingPath',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
       PublicPreviewLead.countDocuments({}),
       PublicPreviewLead.countDocuments({
         lastSavedAt: { $gte: last7d },
@@ -528,6 +657,12 @@ async function showDashboard(req, res, next) {
       paid: 0,
     });
     const trafficChart = buildTrafficChart(humanPageViewEvents14d, now);
+    const seoContentReport = buildSeoContentReport({
+      pageViews: seoPageViews30dRaw,
+      organicViews: seoOrganicPageViews30dRaw,
+      signupStarts: seoSignupStarts30dRaw,
+      signupCompleted: seoSignupCompleted30dRaw,
+    });
 
     const signupEmailList = recentUsers
       .map((user) => String(user.email || '').trim())
@@ -598,6 +733,7 @@ async function showDashboard(req, res, next) {
         signupEmailList,
         creatorPartners,
         trafficChart,
+        seoContentReport,
         recentPreviewLeads,
         recentEpisodes,
         recentIdeas,

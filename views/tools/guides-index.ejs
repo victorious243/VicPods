@@ -1,0 +1,31 @@
+<div class="help-page-shell landing-page-shell guides-shell">
+  <section class="card tool-hero guides-hero" data-help-reveal>
+    <div class="tool-hero-copy">
+      <span class="landing-kicker">Podcast SEO guides</span>
+      <h1><%= pageTitle %></h1>
+      <p class="landing-lead"><%= subtitle %></p>
+      <div class="inline-actions">
+        <a href="/#idea-to-episode-generator" class="btn btn-primary">Try the generator</a>
+        <a href="/podcast-idea-generator" class="btn btn-secondary">Generate ideas</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="guides-grid" data-help-reveal>
+    <% guides.forEach((guide) => { %>
+      <article class="card guide-card">
+        <div class="guide-card-head">
+          <span class="mini-label"><%= guide.readingTime %></span>
+          <span class="guide-card-intent"><%= guide.searchIntent %></span>
+        </div>
+        <h2><a href="<%= guide.path %>"><%= guide.title %></a></h2>
+        <p><%= guide.description %></p>
+        <div class="inline-actions">
+          <a href="<%= guide.path %>" class="btn btn-primary">Read guide</a>
+        </div>
+      </article>
+    <% }) %>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>

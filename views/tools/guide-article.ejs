@@ -1,0 +1,81 @@
+<div class="help-page-shell landing-page-shell guide-article-shell">
+  <article class="card guide-article-hero" data-help-reveal>
+    <div class="guide-article-meta">
+      <span class="landing-kicker">Podcast guide</span>
+      <span class="mini-label"><%= guide.readingTime %></span>
+      <span class="mini-label"><%= guide.searchIntent %></span>
+    </div>
+    <h1><%= guide.title %></h1>
+    <p class="guide-article-lead"><%= guide.subtitle %></p>
+    <p class="mini-note"><%= guide.intro %></p>
+    <div class="inline-actions">
+      <a href="/#idea-to-episode-generator" class="btn btn-primary">Generate Episode</a>
+      <a href="/guides" class="btn btn-secondary">All guides</a>
+    </div>
+  </article>
+
+  <div class="guide-article-grid">
+    <div class="guide-article-main">
+      <% guide.sections.forEach((section, index) => { %>
+        <section class="card guide-section" data-help-reveal>
+          <div class="guide-section-head">
+            <span class="guide-section-index"><%= String(index + 1).padStart(2, '0') %></span>
+            <h2><%= section.title %></h2>
+          </div>
+          <p><%= section.body %></p>
+          <% if (section.bullets && section.bullets.length) { %>
+            <ul class="guide-bullet-list">
+              <% section.bullets.forEach((item) => { %>
+                <li><%= item %></li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+      <% }) %>
+
+      <% if (guide.faq && guide.faq.length) { %>
+        <section class="card guide-faq-shell" data-help-reveal>
+          <div class="section-head">
+            <h2>Common questions</h2>
+          </div>
+          <div class="help-faq-stack">
+            <% guide.faq.forEach((item, index) => { %>
+              <details class="help-faq-item" <%= index === 0 ? 'open' : '' %>>
+                <summary><%= item.question %></summary>
+                <p><%= item.answer %></p>
+              </details>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
+    </div>
+
+    <aside class="guide-article-side">
+      <article class="card guide-side-card" data-help-reveal>
+        <span class="mini-label">Use VicPods for this</span>
+        <h3>Turn the guide into a real episode workflow</h3>
+        <p>Use the public generator to move from the topic to a stronger title, hook, and outline before you record.</p>
+        <div class="inline-actions">
+          <a href="/#idea-to-episode-generator" class="btn btn-primary">Try generator</a>
+          <a href="/auth/register" class="btn btn-ghost">Create account</a>
+        </div>
+      </article>
+
+      <% if (relatedGuides.length) { %>
+        <article class="card guide-side-card" data-help-reveal>
+          <span class="mini-label">Related guides</span>
+          <div class="guide-related-list">
+            <% relatedGuides.forEach((item) => { %>
+              <a href="<%= item.path %>" class="guide-related-link">
+                <strong><%= item.title %></strong>
+                <span><%= item.readingTime %></span>
+              </a>
+            <% }) %>
+          </div>
+        </article>
+      <% } %>
+    </aside>
+  </div>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>

@@ -13,6 +13,7 @@ const {
   handleGoogleCallback,
 } = require('../services/auth/googleOidcService');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
+const { getLandingPathFromRequest } = require('../services/analytics/contentAttributionService');
 const {
   shouldRequireNewUserMfa,
   issueMfaPin,
@@ -198,6 +199,7 @@ function showMfa(req, res) {
 
 async function register(req, res, next) {
   try {
+    const landingPath = getLandingPathFromRequest(req);
     const result = await registerUser({
       ...req.body,
       acceptedTerms: req.body.acceptTerms === 'on',
@@ -213,7 +215,7 @@ async function register(req, res, next) {
       eventType: 'signup_started',
       userEmail: result.email || result.user?.email || req.body.email,
       authProvider: 'local',
-      metadata: { channel: 'web' },
+      metadata: { channel: 'web', landingPath },
     });
     req.flash('success', message);
     return res.redirect(`/auth/verify?email=${encodeURIComponent(result.email || result.user?.email || req.body.email)}`);
@@ -305,6 +307,7 @@ async function resetPassword(req, res, next) {
 
 async function verify(req, res, next) {
   try {
+    const landingPath = getLandingPathFromRequest(req);
     const user = await verifyEmailPin({
       email: req.body.email,
       pin: req.body.pin,
@@ -315,7 +318,7 @@ async function verify(req, res, next) {
       eventType: 'signup_completed',
       user,
       authProvider: user.authProvider,
-      metadata: { channel: 'web' },
+      metadata: { channel: 'web', landingPath },
     });
     req.flash('success', 'Email verified. Welcome to your Studio.');
     return res.redirect('/studio');

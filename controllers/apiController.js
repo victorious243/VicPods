@@ -15,6 +15,7 @@ const {
   getDailyLimitForUser,
 } = require('../services/limitService');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
+const { getLandingPathFromRequest } = require('../services/analytics/contentAttributionService');
 const { getReferralBonusCredits } = require('../services/marketing/referralService');
 const Episode = require('../models/Episode');
 const Series = require('../models/Series');
@@ -206,6 +207,7 @@ function episodeStatus(value) {
 
 async function register(req, res) {
   try {
+    const landingPath = getLandingPathFromRequest(req);
     const verificationResult = await registerUser({
       name: req.body?.displayName || req.body?.name,
       email: req.body?.email,
@@ -219,7 +221,7 @@ async function register(req, res) {
       eventType: 'signup_started',
       userEmail: verificationResult.email || req.body?.email,
       authProvider: 'local',
-      metadata: { channel: 'api' },
+      metadata: { channel: 'api', landingPath },
     });
 
     return res.status(202).json({
@@ -262,6 +264,7 @@ async function login(req, res) {
 
 async function verifyRegistration(req, res) {
   try {
+    const landingPath = getLandingPathFromRequest(req);
     const user = await verifyEmailPin({
       email: req.body?.email,
       pin: req.body?.pin,
@@ -272,7 +275,7 @@ async function verifyRegistration(req, res) {
       eventType: 'signup_completed',
       user,
       authProvider: user.authProvider,
-      metadata: { channel: 'api' },
+      metadata: { channel: 'api', landingPath },
     });
 
     return res.json({

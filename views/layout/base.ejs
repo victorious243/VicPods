@@ -8,6 +8,9 @@
     const needsAiLoader = needsCreateScripts || currentView === 'kitchen/episode';
     const needsEpisodeTools = currentView === 'studio/index' || currentView === 'kitchen/episode' || currentView === 'admin/dashboard';
     const needsI18nUi = (language || 'en') !== 'en';
+    const resolvedMetaRobots = ((typeof metaRobots !== 'undefined') && metaRobots)
+      ? metaRobots
+      : (((typeof publicShell !== 'undefined') && publicShell) ? 'index,follow' : 'noindex,follow');
   %>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,21 +21,33 @@
   <link rel="preconnect" href="https://consent.cookiebot.com" crossorigin />
   <title><%= title || 'VicPods' %></title>
   <meta name="description" content="<%= ((typeof metaDescription !== 'undefined') && metaDescription) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
+  <meta name="robots" content="<%= resolvedMetaRobots %>" />
   <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
     <link rel="canonical" href="<%= canonicalUrl %>" />
   <% } %>
-  <% if ((typeof metaRobots !== 'undefined') && metaRobots) { %>
-    <meta name="robots" content="<%= metaRobots %>" />
-  <% } %>
+  <meta property="og:site_name" content="VicPods" />
+  <meta property="og:locale" content="<%= (language || 'en').toLowerCase() === 'es' ? 'es_ES' : ((language || 'en').toLowerCase() === 'pt' ? 'pt_PT' : 'en_GB') %>" />
   <meta property="og:title" content="<%= ((typeof ogTitle !== 'undefined') && ogTitle) || title || 'VicPods' %>" />
   <meta property="og:description" content="<%= ((typeof ogDescription !== 'undefined') && ogDescription) || (((typeof metaDescription !== 'undefined') && metaDescription)) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
   <meta property="og:type" content="<%= ((typeof ogType !== 'undefined') && ogType) || 'website' %>" />
   <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
     <meta property="og:url" content="<%= canonicalUrl %>" />
   <% } %>
+  <% if ((typeof ogImage !== 'undefined') && ogImage) { %>
+    <meta property="og:image" content="<%= ogImage %>" />
+  <% } %>
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="<%= ((typeof ogTitle !== 'undefined') && ogTitle) || title || 'VicPods' %>" />
   <meta name="twitter:description" content="<%= ((typeof ogDescription !== 'undefined') && ogDescription) || (((typeof metaDescription !== 'undefined') && metaDescription)) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
+  <% if ((typeof twitterImage !== 'undefined') && twitterImage) { %>
+    <meta name="twitter:image" content="<%= twitterImage %>" />
+  <% } %>
+  <% if ((typeof structuredData !== 'undefined') && structuredData) { %>
+    <% const seoStructuredData = Array.isArray(structuredData) ? structuredData : [structuredData]; %>
+    <% seoStructuredData.filter(Boolean).forEach((item) => { %>
+      <script type="application/ld+json"><%- JSON.stringify(item) %></script>
+    <% }) %>
+  <% } %>
   <script>
     (function initTheme() {
       var serverDefault = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser.themePreference) ? currentUser.themePreference : "dark" %>';

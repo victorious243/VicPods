@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
+const { setLandingPathCookie } = require('../services/analytics/contentAttributionService');
 
 const VISITOR_COOKIE_NAME = 'vicpods_vid';
 const VISITOR_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 90;
@@ -48,6 +49,10 @@ function shouldTrackPageView(req, res) {
 }
 
 function trackPageViews(req, res, next) {
+  if (req.method === 'GET') {
+    setLandingPathCookie(req, res);
+  }
+
   res.once('finish', () => {
     if (!shouldTrackPageView(req, res)) {
       return;
