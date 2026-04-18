@@ -24,6 +24,10 @@ const {
 const { AppError } = require('../utils/errors');
 const { renderPage } = require('../utils/render');
 
+const AUTH_PAGE_SEO = {
+  metaRobots: 'noindex,follow',
+};
+
 function getProviderErrorMessage(error, fallbackMessage) {
   const providerMessage = String(
     (error && (error.error_description || error.error || error.message)) || ''
@@ -114,6 +118,7 @@ function showRegister(req, res) {
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
       pendingReferralCode: res.locals.pendingReferralCode || '',
+      ...AUTH_PAGE_SEO,
     },
   });
 }
@@ -134,6 +139,7 @@ function showLogin(req, res) {
       authShellClass: 'auth-shell-premium',
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
+      ...AUTH_PAGE_SEO,
     },
   });
 }
@@ -147,6 +153,7 @@ function showForgotPassword(req, res) {
     authPage: true,
     data: {
       email: String(req.query.email || '').trim(),
+      ...AUTH_PAGE_SEO,
     },
   });
 }
@@ -160,6 +167,7 @@ function showVerify(req, res) {
     authPage: true,
     data: {
       email: String(req.query.email || '').trim(),
+      ...AUTH_PAGE_SEO,
     },
   });
 }
@@ -173,6 +181,7 @@ function showResetPassword(req, res) {
     authPage: true,
     data: {
       token: String(req.query.token || '').trim(),
+      ...AUTH_PAGE_SEO,
     },
   });
 }
@@ -193,6 +202,7 @@ function showMfa(req, res) {
     authPage: true,
     data: {
       maskedEmail: maskEmail(String(req.session.pendingMfaEmail || req.query.email || '').trim()),
+      ...AUTH_PAGE_SEO,
     },
   });
 }

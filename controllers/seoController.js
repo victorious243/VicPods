@@ -16,7 +16,6 @@ function showRobotsTxt(req, res) {
     'User-agent: *',
     'Allow: /',
     'Disallow: /api/',
-    'Disallow: /auth/',
     'Disallow: /ai/',
     'Disallow: /billing/',
     'Disallow: /studio/',

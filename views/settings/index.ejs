@@ -258,7 +258,7 @@
         title: 'Pro',
         price: pricing.pro,
         summary: 'Sharper production flow for serious weekly shows.',
-        note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.proStandard}.`,
+        note: '',
         features: [
           '50 AI generations each day',
           'Continuity refresh + stronger series planning',
@@ -272,7 +272,7 @@
         title: 'Premium',
         price: pricing.premium,
         summary: 'Full VicPods suite with maximum AI and export depth.',
-        note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.premiumStandard}.`,
+        note: '',
         features: [
           'Unlimited AI generations',
           'Tone Fix + Voice Persona controls',
@@ -331,15 +331,6 @@
     </aside>
   </section>
 
-  <section class="card billing-launch-band">
-    <div>
-      <span class="billing-kicker">Founding Launch Pricing</span>
-      <h3>Premium tools, launch-window pricing</h3>
-      <p>Lock in March 2026 pricing while VicPods sharpens ready-to-record planning, release readiness, show notes, and export workflows.</p>
-    </div>
-    <span class="mini-label">through <%= pricing.foundingDeadlineLabel %></span>
-  </section>
-
   <section class="card-grid plan-grid premium-plan-grid">
     <% billingPlans.forEach((plan) => { %>
       <% const planIsCurrent = billing.effectivePlan === plan.key && (plan.key === 'free' || paidActive); %>
@@ -363,7 +354,9 @@
 
         <p class="price premium-price"><%= plan.price %></p>
         <p class="premium-plan-tagline"><%= plan.summary %></p>
-        <p class="mini-note"><%= plan.note %></p>
+        <% if (plan.note) { %>
+          <p class="mini-note"><%= plan.note %></p>
+        <% } %>
 
         <ul class="premium-plan-feature-list">
           <% plan.features.forEach((feature) => { %>

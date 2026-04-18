@@ -124,10 +124,6 @@ function getIndexablePublicPages() {
     { path: '/guides', changefreq: 'weekly', priority: '0.9' },
     { path: '/about', changefreq: 'monthly', priority: '0.7' },
     { path: '/help', changefreq: 'weekly', priority: '0.8' },
-    { path: '/terms', changefreq: 'yearly', priority: '0.4' },
-    { path: '/privacy-policy', changefreq: 'yearly', priority: '0.4' },
-    { path: '/cookie-policy', changefreq: 'yearly', priority: '0.4' },
-    { path: '/data-rights', changefreq: 'yearly', priority: '0.4' },
     ...getIndexableGuidePages(),
   ];
 }
