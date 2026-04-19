@@ -69,10 +69,12 @@
   <section class="landing-momentum-strip" data-help-reveal>
     <% (landingMomentumCards || []).forEach((item, index) => { %>
       <article class="card landing-card landing-momentum-card">
-        <span class="landing-card-index"><%= String(index + 1).padStart(2, '0') %></span>
+        <div class="landing-momentum-meta">
+          <span class="landing-card-index"><%= String(index + 1).padStart(2, '0') %></span>
+          <span class="landing-momentum-tag"><%= item.eyebrow %></span>
+        </div>
         <h3><%= item.title %></h3>
         <p><%= item.body %></p>
-        <span class="landing-momentum-tag"><%= item.eyebrow %></span>
       </article>
     <% }) %>
   </section>

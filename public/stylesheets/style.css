@@ -4606,6 +4606,15 @@ html[data-theme='light'] .onboarding-backdrop {
   .landing-step-row {
     grid-template-columns: 1fr;
   }
+
+  .landing-momentum-card {
+    padding: 20px 18px;
+    border-radius: 22px;
+  }
+
+  .landing-momentum-card h3 {
+    max-width: none;
+  }
 }
 
 .topbar-brand {
@@ -5076,12 +5085,23 @@ html[data-theme='light'] .onboarding-backdrop {
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+.landing-momentum-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .landing-momentum-card h3 {
+  max-width: 16ch;
   font-size: 1.16rem;
-  line-height: 1.1;
+  line-height: 1.08;
 }
 
 .landing-momentum-card p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
   color: color-mix(in srgb, var(--muted) 84%, var(--text) 16%);
 }
 
@@ -6974,6 +6994,39 @@ html[data-theme='light'] .topbar {
   .example-preview-card .inline-actions .btn,
   .template-proof-card .inline-actions .btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-momentum-strip {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .landing-momentum-card {
+    gap: 12px;
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  .landing-momentum-meta {
+    gap: 10px;
+  }
+
+  .landing-momentum-card h3 {
+    font-size: 1.1rem;
+    line-height: 1.1;
+  }
+
+  .landing-momentum-card p {
+    font-size: 0.94rem;
+    line-height: 1.58;
+  }
+
+  .landing-momentum-tag {
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    white-space: nowrap;
   }
 }
 
