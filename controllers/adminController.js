@@ -18,9 +18,11 @@ const {
   TRIAL_INVITE_PLANS,
   createTesterTrialInviteFromAdmin,
   listTesterTrialInvitesForAdmin,
+  recordTesterTrialInviteEmailSent,
   toggleTesterTrialInvite: toggleTesterTrialInviteStatus,
 } = require('../services/marketing/trialInviteService');
 const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
+const { sendTesterTrialInviteEmail: sendTesterTrialInviteEmailMessage } = require('../services/email/testerTrialInviteEmailService');
 const { buildHumanActivityMatch } = require('../services/analytics/trafficQualityService');
 const { SEARCH_ENGINE_REGEX, SEO_CONTENT_PATH_REGEX } = require('../services/analytics/contentAttributionService');
 const { getSeoGuidePathLabelMap } = require('../services/seo/guideLibraryService');
@@ -795,6 +797,57 @@ async function toggleTesterTrialInvite(req, res, next) {
   }
 }
 
+async function sendTesterTrialInviteEmail(req, res, next) {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim();
+    if (!email) {
+      req.flash('error', 'Volunteer email is required.');
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    const inviteList = await listTesterTrialInvitesForAdmin({ appUrl: process.env.APP_URL });
+    const trialInvite = inviteList.find((item) => String(item._id) === String(req.params.inviteId));
+    if (!trialInvite) {
+      req.flash('error', 'Tester trial invite not found.');
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    if (!trialInvite.isRedeemable) {
+      req.flash('error', `${trialInvite.name} is not currently redeemable.`);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    const result = await sendTesterTrialInviteEmailMessage({
+      to: email,
+      name: name || email.split('@')[0],
+      appUrl: process.env.APP_URL,
+      inviteUrl: trialInvite.inviteUrl,
+      plan: trialInvite.plan,
+      durationDays: trialInvite.durationDays,
+    });
+
+    if (result?.delivered) {
+      await recordTesterTrialInviteEmailSent({
+        inviteId: req.params.inviteId,
+        email,
+      });
+      req.flash('success', `Tester invite sent to ${email}.`);
+    } else {
+      req.flash('error', `Tester invite was not delivered to ${email}. Check SMTP configuration.`);
+    }
+
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    return next(error);
+  }
+}
+
 async function upsertCreatorPartner(req, res, next) {
   try {
     const partnerId = String(req.body.partnerId || '').trim();
@@ -870,6 +923,7 @@ async function grantCreatorPartnerAccess(req, res, next) {
 module.exports = {
   showDashboard,
   createTesterTrialInvite,
+  sendTesterTrialInviteEmail,
   toggleTesterTrialInvite,
   upsertCreatorPartner,
   grantCreatorPartnerAccess,

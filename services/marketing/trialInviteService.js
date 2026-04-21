@@ -79,6 +79,10 @@ function normalizeExpiryDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function buildCandidateCode(seed) {
   const suffix = crypto.randomBytes(3).toString('hex').toUpperCase();
   return normalizeTrialInviteCode(`${seed}${suffix}`);
@@ -178,6 +182,19 @@ async function toggleTesterTrialInvite({ inviteId }) {
   return invite;
 }
 
+async function recordTesterTrialInviteEmailSent({ inviteId, email }) {
+  const invite = await TrialInvite.findById(inviteId);
+  if (!invite) {
+    throw new AppError('Tester trial invite not found.', 404);
+  }
+
+  invite.inviteEmailSentCount = (Number.parseInt(invite.inviteEmailSentCount, 10) || 0) + 1;
+  invite.lastInviteEmailSentAt = new Date();
+  invite.lastInviteEmailSentTo = normalizeEmail(email);
+  await invite.save();
+  return invite;
+}
+
 async function applyTrialInviteToUser(user, trialInviteCode, { now = new Date() } = {}) {
   if (!user) {
     return { applied: false, reason: 'missing_user' };
@@ -269,5 +286,6 @@ module.exports = {
   createTesterTrialInviteFromAdmin,
   listTesterTrialInvitesForAdmin,
   normalizeTrialInviteCode,
+  recordTesterTrialInviteEmailSent,
   toggleTesterTrialInvite,
 };

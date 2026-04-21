@@ -52,6 +52,22 @@ const trialInviteSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    inviteEmailSentCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastInviteEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastInviteEmailSentTo: {
+      type: String,
+      default: '',
+      lowercase: true,
+      trim: true,
+      maxlength: 255,
+    },
     notes: {
       type: String,
       default: '',

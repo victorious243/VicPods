@@ -329,6 +329,10 @@
               <span class="mini-label">Remaining</span>
               <strong><%= invite.remainingRedemptions === null ? 'Open' : invite.remainingRedemptions %></strong>
             </article>
+            <article>
+              <span class="mini-label">Invite emails</span>
+              <strong><%= invite.inviteEmailSentCount || 0 %></strong>
+            </article>
           </div>
 
           <div class="creator-admin-link-row">
@@ -345,6 +349,27 @@
               data-copy-label="Copy Trial Link"
             >Copy Link</button>
           </div>
+
+          <form method="POST" action="<%= `${dashboardPath}/tester-trials/${invite._id}/send-email${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>" class="creator-admin-update-form">
+            <div class="creator-admin-form-grid">
+              <label>
+                Volunteer email
+                <input type="email" name="email" maxlength="255" required placeholder="tester@example.com" />
+              </label>
+              <label>
+                First name optional
+                <input type="text" name="name" maxlength="80" placeholder="Sarah" />
+              </label>
+            </div>
+            <div class="inline-actions">
+              <button type="submit" class="btn btn-primary" <%= invite.isRedeemable ? '' : 'disabled' %>>
+                Send Invite Email
+              </button>
+              <% if (invite.lastInviteEmailSentAt) { %>
+                <span class="mini-note">Last sent to <%= invite.lastInviteEmailSentTo || 'a tester' %> on <%= new Date(invite.lastInviteEmailSentAt).toLocaleDateString() %></span>
+              <% } %>
+            </div>
+          </form>
 
           <form method="POST" action="<%= `${dashboardPath}/tester-trials/${invite._id}/toggle${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>">
             <button type="submit" class="btn btn-ghost">
