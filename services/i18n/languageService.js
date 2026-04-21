@@ -48,6 +48,11 @@ const TRANSLATIONS = {
     es: 'Configuracion',
     pt: 'Configuracoes',
   },
+  'nav.feedback': {
+    en: 'Feedback',
+    es: 'Comentarios',
+    pt: 'Feedback',
+  },
   'common.episode': {
     en: 'Episode',
     es: 'Episodio',
@@ -1780,6 +1785,7 @@ function getLocalizedNavItems(language) {
     { label: translate('nav.studio', language, 'Studio'), icon: '🎙', href: '/studio' },
     { label: translate('nav.kitchen', language, 'Workspace'), icon: '🍳', href: '/kitchen' },
     { label: translate('nav.pantry', language, 'Pantry'), icon: '🧺', href: '/pantry' },
+    { label: translate('nav.feedback', language, 'Feedback'), icon: '💬', href: '/feedback' },
     { label: translate('nav.settings', language, 'Settings'), icon: '⚙️', href: '/settings' },
   ];
 }

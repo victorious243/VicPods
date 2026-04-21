@@ -1,0 +1,141 @@
+<%
+  const feedbackContext = submittedPageContext || ((typeof currentPath !== 'undefined') ? currentPath : '');
+  const userEmail = currentUser?.email || '';
+%>
+
+<div class="feedback-page-shell">
+  <section class="card feedback-hero-card">
+    <div class="feedback-hero-copy">
+      <span class="landing-kicker">Product signal</span>
+      <h2>Help shape the next version of VicPods.</h2>
+      <p>Send feedback, feature requests, or bug reports directly into the admin dashboard. The best notes tell us what you were trying to do, where it slowed down, and what would make the workflow better.</p>
+      <div class="feedback-hero-actions">
+        <a href="#feedback-form" class="btn btn-primary">Send feedback</a>
+        <a href="/help" class="btn btn-secondary">Open Help Center</a>
+      </div>
+    </div>
+
+    <div class="feedback-signal-panel" aria-hidden="true">
+      <span class="feedback-signal-orb feedback-signal-orb-a"></span>
+      <span class="feedback-signal-orb feedback-signal-orb-b"></span>
+      <div class="feedback-signal-card feedback-signal-card-main">
+        <span class="mini-label">Live product inbox</span>
+        <strong>Feedback</strong>
+        <p>Feature ideas, pain points, and issue reports land in one admin queue.</p>
+      </div>
+      <div class="feedback-signal-chip feedback-signal-chip-a">Request</div>
+      <div class="feedback-signal-chip feedback-signal-chip-b">Review</div>
+      <div class="feedback-signal-chip feedback-signal-chip-c">Ship</div>
+    </div>
+  </section>
+
+  <section class="feedback-layout">
+    <article class="card feedback-form-card" id="feedback-form">
+      <div class="section-head">
+        <div>
+          <h3>Send feedback</h3>
+          <p class="mini-note">This goes straight to the admin dashboard with your VicPods account attached.</p>
+        </div>
+        <span class="mini-label">User voice</span>
+      </div>
+
+      <form method="POST" action="/feedback" class="feedback-form">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <% } %>
+
+        <div class="feedback-type-grid">
+          <% feedbackTypeOptions.forEach((option, index) => { %>
+            <label class="feedback-type-card">
+              <input type="radio" name="type" value="<%= option.value %>" <%= index === 0 ? 'checked' : '' %> />
+              <span>
+                <strong><%= option.label %></strong>
+                <small><%= option.description %></small>
+              </span>
+            </label>
+          <% }) %>
+        </div>
+
+        <div class="feedback-form-grid">
+          <label>
+            Priority
+            <select name="priority">
+              <% feedbackPriorityOptions.forEach((option) => { %>
+                <option value="<%= option.value %>" <%= option.value === 'normal' ? 'selected' : '' %>><%= option.label %></option>
+              <% }) %>
+            </select>
+          </label>
+
+          <label>
+            Contact email
+            <input type="email" name="contactEmail" maxlength="255" value="<%= userEmail %>" />
+          </label>
+        </div>
+
+        <label>
+          Short title
+          <input type="text" name="title" maxlength="140" required placeholder="Example: Launch Pack captions need more platform options" />
+        </label>
+
+        <label>
+          Details
+          <textarea name="message" rows="7" maxlength="2400" required placeholder="What were you trying to do? What happened? What would make this better?"></textarea>
+        </label>
+
+        <label>
+          Page or workflow context
+          <input type="text" name="pageContext" maxlength="420" value="<%= feedbackContext %>" placeholder="/kitchen or the page where this happened" />
+        </label>
+
+        <div class="feedback-submit-row">
+          <button type="submit" class="btn btn-primary">Submit to VicPods</button>
+          <p class="mini-note">You stay in control. No public posting, no social feed, just direct product feedback.</p>
+        </div>
+      </form>
+    </article>
+
+    <aside class="feedback-side-stack">
+      <article class="card feedback-guidance-card">
+        <span class="mini-label">Useful feedback includes</span>
+        <h3>Context beats guessing.</h3>
+        <p class="mini-note">Tell us the goal, the friction, and the outcome you expected. Screenshots are not required, but page names and workflow names help.</p>
+      </article>
+
+      <article class="card feedback-guidance-card">
+        <span class="mini-label">What happens next</span>
+        <h3>Review, prioritize, ship.</h3>
+        <p class="mini-note">Admin can mark items as new, reviewing, planned, shipped, or closed so the product roadmap follows real user pain.</p>
+      </article>
+    </aside>
+  </section>
+
+  <section class="card feedback-history-card">
+    <div class="section-head">
+      <div>
+        <h3>Your recent feedback</h3>
+        <p class="mini-note">A private record of the latest items you sent.</p>
+      </div>
+      <span class="mini-label"><%= recentFeedback.length %> recent</span>
+    </div>
+
+    <% if (!recentFeedback.length) { %>
+      <p class="empty-state">No feedback sent yet. Use the form above when something feels confusing, broken, or worth improving.</p>
+    <% } else { %>
+      <div class="feedback-history-list">
+        <% recentFeedback.forEach((item) => { %>
+          <article class="feedback-history-item">
+            <div>
+              <div class="feedback-history-meta">
+                <span class="mini-label"><%= item.typeShortLabel %></span>
+                <span class="mini-label feedback-status-chip feedback-status-<%= item.status %>"><%= item.statusLabel %></span>
+              </div>
+              <h4><%= item.title %></h4>
+              <p><%= item.message %></p>
+            </div>
+            <time datetime="<%= new Date(item.createdAt).toISOString() %>"><%= new Date(item.createdAt).toLocaleDateString() %></time>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>

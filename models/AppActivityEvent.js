@@ -13,6 +13,7 @@ const EVENT_TYPES = [
   'public_preview_exported',
   'episode_created',
   'episode_draft_generated',
+  'feedback_submitted',
   'billing_page_viewed',
   'billing_checkout_started',
   'billing_checkout_completed',

@@ -23,6 +23,12 @@ const {
 } = require('../services/marketing/trialInviteService');
 const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
 const { sendTesterTrialInviteEmail: sendTesterTrialInviteEmailMessage } = require('../services/email/testerTrialInviteEmailService');
+const {
+  FEEDBACK_STATUS_OPTIONS,
+  FEEDBACK_PRIORITY_OPTIONS,
+  getFeedbackAdminViewModel,
+  updateUserFeedbackFromAdmin,
+} = require('../services/feedback/userFeedbackService');
 const { buildHumanActivityMatch } = require('../services/analytics/trafficQualityService');
 const { SEARCH_ENGINE_REGEX, SEO_CONTENT_PATH_REGEX } = require('../services/analytics/contentAttributionService');
 const { getSeoGuidePathLabelMap } = require('../services/seo/guideLibraryService');
@@ -351,6 +357,7 @@ async function showDashboard(req, res, next) {
       recentPreviewLeads7d,
       previewLeadBreakdownRaw,
       recentPreviewLeads,
+      feedbackAdminView,
       testerTrialInvites,
       creatorPartnersRaw,
       creatorAttributionRaw,
@@ -554,6 +561,7 @@ async function showDashboard(req, res, next) {
         .sort({ lastSavedAt: -1, updatedAt: -1 })
         .limit(12)
         .select('email source sourceInput captureCount lastSavedAt lastSentAt'),
+      getFeedbackAdminViewModel({ limit: 24 }),
       listTesterTrialInvitesForAdmin({ appUrl: process.env.APP_URL }),
       CreatorPartner.find({})
         .sort({ updatedAt: -1, createdAt: -1 })
@@ -732,6 +740,10 @@ async function showDashboard(req, res, next) {
           creatorPartnersPosted: creatorMetrics.posted,
           creatorPartnerSignups: creatorMetrics.signups,
           creatorPartnerPaid: creatorMetrics.paid,
+          feedbackTotal: feedbackAdminView.total,
+          feedbackNew: feedbackAdminView.newCount,
+          feedbackPlanned: feedbackAdminView.plannedCount,
+          feedbackShipped: feedbackAdminView.shippedCount,
           adminAccessAttempts24h,
           blockedAdminAttempts7d,
           uniqueAdminIps7d: uniqueAdminIps7d.length,
@@ -746,6 +758,10 @@ async function showDashboard(req, res, next) {
         signupEmailList,
         testerTrialInvites,
         creatorPartners,
+        feedbackItems: feedbackAdminView.items,
+        feedbackStats: feedbackAdminView,
+        feedbackStatusOptions: FEEDBACK_STATUS_OPTIONS,
+        feedbackPriorityOptions: FEEDBACK_PRIORITY_OPTIONS,
         trafficChart,
         seoContentReport,
         recentPreviewLeads,
@@ -848,6 +864,26 @@ async function sendTesterTrialInviteEmail(req, res, next) {
   }
 }
 
+async function updateFeedbackItem(req, res, next) {
+  try {
+    const feedback = await updateUserFeedbackFromAdmin({
+      feedbackId: req.params.feedbackId,
+      body: req.body,
+      adminUser: req.currentUser,
+    });
+
+    req.flash('success', `Feedback updated: ${feedback.title}`);
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    return next(error);
+  }
+}
+
 async function upsertCreatorPartner(req, res, next) {
   try {
     const partnerId = String(req.body.partnerId || '').trim();
@@ -925,6 +961,7 @@ module.exports = {
   createTesterTrialInvite,
   sendTesterTrialInviteEmail,
   toggleTesterTrialInvite,
+  updateFeedbackItem,
   upsertCreatorPartner,
   grantCreatorPartnerAccess,
 };

@@ -10269,3 +10269,434 @@ html[data-theme="light"] .error-wave-panel {
     animation: none !important;
   }
 }
+
+.feedback-page-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.feedback-hero-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.72fr);
+  gap: 22px;
+  min-height: 360px;
+  padding: clamp(22px, 3vw, 34px);
+  border-color: color-mix(in srgb, var(--border) 70%, rgba(96, 165, 250, 0.26));
+  background:
+    radial-gradient(circle at 14% 10%, rgba(59, 130, 246, 0.2), transparent 34%),
+    radial-gradient(circle at 84% 4%, rgba(139, 92, 246, 0.2), transparent 30%),
+    linear-gradient(140deg, color-mix(in srgb, var(--surface) 88%, #111827), color-mix(in srgb, var(--bg-2) 92%, #1d2454));
+}
+
+.feedback-hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.36;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.feedback-hero-copy,
+.feedback-signal-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.feedback-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.feedback-hero-copy h2 {
+  font-size: clamp(34px, 5vw, 68px);
+  line-height: 0.94;
+  letter-spacing: -0.065em;
+}
+
+.feedback-hero-copy p {
+  max-width: 680px;
+  font-size: clamp(16px, 1.6vw, 19px);
+  color: color-mix(in srgb, var(--muted) 88%, #fff);
+}
+
+.feedback-hero-actions,
+.feedback-submit-row,
+.feedback-admin-context,
+.feedback-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedback-signal-panel {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+}
+
+.feedback-signal-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+}
+
+.feedback-signal-orb-a {
+  width: 210px;
+  height: 210px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.28), transparent 68%);
+  animation: feedback-drift 8s ease-in-out infinite;
+}
+
+.feedback-signal-orb-b {
+  width: 150px;
+  height: 150px;
+  right: 12%;
+  bottom: 6%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 66%);
+  animation: feedback-drift 9s ease-in-out infinite reverse;
+}
+
+.feedback-signal-card,
+.feedback-signal-chip {
+  border: 1px solid color-mix(in srgb, var(--border) 72%, rgba(147, 197, 253, 0.24));
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  box-shadow: 0 24px 60px rgba(2, 8, 28, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.feedback-signal-card-main {
+  position: relative;
+  width: min(100%, 310px);
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+  border-radius: 26px;
+}
+
+.feedback-signal-card-main strong {
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+.feedback-signal-chip {
+  position: absolute;
+  padding: 9px 12px;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feedback-signal-chip-a {
+  top: 14%;
+  left: 10%;
+}
+
+.feedback-signal-chip-b {
+  right: 10%;
+  top: 28%;
+}
+
+.feedback-signal-chip-c {
+  left: 22%;
+  bottom: 13%;
+}
+
+.feedback-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.feedback-form-card,
+.feedback-history-card,
+.feedback-guidance-card,
+.feedback-admin-shell,
+.feedback-admin-card {
+  border-color: color-mix(in srgb, var(--border) 78%, rgba(99, 102, 241, 0.18));
+  background:
+    linear-gradient(150deg, rgba(59, 130, 246, 0.07), transparent 44%),
+    color-mix(in srgb, var(--surface) 92%, var(--bg-2));
+}
+
+.feedback-form,
+.feedback-side-stack,
+.feedback-history-list,
+.feedback-admin-list {
+  display: grid;
+  gap: 14px;
+}
+
+.feedback-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.feedback-type-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.05));
+  background: color-mix(in srgb, var(--surface) 86%, var(--bg-2));
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.feedback-type-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 46%, var(--border));
+}
+
+.feedback-type-card:has(input:checked) {
+  border-color: color-mix(in srgb, var(--primary) 62%, var(--accent));
+  background:
+    linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.1)),
+    color-mix(in srgb, var(--surface) 86%, var(--bg-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 16px 38px rgba(37, 99, 235, 0.14);
+}
+
+.feedback-type-card input {
+  width: auto;
+  margin: 3px 0 0;
+  accent-color: var(--primary);
+}
+
+.feedback-type-card strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.feedback-type-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.feedback-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.feedback-submit-row {
+  justify-content: space-between;
+}
+
+.feedback-submit-row .mini-note {
+  max-width: 420px;
+}
+
+.feedback-guidance-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+}
+
+.feedback-guidance-card h3 {
+  font-size: 18px;
+}
+
+.feedback-history-item,
+.feedback-admin-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, rgba(99, 102, 241, 0.18));
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg-2));
+}
+
+.feedback-history-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.feedback-history-item h4,
+.feedback-admin-card h4 {
+  margin-top: 8px;
+}
+
+.feedback-history-item p {
+  margin-top: 6px;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.feedback-history-item time {
+  color: var(--muted-2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.feedback-status-chip {
+  border-color: color-mix(in srgb, var(--border) 62%, rgba(96, 165, 250, 0.32));
+}
+
+.feedback-status-new {
+  color: #dbeafe;
+  background: rgba(37, 99, 235, 0.14);
+}
+
+.feedback-status-reviewing {
+  color: #ede9fe;
+  background: rgba(124, 58, 237, 0.16);
+}
+
+.feedback-status-planned {
+  color: #cffafe;
+  background: rgba(8, 145, 178, 0.16);
+}
+
+.feedback-status-shipped {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.feedback-status-closed {
+  color: #e5e7eb;
+  background: rgba(107, 114, 128, 0.16);
+}
+
+.feedback-priority-high {
+  color: #fed7aa;
+  background: rgba(249, 115, 22, 0.14);
+}
+
+.feedback-priority-low {
+  color: #cbd5e1;
+}
+
+.feedback-admin-list {
+  margin-top: 14px;
+}
+
+.feedback-admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.feedback-admin-message {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--bg-2) 78%, transparent);
+  white-space: pre-wrap;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+}
+
+.feedback-admin-context {
+  gap: 8px;
+}
+
+.feedback-admin-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+}
+
+html[data-theme="light"] .feedback-hero-card,
+html[data-theme="light"] .feedback-form-card,
+html[data-theme="light"] .feedback-history-card,
+html[data-theme="light"] .feedback-guidance-card,
+html[data-theme="light"] .feedback-admin-shell,
+html[data-theme="light"] .feedback-admin-card {
+  background:
+    linear-gradient(150deg, rgba(37, 99, 235, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 46px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .feedback-signal-card,
+html[data-theme="light"] .feedback-signal-chip,
+html[data-theme="light"] .feedback-type-card,
+html[data-theme="light"] .feedback-history-item {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+@keyframes feedback-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(12px, -14px, 0) scale(1.05);
+  }
+}
+
+@media (max-width: 980px) {
+  .feedback-hero-card,
+  .feedback-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-signal-panel {
+    min-height: 230px;
+  }
+}
+
+@media (max-width: 640px) {
+  .feedback-hero-card {
+    min-height: auto;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .feedback-hero-copy h2 {
+    font-size: clamp(34px, 13vw, 48px);
+  }
+
+  .feedback-signal-panel {
+    display: none;
+  }
+
+  .feedback-type-grid,
+  .feedback-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-submit-row {
+    align-items: stretch;
+  }
+
+  .feedback-submit-row .btn {
+    width: 100%;
+  }
+
+  .feedback-history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-history-item time {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-signal-orb {
+    animation: none !important;
+  }
+}

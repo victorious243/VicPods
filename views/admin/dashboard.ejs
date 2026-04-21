@@ -63,6 +63,11 @@
     <span class="mini-note">Total lead emails: <%= metrics.totalPreviewLeads %></span>
   </article>
   <article class="card stat-card">
+    <p>User feedback</p>
+    <h3><%= metrics.feedbackNew %></h3>
+    <span class="mini-note">Total: <%= metrics.feedbackTotal %> · Planned: <%= metrics.feedbackPlanned %></span>
+  </article>
+  <article class="card stat-card">
     <p>Drafts generated (7d)</p>
     <h3><%= metrics.episodeDrafts7d %></h3>
     <span class="mini-note">Episodes created / 7d: <%= metrics.episodesCreated7d %></span>
@@ -624,6 +629,100 @@
             <span class="mini-label">captures: <%= lead.captureCount || 0 %></span>
           </div>
         </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="card feedback-admin-shell">
+  <div class="section-head">
+    <div>
+      <h3>User feedback + feature requests</h3>
+      <p class="mini-note">Direct product signal from logged-in users. Use this queue to track pain points, requests, bugs, and shipped improvements.</p>
+    </div>
+    <span class="mini-label"><%= feedbackStats.total %> total</span>
+  </div>
+
+  <div class="admin-preview-lead-summary feedback-admin-summary">
+    <span class="mini-label">New: <%= feedbackStats.statusBreakdown.new %></span>
+    <span class="mini-label">Reviewing: <%= feedbackStats.statusBreakdown.reviewing %></span>
+    <span class="mini-label">Planned: <%= feedbackStats.statusBreakdown.planned %></span>
+    <span class="mini-label">Shipped: <%= feedbackStats.statusBreakdown.shipped %></span>
+    <span class="mini-label">Feature requests: <%= feedbackStats.typeBreakdown.feature_request %></span>
+    <span class="mini-label">Bugs: <%= feedbackStats.typeBreakdown.bug %></span>
+    <span class="mini-label">High priority: <%= feedbackStats.priorityBreakdown.high %></span>
+  </div>
+
+  <% if (!feedbackItems.length) { %>
+    <p class="empty-state">No user feedback yet. Logged-in users can submit from the Feedback page.</p>
+  <% } else { %>
+    <div class="feedback-admin-list">
+      <% feedbackItems.forEach((item) => { %>
+        <article class="card feedback-admin-card">
+          <div class="feedback-admin-card-head">
+            <div>
+              <div class="feedback-history-meta">
+                <span class="mini-label"><%= item.typeLabel %></span>
+                <span class="mini-label feedback-status-chip feedback-status-<%= item.status %>"><%= item.statusLabel %></span>
+                <span class="mini-label feedback-priority-<%= item.priority %>"><%= item.priorityLabel %> priority</span>
+              </div>
+              <h4><%= item.title %></h4>
+              <p class="mini-note">
+                <%= item.actorLabel %>
+                <% if (item.userEmail || item.contactEmail) { %>
+                  · <%= item.userEmail || item.contactEmail %>
+                <% } %>
+                · <%= new Date(item.createdAt).toLocaleString() %>
+              </p>
+            </div>
+          </div>
+
+          <p class="feedback-admin-message"><%= item.message %></p>
+
+          <div class="feedback-admin-context">
+            <% if (item.pageContext) { %>
+              <span class="mini-label">Context: <%= item.pageContext %></span>
+            <% } %>
+            <% if (item.visitorId) { %>
+              <span class="mini-label">Visitor: <%= String(item.visitorId).slice(0, 8) %></span>
+            <% } %>
+            <span class="mini-label">Source: <%= item.source %></span>
+          </div>
+
+          <form method="POST" action="<%= `${dashboardPath}/feedback/${item._id}${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>" class="feedback-admin-form">
+            <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <% } %>
+            <div class="creator-admin-form-grid">
+              <label>
+                Status
+                <select name="status">
+                  <% feedbackStatusOptions.forEach((statusOption) => { %>
+                    <option value="<%= statusOption.value %>" <%= statusOption.value === item.status ? 'selected' : '' %>><%= statusOption.label %></option>
+                  <% }) %>
+                </select>
+              </label>
+              <label>
+                Priority
+                <select name="priority">
+                  <% feedbackPriorityOptions.forEach((priorityOption) => { %>
+                    <option value="<%= priorityOption.value %>" <%= priorityOption.value === item.priority ? 'selected' : '' %>><%= priorityOption.label %></option>
+                  <% }) %>
+                </select>
+              </label>
+              <label class="creator-admin-form-span">
+                Admin note
+                <textarea name="adminNote" rows="2" maxlength="1600" placeholder="Decision, follow-up, or roadmap note."><%= item.adminNote || '' %></textarea>
+              </label>
+            </div>
+            <div class="inline-actions">
+              <button type="submit" class="btn btn-secondary">Save feedback status</button>
+              <% if (item.reviewedAt) { %>
+                <span class="mini-note">Last reviewed <%= new Date(item.reviewedAt).toLocaleString() %></span>
+              <% } %>
+            </div>
+          </form>
+        </article>
       <% }) %>
     </div>
   <% } %>

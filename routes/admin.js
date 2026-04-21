@@ -8,6 +8,7 @@ router.get('/', requireAdminDashboardAccess, adminController.showDashboard);
 router.post('/tester-trials', requireAdminDashboardAccess, adminController.createTesterTrialInvite);
 router.post('/tester-trials/:inviteId/send-email', requireAdminDashboardAccess, adminController.sendTesterTrialInviteEmail);
 router.post('/tester-trials/:inviteId/toggle', requireAdminDashboardAccess, adminController.toggleTesterTrialInvite);
+router.post('/feedback/:feedbackId', requireAdminDashboardAccess, adminController.updateFeedbackItem);
 router.post('/creator-partners', requireAdminDashboardAccess, adminController.upsertCreatorPartner);
 router.post('/creator-partners/:partnerId/grant-access', requireAdminDashboardAccess, adminController.grantCreatorPartnerAccess);
 

@@ -33,6 +33,7 @@ const aiRouter = require('./routes/ai');
 const billingRouter = require('./routes/billing');
 const settingsRouter = require('./routes/settings');
 const onboardingRouter = require('./routes/onboarding');
+const feedbackRouter = require('./routes/feedback');
 const adminRouter = require('./routes/admin');
 
 const app = express();
@@ -182,6 +183,7 @@ app.use('/ai', requireAuth, aiRouter);
 app.use('/billing', requireAuth, billingRouter);
 app.use('/onboarding', requireAuth, onboardingRouter);
 app.use('/settings', requireAuth, settingsRouter);
+app.use('/feedback', requireAuth, feedbackRouter);
 app.use(adminDashboardPath, requireAdminEntryAuth, adminRouter);
 
 app.use(notFoundHandler);
