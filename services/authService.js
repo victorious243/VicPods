@@ -11,6 +11,10 @@ const {
   attachReferralToUser,
   normalizeReferralCode,
 } = require('./marketing/referralService');
+const {
+  applyTrialInviteToUser,
+  normalizeTrialInviteCode,
+} = require('./marketing/trialInviteService');
 
 const SALT_ROUNDS = 12;
 const EMAIL_PIN_TTL_MINUTES = 15;
@@ -635,7 +639,9 @@ async function activatePendingRegistration(pendingRegistration, existingUser = n
   }
 
   const pendingReferralCode = normalizeReferralCode(pendingRegistration.referredByCode || user.referredByCode || '');
+  const pendingTrialInviteCode = normalizeTrialInviteCode(pendingRegistration.trialInviteCode || user.testerTrialCode || '');
   await attachReferralToUser(user, pendingReferralCode);
+  await applyTrialInviteToUser(user, pendingTrialInviteCode);
 
   if (user.isModified()) {
     await user.save();
@@ -649,10 +655,11 @@ async function activatePendingRegistration(pendingRegistration, existingUser = n
   return user;
 }
 
-async function registerUser({ name, email, password, acceptedTerms, requestIp, referralCode }) {
+async function registerUser({ name, email, password, acceptedTerms, requestIp, referralCode, trialInviteCode }) {
   const normalizedEmail = normalizeEmail(email);
   const normalizedName = String(name || '').trim();
   const normalizedReferralCode = normalizeReferralCode(referralCode);
+  const normalizedTrialInviteCode = normalizeTrialInviteCode(trialInviteCode);
 
   if (!normalizedName || !normalizedEmail || !password) {
     throw new AppError('Name, email, and password are required.', 400);
@@ -678,6 +685,9 @@ async function registerUser({ name, email, password, acceptedTerms, requestIp, r
       if (!existingUser.referredByUserId && !existingUser.referredByCreatorPartnerId && !existingUser.referralRewardAppliedAt) {
         existingUser.referredByCode = normalizedReferralCode || existingUser.referredByCode || '';
       }
+      if (!existingUser.testerTrialInviteId && !existingUser.testerTrialGrantedAt) {
+        existingUser.testerTrialCode = normalizedTrialInviteCode || existingUser.testerTrialCode || '';
+      }
       return issueVerificationPinForUser(existingUser);
     }
     throw new AppError('An account with this email already exists.', 409);
@@ -699,6 +709,7 @@ async function registerUser({ name, email, password, acceptedTerms, requestIp, r
   pendingRegistration.termsAcceptedVersion = TERMS_VERSION;
   pendingRegistration.termsAcceptedIp = normalizeIp(requestIp);
   pendingRegistration.referredByCode = normalizedReferralCode || pendingRegistration.referredByCode || '';
+  pendingRegistration.trialInviteCode = normalizedTrialInviteCode || pendingRegistration.trialInviteCode || '';
   pendingRegistration.expiresAt = buildPendingRegistrationExpiryDate();
 
   return issueVerificationPinForPendingRegistration(pendingRegistration);
@@ -891,6 +902,7 @@ async function verifyEmailPin({ email, pin }) {
 
   user.emailVerified = true;
   await attachReferralToUser(user, user.referredByCode);
+  await applyTrialInviteToUser(user, user.testerTrialCode);
   user.emailVerificationPinHash = '';
   user.emailVerificationPinExpiresAt = null;
   await user.save();

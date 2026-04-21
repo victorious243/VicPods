@@ -241,6 +241,122 @@
   </article>
 </section>
 
+<section class="card creator-admin-shell tester-admin-shell">
+  <div class="section-head">
+    <h3>Tester trials</h3>
+    <span class="mini-label">No-card volunteer access</span>
+  </div>
+  <div class="creator-admin-intro">
+    <p class="mini-note">Use this for Facebook group volunteers and early testers. Create one trial link, send it to testers, and VicPods grants the selected plan automatically after signup and email verification.</p>
+  </div>
+
+  <form method="POST" action="<%= `${dashboardPath}/tester-trials${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>" class="creator-admin-form">
+    <div class="creator-admin-form-grid">
+      <label>
+        Trial name
+        <input type="text" name="name" maxlength="100" required placeholder="Facebook podcaster testers" />
+      </label>
+      <label>
+        Plan
+        <select name="plan">
+          <% testerTrialPlans.forEach((plan) => { %>
+            <option value="<%= plan %>" <%= plan === 'premium' ? 'selected' : '' %>><%= plan.charAt(0).toUpperCase() + plan.slice(1) %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        Trial days
+        <input type="number" name="durationDays" min="1" max="90" step="1" value="<%= testerDefaultTrialDays %>" />
+      </label>
+      <label>
+        Max redemptions
+        <input type="number" name="maxRedemptions" min="0" step="1" placeholder="0 = unlimited" />
+      </label>
+      <label>
+        Link expires
+        <input type="date" name="expiresAt" />
+      </label>
+      <label class="creator-admin-form-span">
+        Notes
+        <textarea name="notes" rows="2" maxlength="1200" placeholder="Where this link is shared and what feedback you expect."></textarea>
+      </label>
+    </div>
+    <div class="inline-actions">
+      <button type="submit" class="btn btn-primary">Create Trial Link</button>
+    </div>
+  </form>
+
+  <% if (!testerTrialInvites.length) { %>
+    <p class="empty-state">No tester trial links yet. Create one before replying to volunteers.</p>
+  <% } else { %>
+    <div class="creator-admin-list">
+      <% testerTrialInvites.forEach((invite) => { %>
+        <article class="card creator-admin-card">
+          <div class="creator-admin-card-head">
+            <div>
+              <h4><%= invite.name %></h4>
+              <p>
+                <%= invite.plan.charAt(0).toUpperCase() + invite.plan.slice(1) %>
+                · <%= invite.durationDays %> days
+                · <%= invite.active ? 'active' : 'paused' %>
+              </p>
+              <% if (invite.notes) { %>
+                <p class="mini-note"><%= invite.notes %></p>
+              <% } %>
+            </div>
+            <div class="inline-actions admin-signup-meta">
+              <span class="mini-label"><%= invite.statusLabel %></span>
+              <% if (invite.expiresAt) { %>
+                <span class="mini-label">expires <%= new Date(invite.expiresAt).toLocaleDateString() %></span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="creator-admin-metrics">
+            <article>
+              <span class="mini-label">Trial code</span>
+              <strong><%= invite.code %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Redeemed</span>
+              <strong><%= invite.redeemedCount || 0 %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Limit</span>
+              <strong><%= invite.maxRedemptions ? invite.maxRedemptions : 'Open' %></strong>
+            </article>
+            <article>
+              <span class="mini-label">Remaining</span>
+              <strong><%= invite.remainingRedemptions === null ? 'Open' : invite.remainingRedemptions %></strong>
+            </article>
+          </div>
+
+          <div class="creator-admin-link-row">
+            <input
+              type="text"
+              value="<%= invite.inviteUrl %>"
+              readonly
+              data-copy-source="tester-trial-link-<%= invite._id %>"
+            />
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-copy-trigger="tester-trial-link-<%= invite._id %>"
+              data-copy-label="Copy Trial Link"
+            >Copy Link</button>
+          </div>
+
+          <form method="POST" action="<%= `${dashboardPath}/tester-trials/${invite._id}/toggle${adminKey ? `?key=${encodeURIComponent(adminKey)}` : ''}` %>">
+            <button type="submit" class="btn btn-ghost">
+              <%= invite.active ? 'Pause Link' : 'Reactivate Link' %>
+            </button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
 <section class="card creator-admin-shell">
   <div class="section-head">
     <h3>Creator partnerships</h3>

@@ -13,6 +13,13 @@ const {
   grantCreatorPartnerPremiumAccess,
   upsertCreatorPartnerFromAdmin,
 } = require('../services/marketing/creatorPartnerService');
+const {
+  DEFAULT_TESTER_TRIAL_DAYS,
+  TRIAL_INVITE_PLANS,
+  createTesterTrialInviteFromAdmin,
+  listTesterTrialInvitesForAdmin,
+  toggleTesterTrialInvite: toggleTesterTrialInviteStatus,
+} = require('../services/marketing/trialInviteService');
 const { sendCreatorPremiumWelcomeEmail } = require('../services/email/creatorWelcomeEmailService');
 const { buildHumanActivityMatch } = require('../services/analytics/trafficQualityService');
 const { SEARCH_ENGINE_REGEX, SEO_CONTENT_PATH_REGEX } = require('../services/analytics/contentAttributionService');
@@ -342,6 +349,7 @@ async function showDashboard(req, res, next) {
       recentPreviewLeads7d,
       previewLeadBreakdownRaw,
       recentPreviewLeads,
+      testerTrialInvites,
       creatorPartnersRaw,
       creatorAttributionRaw,
       recentActivityEvents,
@@ -544,6 +552,7 @@ async function showDashboard(req, res, next) {
         .sort({ lastSavedAt: -1, updatedAt: -1 })
         .limit(12)
         .select('email source sourceInput captureCount lastSavedAt lastSentAt'),
+      listTesterTrialInvitesForAdmin({ appUrl: process.env.APP_URL }),
       CreatorPartner.find({})
         .sort({ updatedAt: -1, createdAt: -1 })
         .populate({ path: 'assignedUserId', select: 'name email plan planStatus currentPeriodEnd' })
@@ -681,6 +690,8 @@ async function showDashboard(req, res, next) {
         secretKeyEnabled: Boolean(String(process.env.ADMIN_DASHBOARD_KEY || '').trim()),
         creatorPartnerStatuses: CREATOR_PARTNER_STATUSES,
         creatorDefaultPremiumDays: DEFAULT_CREATOR_PREMIUM_DAYS,
+        testerTrialPlans: TRIAL_INVITE_PLANS,
+        testerDefaultTrialDays: DEFAULT_TESTER_TRIAL_DAYS,
         metrics: {
           totalUsers,
           usersLast24h,
@@ -731,6 +742,7 @@ async function showDashboard(req, res, next) {
         recentUsers,
         userDirectory,
         signupEmailList,
+        testerTrialInvites,
         creatorPartners,
         trafficChart,
         seoContentReport,
@@ -742,6 +754,43 @@ async function showDashboard(req, res, next) {
       },
     });
   } catch (error) {
+    return next(error);
+  }
+}
+
+async function createTesterTrialInvite(req, res, next) {
+  try {
+    const invite = await createTesterTrialInviteFromAdmin({
+      body: req.body,
+      adminUser: req.currentUser,
+    });
+
+    req.flash('success', `Tester trial link created: ${invite.code}.`);
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
+    return next(error);
+  }
+}
+
+async function toggleTesterTrialInvite(req, res, next) {
+  try {
+    const invite = await toggleTesterTrialInviteStatus({
+      inviteId: req.params.inviteId,
+    });
+
+    req.flash('success', `${invite.name} is now ${invite.active ? 'active' : 'paused'}.`);
+    return res.redirect(buildDashboardUrl(req));
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(buildDashboardUrl(req));
+    }
+
     return next(error);
   }
 }
@@ -820,6 +869,8 @@ async function grantCreatorPartnerAccess(req, res, next) {
 
 module.exports = {
   showDashboard,
+  createTesterTrialInvite,
+  toggleTesterTrialInvite,
   upsertCreatorPartner,
   grantCreatorPartnerAccess,
 };

@@ -57,7 +57,11 @@
         <% if (pendingReferralCode) { %>
           <p class="mini-note auth-referral-note">Invite applied: <strong><%= pendingReferralCode %></strong>. Your signup will be linked as soon as you verify your email.</p>
         <% } %>
+        <% if (pendingTrialInviteCode) { %>
+          <p class="mini-note auth-referral-note">No-card tester trial applied: <strong><%= pendingTrialInviteCode %></strong>. Your trial starts after email verification.</p>
+        <% } %>
         <input type="hidden" name="referralCode" value="<%= pendingReferralCode || '' %>" />
+        <input type="hidden" name="trialInviteCode" value="<%= pendingTrialInviteCode || '' %>" />
         <label>
           Name
           <input type="text" name="name" required maxlength="80" placeholder="Your name" autocomplete="name" />

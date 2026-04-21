@@ -118,6 +118,7 @@ function showRegister(req, res) {
       googleAuthEnabled: googleOidcStatus.enabled,
       googleAuthMissing: googleOidcStatus.missing,
       pendingReferralCode: res.locals.pendingReferralCode || '',
+      pendingTrialInviteCode: res.locals.pendingTrialInviteCode || '',
       ...AUTH_PAGE_SEO,
     },
   });
@@ -215,6 +216,7 @@ async function register(req, res, next) {
       acceptedTerms: req.body.acceptTerms === 'on',
       requestIp: req.ip,
       referralCode: req.body.referralCode || req.session?.referralCode || '',
+      trialInviteCode: req.body.trialInviteCode || req.session?.trialInviteCode || '',
     });
 
     let message = 'Check your email and enter the PIN to finish creating your account.';
@@ -330,7 +332,21 @@ async function verify(req, res, next) {
       authProvider: user.authProvider,
       metadata: { channel: 'web', landingPath },
     });
-    req.flash('success', 'Email verified. Welcome to your Studio.');
+    if (req.session) {
+      delete req.session.trialInviteCode;
+    }
+    const hasNoCardTrial = Boolean(
+      user.testerTrialInviteId
+      && user.planStatus === 'trialing'
+      && user.currentPeriodEnd
+      && new Date(user.currentPeriodEnd).getTime() > Date.now()
+    );
+    req.flash(
+      'success',
+      hasNoCardTrial
+        ? `Email verified. Your no-card ${String(user.plan || 'premium').toUpperCase()} trial is live until ${new Date(user.currentPeriodEnd).toLocaleDateString()}.`
+        : 'Email verified. Welcome to your Studio.'
+    );
     return res.redirect('/studio');
   } catch (error) {
     if (error.statusCode) {
@@ -398,7 +414,16 @@ async function googleCallback(req, res, next) {
 
     const authResult = await handleGoogleCallback(req);
     const user = authResult.user;
-    const loginResult = await finalizeLoginWithMfa(req, user, `Welcome, ${user.name}.`);
+    const hasNoCardTrial = Boolean(
+      user.testerTrialInviteId
+      && user.planStatus === 'trialing'
+      && user.currentPeriodEnd
+      && new Date(user.currentPeriodEnd).getTime() > Date.now()
+    );
+    const welcomeMessage = hasNoCardTrial
+      ? `Welcome, ${user.name}. Your no-card ${String(user.plan || 'premium').toUpperCase()} trial is live until ${new Date(user.currentPeriodEnd).toLocaleDateString()}.`
+      : `Welcome, ${user.name}.`;
+    const loginResult = await finalizeLoginWithMfa(req, user, welcomeMessage);
     if (authResult.isNewUser) {
       await recordActivityEvent(req, {
         eventType: 'signup_completed',

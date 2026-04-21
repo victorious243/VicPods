@@ -215,6 +215,7 @@ async function register(req, res) {
       acceptedTerms: Boolean(req.body?.acceptedTerms),
       requestIp: req.ip,
       referralCode: req.body?.referralCode || req.session?.referralCode || '',
+      trialInviteCode: req.body?.trialInviteCode || req.session?.trialInviteCode || '',
     });
 
     await recordActivityEvent(req, {
@@ -277,6 +278,9 @@ async function verifyRegistration(req, res) {
       authProvider: user.authProvider,
       metadata: { channel: 'api', landingPath },
     });
+    if (req.session) {
+      delete req.session.trialInviteCode;
+    }
 
     return res.json({
       result: {

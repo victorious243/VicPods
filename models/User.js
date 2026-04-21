@@ -162,6 +162,26 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 18,
     },
+    testerTrialInviteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TrialInvite',
+      default: null,
+      index: true,
+    },
+    testerTrialCode: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
+    testerTrialGrantedAt: {
+      type: Date,
+      default: null,
+    },
+    testerTrialExpiresAt: {
+      type: Date,
+      default: null,
+    },
     referralCount: {
       type: Number,
       default: 0,

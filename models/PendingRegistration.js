@@ -48,6 +48,12 @@ const pendingRegistrationSchema = new mongoose.Schema(
       trim: true,
       maxlength: 18,
     },
+    trialInviteCode: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
     expiresAt: {
       type: Date,
       required: true,

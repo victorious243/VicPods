@@ -9,6 +9,10 @@ const {
   attachReferralToUser,
   normalizeReferralCode,
 } = require('../marketing/referralService');
+const {
+  applyTrialInviteToUser,
+  normalizeTrialInviteCode,
+} = require('../marketing/trialInviteService');
 
 const GOOGLE_OIDC_SESSION_KEY = 'googleOidcFlow';
 const SALT_ROUNDS = 12;
@@ -173,11 +177,12 @@ async function createLocalPasswordPlaceholder() {
   return bcrypt.hash(randomSecret, SALT_ROUNDS);
 }
 
-async function upsertUserFromClaims(claims, { referralCode } = {}) {
+async function upsertUserFromClaims(claims, { referralCode, trialInviteCode } = {}) {
   const email = String(claims.email || '').trim().toLowerCase();
   const subject = String(claims.sub || '').trim();
   const providerSubject = `google:${subject}`;
   const normalizedReferralCode = normalizeReferralCode(referralCode);
+  const normalizedTrialInviteCode = normalizeTrialInviteCode(trialInviteCode);
 
   if (!email) {
     throw new AppError('Google did not return an email address.', 400);
@@ -208,6 +213,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
     });
 
     await attachReferralToUser(user, normalizedReferralCode);
+    await applyTrialInviteToUser(user, normalizedTrialInviteCode);
     if (user.isModified()) {
       await user.save();
     }
@@ -228,6 +234,7 @@ async function upsertUserFromClaims(claims, { referralCode } = {}) {
   if (!user.referredByUserId && !user.referredByCreatorPartnerId && !user.referralRewardAppliedAt) {
     await attachReferralToUser(user, normalizedReferralCode);
   }
+  await applyTrialInviteToUser(user, normalizedTrialInviteCode);
 
   await user.save();
   await applyReferralRewardIfEligible(user);
@@ -272,7 +279,8 @@ async function handleGoogleCallback(req) {
   }
 
   const referralCode = normalizeReferralCode(req.session?.referralCode || '');
-  return upsertUserFromClaims(claims, { referralCode });
+  const trialInviteCode = normalizeTrialInviteCode(req.session?.trialInviteCode || '');
+  return upsertUserFromClaims(claims, { referralCode, trialInviteCode });
 }
 
 module.exports = {
