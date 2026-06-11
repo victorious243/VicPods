@@ -19,7 +19,6 @@ function showTerms(req, res) {
     path: '/terms',
     title,
     description: 'Read the VicPods terms and conditions for account use, subscriptions, billing, and user responsibilities.',
-    robots: 'noindex,follow',
     structuredData: [
       buildBreadcrumbSchema([
         { name: 'VicPods', path: '/' },
@@ -46,7 +45,6 @@ function showPrivacyPolicy(req, res) {
     path: '/privacy-policy',
     title,
     description: 'Read how VicPods handles data, privacy controls, deletion, and user rights.',
-    robots: 'noindex,follow',
     structuredData: [
       buildBreadcrumbSchema([
         { name: 'VicPods', path: '/' },
@@ -73,7 +71,6 @@ function showCookiePolicy(req, res) {
     path: '/cookie-policy',
     title,
     description: 'Read how VicPods uses cookies, consent preferences, and related technologies.',
-    robots: 'noindex,follow',
     structuredData: [
       buildBreadcrumbSchema([
         { name: 'VicPods', path: '/' },
@@ -100,7 +97,6 @@ function showDataRights(req, res) {
     path: '/data-rights',
     title,
     description: 'Read how to access, correct, delete, export, or challenge personal data processing in VicPods.',
-    robots: 'noindex,follow',
     structuredData: [
       buildBreadcrumbSchema([
         { name: 'VicPods', path: '/' },

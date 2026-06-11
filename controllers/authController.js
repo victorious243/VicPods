@@ -25,7 +25,7 @@ const { AppError } = require('../utils/errors');
 const { renderPage } = require('../utils/render');
 
 const AUTH_PAGE_SEO = {
-  metaRobots: 'noindex,follow',
+  metaRobots: 'noindex,nofollow',
 };
 
 function getProviderErrorMessage(error, fallbackMessage) {

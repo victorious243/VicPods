@@ -1,7 +1,17 @@
 const {
+  buildAbsoluteUrl,
   getIndexablePublicPages,
   normalizeAppUrl,
 } = require('../services/seo/siteSeoService');
+
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 
 function normalizeAdminDashboardPath() {
   const configuredPath = String(process.env.ADMIN_DASHBOARD_PATH || '/control-room-ops').trim();
@@ -15,17 +25,28 @@ function showRobotsTxt(req, res) {
   const lines = [
     'User-agent: *',
     'Allow: /',
+    'Disallow: /auth/',
+    'Disallow: /login',
+    'Disallow: /register',
+    'Disallow: /verify',
+    'Disallow: /forgot-password',
+    'Disallow: /reset-password',
     'Disallow: /api/',
     'Disallow: /ai/',
     'Disallow: /billing/',
     'Disallow: /studio/',
+    'Disallow: /dashboard',
     'Disallow: /create/',
     'Disallow: /kitchen/',
     'Disallow: /pantry/',
     'Disallow: /settings/',
+    'Disallow: /account',
     'Disallow: /onboarding/',
-    'Disallow: /generate-episode',
     'Disallow: /share/',
+    'Disallow: /webhooks/',
+    'Disallow: /feedback/',
+    'Disallow: /oauth2callback',
+    'Disallow: /lab',
   ];
 
   if (adminDashboardPath) {
@@ -41,11 +62,10 @@ function showRobotsTxt(req, res) {
 }
 
 function showSitemapXml(req, res) {
-  const appUrl = normalizeAppUrl();
   const pages = getIndexablePublicPages();
   const urls = pages.map((page) => [
     '  <url>',
-    `    <loc>${appUrl}${page.path}</loc>`,
+    `    <loc>${escapeXml(buildAbsoluteUrl(page.path))}</loc>`,
     `    <changefreq>${page.changefreq}</changefreq>`,
     `    <priority>${page.priority}</priority>`,
     '  </url>',

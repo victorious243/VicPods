@@ -71,6 +71,22 @@
       </div>
     </article>
   </section>
+
+  <% if (faq && faq.length) { %>
+    <section class="card guide-faq-shell" data-help-reveal>
+      <div class="section-head">
+        <h2>Podcast idea generator FAQ</h2>
+      </div>
+      <div class="help-faq-stack">
+        <% faq.forEach((item, index) => { %>
+          <details class="help-faq-item" <%= index === 0 ? 'open' : '' %>>
+            <summary><%= item.question %></summary>
+            <p><%= item.answer %></p>
+          </details>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
 </div>
 
 <script src="/javascripts/help-center.js" defer></script>

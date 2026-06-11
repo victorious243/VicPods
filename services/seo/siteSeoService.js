@@ -1,7 +1,7 @@
 const { getIndexableGuidePages } = require('./guideLibraryService');
 
 function normalizeAppUrl() {
-  return String(process.env.APP_URL || 'http://localhost:3000')
+  return String(process.env.SITE_URL || process.env.APP_URL || 'https://vicpods.com')
     .trim()
     .replace(/\/+$/, '');
 }
@@ -111,6 +111,7 @@ function buildPublicPageSeo({
     ogDescription: description,
     ogType: type,
     ogImage: socialImageUrl,
+    twitterCard: 'summary_large_image',
     twitterImage: socialImageUrl,
     structuredData,
   };
@@ -119,11 +120,16 @@ function buildPublicPageSeo({
 function getIndexablePublicPages() {
   return [
     { path: '/', changefreq: 'daily', priority: '1.0' },
+    { path: '/generate-episode', changefreq: 'weekly', priority: '0.8' },
     { path: '/podcast-idea-generator', changefreq: 'weekly', priority: '0.9' },
     { path: '/examples', changefreq: 'weekly', priority: '0.9' },
     { path: '/guides', changefreq: 'weekly', priority: '0.9' },
     { path: '/about', changefreq: 'monthly', priority: '0.7' },
     { path: '/help', changefreq: 'weekly', priority: '0.8' },
+    { path: '/terms', changefreq: 'yearly', priority: '0.3' },
+    { path: '/privacy-policy', changefreq: 'yearly', priority: '0.3' },
+    { path: '/cookie-policy', changefreq: 'yearly', priority: '0.2' },
+    { path: '/data-rights', changefreq: 'yearly', priority: '0.2' },
     ...getIndexableGuidePages(),
   ];
 }

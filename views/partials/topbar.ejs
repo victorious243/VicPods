@@ -59,7 +59,9 @@
     <div class="topbar-right">
       <% if (isPublicShell) { %>
         <nav class="topbar-links-desktop" aria-label="Primary navigation">
+          <a href="/podcast-idea-generator" class="topbar-link">Idea Generator</a>
           <a href="/examples" class="topbar-link">Examples</a>
+          <a href="/guides" class="topbar-link">Guides</a>
           <a href="/about" class="topbar-link"><%= t('page.about.link', 'About VicPods') %></a>
           <a href="/help" class="topbar-link"><%= t('page.help.link', 'Help Center') %></a>
           <% if (!currentUser) { %>
@@ -223,7 +225,9 @@
   <% if (isPublicShell) { %>
     <div class="topbar-mobile-panel" id="topbar-mobile-panel" data-topbar-panel hidden>
       <nav class="topbar-panel-links" aria-label="Mobile navigation">
+        <a href="/podcast-idea-generator" class="topbar-panel-link" data-topbar-close>Idea Generator</a>
         <a href="/examples" class="topbar-panel-link" data-topbar-close>Examples</a>
+        <a href="/guides" class="topbar-panel-link" data-topbar-close>Guides</a>
         <a href="/about" class="topbar-panel-link" data-topbar-close><%= t('page.about.link', 'About VicPods') %></a>
         <a href="/help" class="topbar-panel-link" data-topbar-close><%= t('page.help.link', 'Help Center') %></a>
         <% if (currentUser) { %>

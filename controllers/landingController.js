@@ -3,6 +3,7 @@ const { normalizeNiche } = require('../services/public/publicPodcastIdeaService'
 const { getPricingDisplay } = require('../services/billing/pricing');
 const {
   buildBreadcrumbSchema,
+  buildFaqSchema,
   buildOrganizationSchema,
   buildPublicPageSeo,
   buildSoftwareApplicationSchema,
@@ -90,14 +91,16 @@ function showLanding(req, res) {
   const isPerformanceLanding = req.path === '/generate-episode';
   const isLabAlias = req.path === '/lab';
   const title = isPerformanceLanding
-    ? 'Generate a Podcast Episode Preview - VicPods'
-    : req.t('page.landing.title', 'VicPods - Turn podcast ideas into ready-to-record episodes');
-  const description = 'Turn a rough podcast idea into a stronger title, sharper hook, structured outline, and launch-ready direction with VicPods. Generate the preview before you sign up.';
+    ? 'Generate a Podcast Episode Preview - Free AI Tool - VicPods'
+    : 'VicPods - AI Podcast Planning and Launch Prep Workspace';
+  const description = isPerformanceLanding
+    ? 'Generate a free podcast episode preview with VicPods. Turn a rough idea into a stronger title, hook, outline, CTA, and launch direction before you sign up.'
+    : 'VicPods is an AI-powered podcast planning and launch-prep workspace that helps creators turn rough ideas into structured episodes, show notes, launch assets, and exportable episode briefs.';
   const seo = buildPublicPageSeo({
-    path: '/',
+    path: isPerformanceLanding ? '/generate-episode' : '/',
     title,
     description,
-    robots: (isPerformanceLanding || isLabAlias) ? 'noindex,follow' : undefined,
+    robots: isLabAlias ? 'noindex,nofollow' : undefined,
     structuredData: [
       buildOrganizationSchema(),
       buildWebsiteSchema(),
@@ -127,6 +130,16 @@ function showPodcastIdeaGenerator(req, res) {
   const initialNiche = normalizeNiche(req.query?.niche || '');
   const title = 'Podcast Idea Generator – Free AI Tool';
   const description = 'Generate 10 podcast ideas in seconds with this free AI tool from VicPods. Add a niche or leave it blank, then turn any idea into a real episode preview.';
+  const faq = [
+    {
+      question: 'Is the podcast idea generator free?',
+      answer: 'Yes. You can generate podcast ideas without logging in, then turn a promising idea into a structured episode preview.',
+    },
+    {
+      question: 'What should I enter as a niche?',
+      answer: 'Use a short audience, industry, or topic area such as business podcast, real estate, coaching, ministry, or personal branding.',
+    },
+  ];
   const seo = buildPublicPageSeo({
     path: '/podcast-idea-generator',
     title,
@@ -137,6 +150,7 @@ function showPodcastIdeaGenerator(req, res) {
         { name: 'Podcast Idea Generator', path: '/podcast-idea-generator' },
       ]),
       buildSoftwareApplicationSchema(),
+      buildFaqSchema(faq),
     ],
   });
 
@@ -152,6 +166,7 @@ function showPodcastIdeaGenerator(req, res) {
       ideaGeneratorInitialNiche: initialNiche,
       ideaGeneratorEpisodeBaseUrl: '/',
       featuredExamples: getFeaturedExamples({ limit: 2 }),
+      faq,
     },
   });
 }

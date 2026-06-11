@@ -2,8 +2,8 @@
   <section class="landing-hero card" data-help-reveal>
     <div class="landing-copy">
       <span class="landing-kicker"><%= t('page.landing.kicker', 'For podcasters who hate blank pages') %></span>
-      <h1><%= t('page.landing.hero.title', 'Turn one podcast idea into a ready-to-record episode in minutes.') %></h1>
-      <p class="landing-lead"><%= t('page.landing.hero.body', 'Paste the idea you were planning to record next. VicPods gives you a stronger title, sharper hook, structured outline, and launch-ready direction before you touch your notes.') %></p>
+      <h1>AI podcast planning and launch prep for creators.</h1>
+      <p class="landing-lead">VicPods helps podcasters turn rough ideas into structured episodes, show notes, launch assets, and exportable episode briefs before recording starts.</p>
 
       <div class="inline-actions landing-actions">
         <% if (currentUser) { %>
@@ -77,6 +77,38 @@
         <p><%= item.body %></p>
       </article>
     <% }) %>
+  </section>
+
+  <section class="card landing-steps landing-steps-shell" data-help-reveal>
+    <div class="section-head">
+      <div>
+        <span class="landing-kicker">AI podcast planning workspace</span>
+        <h2>Plan the episode, package the launch, and keep the whole show organized.</h2>
+        <p class="mini-note">
+          VicPods is an AI-powered podcast planning and launch-prep workspace for creators who want structured episodes, show notes, launch assets, and exportable episode briefs before they record.
+        </p>
+      </div>
+      <a href="/guides" class="btn btn-ghost">Read podcast guides</a>
+    </div>
+
+    <div class="landing-step-row">
+      <article>
+        <span class="landing-step-label">Studio</span>
+        <p>Track series, standalone episodes, Ready and Served drafts, Pantry ideas, and AI usage from one dashboard.</p>
+      </article>
+      <article>
+        <span class="landing-step-label">Kitchen</span>
+        <p>Build podcast series around themes, episodes, continuity, audience goals, and recording-ready briefs.</p>
+      </article>
+      <article>
+        <span class="landing-step-label">Pantry</span>
+        <p>Save raw hooks, notes, and topic ideas so strong concepts do not disappear before recording day.</p>
+      </article>
+      <article>
+        <span class="landing-step-label">Chef AI</span>
+        <p>Generate outlines, hooks, show notes packs, launch packs, tone improvements, and exportable episode briefs.</p>
+      </article>
+    </div>
   </section>
 
   <section class="card landing-generator-section" id="idea-to-episode-generator" data-help-reveal>

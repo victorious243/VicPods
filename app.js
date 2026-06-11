@@ -170,6 +170,10 @@ app.use((req, res, next) => {
 app.use(trackPageViews);
 
 app.locals.appName = 'VicPods';
+app.locals.googleSiteVerification = String(process.env.GOOGLE_SITE_VERIFICATION || '').trim();
+app.locals.bingSiteVerification = String(process.env.BING_SITE_VERIFICATION || '').trim();
+app.locals.analyticsScriptSrc = String(process.env.ANALYTICS_SCRIPT_SRC || '').trim();
+app.locals.analyticsSiteId = String(process.env.ANALYTICS_SITE_ID || '').trim();
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);

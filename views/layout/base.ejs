@@ -10,7 +10,7 @@
     const needsI18nUi = (language || 'en') !== 'en';
     const resolvedMetaRobots = ((typeof metaRobots !== 'undefined') && metaRobots)
       ? metaRobots
-      : (((typeof publicShell !== 'undefined') && publicShell) ? 'index,follow' : 'noindex,follow');
+      : (((typeof publicShell !== 'undefined') && publicShell) ? 'index,follow' : 'noindex,nofollow');
   %>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,6 +22,12 @@
   <title><%= title || 'VicPods' %></title>
   <meta name="description" content="<%= ((typeof metaDescription !== 'undefined') && metaDescription) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
   <meta name="robots" content="<%= resolvedMetaRobots %>" />
+  <% if ((typeof googleSiteVerification !== 'undefined') && googleSiteVerification) { %>
+    <meta name="google-site-verification" content="<%= googleSiteVerification %>" />
+  <% } %>
+  <% if ((typeof bingSiteVerification !== 'undefined') && bingSiteVerification) { %>
+    <meta name="msvalidate.01" content="<%= bingSiteVerification %>" />
+  <% } %>
   <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
     <link rel="canonical" href="<%= canonicalUrl %>" />
   <% } %>
@@ -36,9 +42,12 @@
   <% if ((typeof ogImage !== 'undefined') && ogImage) { %>
     <meta property="og:image" content="<%= ogImage %>" />
   <% } %>
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="<%= ((typeof twitterCard !== 'undefined') && twitterCard) || 'summary_large_image' %>" />
   <meta name="twitter:title" content="<%= ((typeof ogTitle !== 'undefined') && ogTitle) || title || 'VicPods' %>" />
   <meta name="twitter:description" content="<%= ((typeof ogDescription !== 'undefined') && ogDescription) || (((typeof metaDescription !== 'undefined') && metaDescription)) || subtitle || 'VicPods helps creators go from podcast idea to ready-to-record episode.' %>" />
+  <% if ((typeof canonicalUrl !== 'undefined') && canonicalUrl) { %>
+    <meta name="twitter:url" content="<%= canonicalUrl %>" />
+  <% } %>
   <% if ((typeof twitterImage !== 'undefined') && twitterImage) { %>
     <meta name="twitter:image" content="<%= twitterImage %>" />
   <% } %>
@@ -66,6 +75,9 @@
     }());
   </script>
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="7031f7cc-b0f4-4087-bc4b-de5aaaec95f7" data-blockingmode="auto" type="text/javascript"></script>
+  <% if ((typeof analyticsScriptSrc !== 'undefined') && analyticsScriptSrc) { %>
+    <script src="<%= analyticsScriptSrc %>" async defer <% if ((typeof analyticsSiteId !== 'undefined') && analyticsSiteId) { %>data-site-id="<%= analyticsSiteId %>"<% } %>></script>
+  <% } %>
   <link rel="stylesheet" href="/stylesheets/style.css" />
 </head>
 <body class="<%= authPage ? 'auth-body' : (((typeof publicShell !== 'undefined') && publicShell) ? 'app-body app-body-public' : 'app-body') %>">
