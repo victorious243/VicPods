@@ -67,7 +67,8 @@ OPENAI_API_KEY=
 APP_URL=http://localhost:3000
 NEW_USER_MFA_DAYS=14
 GOOGLE_OIDC_ISSUER_URL=https://accounts.google.com
-GOOGLE_OIDC_CLIENT_ID=
+GOOGLE_OIDC_CLIENT_ID=123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com
+# Optional for public PKCE Google clients. Leave blank when the OAuth client does not have a secret.
 GOOGLE_OIDC_CLIENT_SECRET=
 GOOGLE_OIDC_REDIRECT_URI=http://localhost:3000/auth/google/callback
 GOOGLE_OIDC_SCOPES=openid email profile

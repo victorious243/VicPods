@@ -1,5 +1,6 @@
 const { AppError } = require('../utils/errors');
 const { reconcileUserBilling } = require('../services/stripe/billingReconciliation');
+const { enforceTesterTrialExpiry } = require('../services/marketing/trialInviteService');
 
 const planPriority = {
   free: 0,
@@ -101,12 +102,15 @@ async function syncPlanStatus(req, res, next) {
       return next();
     }
 
-    try {
-      await reconcileUserBilling(req.currentUser);
-      res.locals.currentUser = req.currentUser;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(`Billing reconciliation skipped for ${req.currentUser._id}: ${error.message}`);
+    const testerTrialExpiry = await enforceTesterTrialExpiry(req.currentUser);
+    if (!testerTrialExpiry.expired) {
+      try {
+        await reconcileUserBilling(req.currentUser);
+        res.locals.currentUser = req.currentUser;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(`Billing reconciliation skipped for ${req.currentUser._id}: ${error.message}`);
+      }
     }
 
     const now = new Date();

@@ -127,6 +127,51 @@ function hasActivePaidAccess(user, now = new Date()) {
   return new Date(user.currentPeriodEnd).getTime() > now.getTime();
 }
 
+function getTesterTrialExpiry(user) {
+  if (!user) {
+    return null;
+  }
+
+  const expiry = user.testerTrialExpiresAt || user.currentPeriodEnd || null;
+  if (!expiry) {
+    return null;
+  }
+
+  const expiryDate = new Date(expiry);
+  return Number.isNaN(expiryDate.getTime()) ? null : expiryDate;
+}
+
+async function enforceTesterTrialExpiry(user, { now = new Date() } = {}) {
+  if (!user || user.role === 'admin') {
+    return { expired: false, reason: 'missing_or_admin' };
+  }
+
+  if (!user.testerTrialInviteId && !user.testerTrialGrantedAt) {
+    return { expired: false, reason: 'not_tester_trial' };
+  }
+
+  if (user.stripeSubscriptionId) {
+    return { expired: false, reason: 'stripe_subscription_linked' };
+  }
+
+  if (String(user.planStatus || '').trim().toLowerCase() !== 'trialing') {
+    return { expired: false, reason: 'not_trialing' };
+  }
+
+  const expiryDate = getTesterTrialExpiry(user);
+  if (!expiryDate || expiryDate.getTime() > now.getTime()) {
+    return { expired: false, reason: 'still_active', expiresAt: expiryDate };
+  }
+
+  user.plan = 'free';
+  user.planStatus = 'canceled';
+  user.currentPeriodEnd = expiryDate;
+  user.cancelAtPeriodEnd = false;
+  await user.save();
+
+  return { expired: true, reason: 'tester_trial_expired', expiresAt: expiryDate };
+}
+
 function isInviteRedeemable(invite, now = new Date()) {
   if (!invite) {
     return { allowed: false, reason: 'missing' };
@@ -284,6 +329,7 @@ module.exports = {
   applyTrialInviteToUser,
   buildTrialInviteUrl,
   createTesterTrialInviteFromAdmin,
+  enforceTesterTrialExpiry,
   listTesterTrialInvitesForAdmin,
   normalizeTrialInviteCode,
   recordTesterTrialInviteEmailSent,

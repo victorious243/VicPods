@@ -16,6 +16,8 @@
   var card = document.getElementById('onboarding-card');
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var STATE_KEY = 'vicpods_onboarding_state';
+  var STEP_NAVIGATION_GUARD_MS = 650;
+  var HIGHLIGHT_SETTLE_MS = prefersReducedMotion ? 0 : 260;
   var pagePath = window.location.pathname;
   var pageSearch = new URLSearchParams(window.location.search);
 
@@ -266,6 +268,19 @@
 
   var currentStep = initialStep();
   var requestInFlight = false;
+  var lastNavigationAt = 0;
+  var highlightFrame = null;
+  var highlightTimer = null;
+
+  function canNavigateStep() {
+    var now = Date.now();
+    if (requestInFlight || now - lastNavigationAt < STEP_NAVIGATION_GUARD_MS) {
+      return false;
+    }
+
+    lastNavigationAt = now;
+    return true;
+  }
 
   function updateProgress(index, total) {
     var ratio = Math.max(0, Math.min(1, (index + 1) / total));
@@ -321,10 +336,49 @@
     };
   }
 
+  function clearHighlightSchedule() {
+    if (highlightFrame) {
+      window.cancelAnimationFrame(highlightFrame);
+      highlightFrame = null;
+    }
+
+    if (highlightTimer) {
+      window.clearTimeout(highlightTimer);
+      highlightTimer = null;
+    }
+  }
+
+  function applyHighlightPosition(target) {
+    if (!target || !highlight) {
+      return;
+    }
+
+    var rect = target.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      highlight.hidden = true;
+      return;
+    }
+
+    var position = normalizeRect(rect, 10);
+    highlight.style.top = position.top + 'px';
+    highlight.style.left = position.left + 'px';
+    highlight.style.width = position.width + 'px';
+    highlight.style.height = position.height + 'px';
+    highlight.hidden = false;
+
+    if (!prefersReducedMotion) {
+      highlight.classList.add('is-active');
+    } else {
+      highlight.classList.remove('is-active');
+    }
+  }
+
   function placeHighlight(targetSelector) {
     if (!highlight) {
       return;
     }
+
+    clearHighlightSchedule();
 
     if (!targetSelector) {
       highlight.hidden = true;
@@ -349,17 +403,16 @@
       target.scrollIntoView({ block: 'center' });
     }
 
-    var position = normalizeRect(rect, 10);
-    highlight.style.top = position.top + 'px';
-    highlight.style.left = position.left + 'px';
-    highlight.style.width = position.width + 'px';
-    highlight.style.height = position.height + 'px';
-    highlight.hidden = false;
+    highlightFrame = window.requestAnimationFrame(function () {
+      applyHighlightPosition(target);
+      highlightFrame = null;
+    });
 
-    if (!prefersReducedMotion) {
-      highlight.classList.add('is-active');
-    } else {
-      highlight.classList.remove('is-active');
+    if (HIGHLIGHT_SETTLE_MS > 0) {
+      highlightTimer = window.setTimeout(function () {
+        applyHighlightPosition(target);
+        highlightTimer = null;
+      }, HIGHLIGHT_SETTLE_MS);
     }
   }
 
@@ -480,6 +533,10 @@
   }
 
   nextButton.addEventListener('click', function onNext() {
+    if (!canNavigateStep()) {
+      return;
+    }
+
     if (currentStep === steps.length - 1) {
       completeTour();
       return;
@@ -490,7 +547,7 @@
   });
 
   backButton.addEventListener('click', function onBack() {
-    if (requestInFlight || currentStep === 0) {
+    if (currentStep === 0 || !canNavigateStep()) {
       return;
     }
 
@@ -525,13 +582,17 @@
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      nextButton.click();
+      if (!event.repeat) {
+        nextButton.click();
+      }
       return;
     }
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      backButton.click();
+      if (!event.repeat) {
+        backButton.click();
+      }
     }
   });
 

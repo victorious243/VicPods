@@ -35,9 +35,6 @@ function getGoogleOidcStatus() {
   if (!config.clientId) {
     missing.push('GOOGLE_OIDC_CLIENT_ID');
   }
-  if (!config.clientSecret) {
-    missing.push('GOOGLE_OIDC_CLIENT_SECRET');
-  }
   if (!config.redirectUri) {
     missing.push('GOOGLE_OIDC_REDIRECT_URI');
   }
@@ -59,12 +56,21 @@ async function getClient() {
 
   if (!clientPromise) {
     const config = getConfig();
-    clientPromise = Issuer.discover(config.issuerUrl).then((issuer) => new issuer.Client({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      redirect_uris: [config.redirectUri],
-      response_types: ['code'],
-    }));
+    clientPromise = Issuer.discover(config.issuerUrl).then((issuer) => {
+      const metadata = {
+        client_id: config.clientId,
+        redirect_uris: [config.redirectUri],
+        response_types: ['code'],
+      };
+
+      if (config.clientSecret) {
+        metadata.client_secret = config.clientSecret;
+      } else {
+        metadata.token_endpoint_auth_method = 'none';
+      }
+
+      return new issuer.Client(metadata);
+    });
   }
 
   return clientPromise;

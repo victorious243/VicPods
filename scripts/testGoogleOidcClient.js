@@ -11,14 +11,25 @@ function requireEnv(name) {
   return value;
 }
 
+function getOptionalEnv(name) {
+  return String(process.env[name] || '').trim();
+}
+
 function run() {
-  const payload = querystring.stringify({
+  const payloadFields = {
     code: 'vicpods_diagnostic_fake_code',
     client_id: requireEnv('GOOGLE_OIDC_CLIENT_ID'),
-    client_secret: requireEnv('GOOGLE_OIDC_CLIENT_SECRET'),
     redirect_uri: requireEnv('GOOGLE_OIDC_REDIRECT_URI'),
     grant_type: 'authorization_code',
-  });
+  };
+  const clientSecret = getOptionalEnv('GOOGLE_OIDC_CLIENT_SECRET');
+  if (clientSecret) {
+    payloadFields.client_secret = clientSecret;
+  } else {
+    payloadFields.code_verifier = 'vicpods-diagnostic-code-verifier-vicpods-diagnostic-code-verifier';
+  }
+
+  const payload = querystring.stringify(payloadFields);
 
   const request = https.request({
     hostname: 'oauth2.googleapis.com',
@@ -35,10 +46,12 @@ function run() {
     });
     response.on('end', () => {
       // eslint-disable-next-line no-console
+      console.log(`client_auth=${clientSecret ? 'client_secret' : 'pkce_public'}`);
+      // eslint-disable-next-line no-console
       console.log(`status=${response.statusCode}`);
       // eslint-disable-next-line no-console
       console.log(body);
-      process.exit(response.statusCode === 400 ? 0 : 1);
+      process.exit(response.statusCode === 400 || response.statusCode === 401 ? 0 : 1);
     });
   });
 

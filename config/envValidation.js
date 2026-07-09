@@ -17,6 +17,10 @@ function isValidEmailAddress(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
+function isValidGoogleOidcClientId(value) {
+  return /^\d+-[a-z0-9-]+\.apps\.googleusercontent\.com$/i.test(String(value || '').trim());
+}
+
 function usesPlaceholderEmailDomain(value) {
   const normalized = extractEmailAddress(value);
   const domain = normalized.split('@')[1] || '';
@@ -157,13 +161,16 @@ function validateEnvironment({ isProduction }) {
   }
 
   const googleEnabled = Boolean(googleIssuerUrl || googleClientId || googleClientSecret || googleRedirectUri);
-  const googleConfigured = Boolean(googleClientId && googleClientSecret && googleRedirectUri);
+  const googleConfigured = Boolean(googleClientId && googleRedirectUri);
   if (googleEnabled && !googleConfigured) {
-    warnings.push('Google OIDC is partially configured. Set GOOGLE_OIDC_CLIENT_ID, GOOGLE_OIDC_CLIENT_SECRET, and GOOGLE_OIDC_REDIRECT_URI.');
+    warnings.push('Google OIDC is partially configured. Set GOOGLE_OIDC_CLIENT_ID and GOOGLE_OIDC_REDIRECT_URI.');
   }
   if (googleConfigured) {
     if (googleIssuerUrl && !isValidHttpUrl(googleIssuerUrl)) {
       errors.push('GOOGLE_OIDC_ISSUER_URL must be a valid http(s) URL when set.');
+    }
+    if (!isValidGoogleOidcClientId(googleClientId)) {
+      errors.push('GOOGLE_OIDC_CLIENT_ID must be the full Google client ID, including the numeric project prefix and .apps.googleusercontent.com suffix.');
     }
     if (!isValidHttpUrl(googleRedirectUri)) {
       errors.push('GOOGLE_OIDC_REDIRECT_URI must be a valid http(s) URL.');
