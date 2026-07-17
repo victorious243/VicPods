@@ -10700,3 +10700,148 @@ html[data-theme="light"] .feedback-history-item {
     animation: none !important;
   }
 }
+
+.publish-foundation-card,
+.publish-audio-shell,
+.publish-empty-shell,
+.publish-locked-shell,
+.published-episode-card,
+.published-episode-rail .shared-episode-rail-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.publish-empty-shell,
+.publish-locked-shell,
+.publish-audio-shell,
+.publish-link-grid,
+.published-episode-player,
+.published-episode-section {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg-2));
+  padding: 16px;
+}
+
+.publish-empty-shell,
+.publish-locked-shell {
+  display: grid;
+  gap: 8px;
+}
+
+.publish-audio-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.publish-audio-current {
+  display: grid;
+  gap: 12px;
+}
+
+.publish-audio-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.publish-audio-shell audio,
+.published-episode-player audio {
+  width: 100%;
+}
+
+.publish-audio-actions {
+  align-items: center;
+}
+
+.publish-audio-actions input[type="file"] {
+  width: min(100%, 320px);
+}
+
+.publish-link-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.publish-show-item {
+  align-items: flex-start;
+}
+
+.publish-shows-grid {
+  align-items: start;
+}
+
+.published-episode-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  gap: 20px;
+}
+
+.published-episode-card {
+  display: grid;
+  gap: 18px;
+}
+
+.published-episode-hero {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.published-episode-cover img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.published-episode-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.published-episode-copy h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1.02;
+}
+
+.published-episode-show,
+.published-episode-summary {
+  font-size: 16px;
+}
+
+.published-episode-section {
+  display: grid;
+  gap: 12px;
+}
+
+.published-episode-meta {
+  flex-wrap: wrap;
+}
+
+.published-episode-rail {
+  position: sticky;
+  top: 110px;
+  align-self: start;
+}
+
+.mini-note.is-error {
+  color: var(--danger);
+}
+
+@media (max-width: 960px) {
+  .published-episode-shell,
+  .published-episode-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .published-episode-cover {
+    max-width: 280px;
+  }
+
+  .published-episode-rail {
+    position: static;
+  }
+}

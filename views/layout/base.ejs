@@ -6,7 +6,7 @@
     const needsSettingsScript = currentView === 'settings/index';
     const needsCreateScripts = currentView === 'create/single' || currentView === 'create/series';
     const needsAiLoader = needsCreateScripts || currentView === 'kitchen/episode';
-    const needsEpisodeTools = currentView === 'studio/index' || currentView === 'kitchen/episode' || currentView === 'admin/dashboard';
+    const needsEpisodeTools = currentView === 'studio/index' || currentView === 'kitchen/episode' || currentView === 'admin/dashboard' || currentView === 'publish/shows';
     const needsI18nUi = (language || 'en') !== 'en';
     const resolvedMetaRobots = ((typeof metaRobots !== 'undefined') && metaRobots)
       ? metaRobots

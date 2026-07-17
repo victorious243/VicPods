@@ -154,6 +154,72 @@ const episodeSchema = new mongoose.Schema(
       enum: ['Planned', 'Draft', 'Ready', 'Served'],
       default: 'Planned',
     },
+    showId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PodcastShow',
+      default: null,
+      index: true,
+    },
+    summary: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 3000,
+    },
+    publicSlug: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+    },
+    publishStatus: {
+      type: String,
+      enum: ['draft', 'scheduled', 'published'],
+      default: 'draft',
+      index: true,
+    },
+    scheduledFor: {
+      type: Date,
+      default: null,
+    },
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+    audioAssetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AudioAsset',
+      default: null,
+    },
+    durationSeconds: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    seasonNumber: {
+      type: Number,
+      default: null,
+      min: 1,
+    },
+    episodeNumberForFeed: {
+      type: Number,
+      default: null,
+      min: 1,
+    },
+    explicit: {
+      type: Boolean,
+      default: null,
+    },
+    publicPageEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    rssGuid: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 200,
+    },
     hook: {
       type: String,
       default: '',
@@ -399,6 +465,26 @@ episodeSchema.index(
   {
     unique: true,
     sparse: true,
+  }
+);
+
+episodeSchema.index(
+  { showId: 1, publicSlug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      showId: { $type: 'objectId' },
+      publicSlug: { $gt: '' },
+    },
+  }
+);
+
+episodeSchema.index(
+  { showId: 1, publishStatus: 1, publishedAt: -1, scheduledFor: 1 },
+  {
+    partialFilterExpression: {
+      showId: { $type: 'objectId' },
+    },
   }
 );
 

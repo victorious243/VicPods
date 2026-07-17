@@ -22,3 +22,4 @@ yarn-error.log*
 *.pid.lock
 coverage/
 .nyc_output/
+public/uploads/

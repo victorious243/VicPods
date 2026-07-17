@@ -1,19 +1,24 @@
 const { getIndexableGuidePages } = require('./guideLibraryService');
 
-function normalizeAppUrl() {
-  return String(process.env.SITE_URL || process.env.APP_URL || 'https://vicpods.com')
+function normalizeAppUrl(input = process.env.SITE_URL || process.env.APP_URL || 'https://vicpods.com') {
+  return String(input || 'https://vicpods.com')
     .trim()
     .replace(/\/+$/, '');
 }
 
-function buildAbsoluteUrl(pathname = '/') {
-  const appUrl = normalizeAppUrl();
+function buildAbsoluteUrl(
+  pathname = '/',
+  baseUrl = process.env.SITE_URL || process.env.APP_URL || 'https://vicpods.com'
+) {
+  const appUrl = normalizeAppUrl(baseUrl);
   const normalizedPath = String(pathname || '/').trim() || '/';
   return `${appUrl}${normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`}`;
 }
 
-function buildDefaultSocialImageUrl() {
-  return buildAbsoluteUrl('/images/logo/vicpods-logo-horizontal-dark.png');
+function buildDefaultSocialImageUrl(
+  baseUrl = process.env.SITE_URL || process.env.APP_URL || 'https://vicpods.com'
+) {
+  return buildAbsoluteUrl('/images/logo/vicpods-logo-horizontal-dark.png', baseUrl);
 }
 
 function buildOrganizationSchema() {

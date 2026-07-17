@@ -1,0 +1,122 @@
+<section class="card">
+  <div class="section-head">
+    <h3>Hosted Shows</h3>
+    <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
+  </div>
+
+  <p>Create one hosted show, copy the feed URL, and publish Ready episodes from the episode editor once the final MP3 is attached.</p>
+</section>
+
+<section class="split-grid publish-shows-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3>Create Hosted Show</h3>
+      <span class="mini-label">Pro</span>
+    </div>
+
+    <form method="POST" action="/publish/shows" class="form-grid">
+      <label>
+        Show Name
+        <input type="text" name="name" maxlength="120" required />
+      </label>
+
+      <label>
+        Show Description
+        <textarea name="description" rows="5" maxlength="4000"></textarea>
+      </label>
+
+      <div class="two-col">
+        <label>
+          Author Name
+          <input type="text" name="authorName" maxlength="120" value="<%= defaultShowValues.authorName %>" />
+        </label>
+        <label>
+          Owner Email
+          <input type="email" name="ownerEmail" maxlength="200" value="<%= defaultShowValues.ownerEmail %>" />
+        </label>
+      </div>
+
+      <div class="two-col">
+        <label>
+          Podcast Language
+          <input type="text" name="language" maxlength="20" value="<%= defaultShowValues.language %>" placeholder="en-us" />
+        </label>
+        <label>
+          Explicit Default
+          <select name="explicit">
+            <option value="no">Clean</option>
+            <option value="yes">Explicit</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="two-col">
+        <label>
+          Primary Category
+          <input type="text" name="categoryPrimary" maxlength="120" placeholder="Business" />
+        </label>
+        <label>
+          Secondary Category
+          <input type="text" name="categorySecondary" maxlength="120" placeholder="Entrepreneurship" />
+        </label>
+      </div>
+
+      <div class="two-col">
+        <label>
+          Cover Image URL
+          <input type="url" name="coverImageUrl" maxlength="500" placeholder="https://..." />
+        </label>
+        <label>
+          Website URL
+          <input type="url" name="websiteUrl" maxlength="500" placeholder="https://..." />
+        </label>
+      </div>
+
+      <label>
+        Copyright
+        <input type="text" name="copyright" maxlength="240" placeholder="2026 Your Company" />
+      </label>
+
+      <div class="inline-actions">
+        <button class="btn btn-primary" type="submit">Create Hosted Show</button>
+      </div>
+    </form>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3>Your Hosted Shows</h3>
+      <span class="mini-label"><%= podcastShows.length %> total</span>
+    </div>
+
+    <% if (!podcastShows.length) { %>
+      <p class="empty-state">No hosted shows yet. Create one to unlock your first live feed.</p>
+    <% } else { %>
+      <div class="list-stack">
+        <% podcastShows.forEach((show) => { %>
+          <article class="list-item publish-show-item">
+            <div>
+              <h4><%= show.name %></h4>
+              <p>
+                <strong>Slug:</strong> <%= show.slug %>
+                · <strong>Status:</strong> <%= show.feedStatus %>
+                · <strong>Published:</strong> <%= show.publishedEpisodeCount || 0 %>
+              </p>
+              <% if (show.authorName || show.ownerEmail) { %>
+                <p><%= show.authorName || 'No author set' %><%= show.ownerEmail ? ` · ${show.ownerEmail}` : '' %></p>
+              <% } %>
+              <label class="share-link-field">
+                <span class="landing-preview-label">Feed URL</span>
+                <input type="text" value="<%= podcastFeedUrls[String(show._id)] %>" readonly data-copy-source="show-feed-<%= show._id %>" />
+              </label>
+              <div class="inline-actions">
+                <button class="btn btn-ghost" type="button" data-copy-trigger="show-feed-<%= show._id %>" data-copy-label="Copy Feed URL">Copy Feed URL</button>
+                <a class="btn btn-secondary" href="<%= podcastFeedUrls[String(show._id)] %>" target="_blank" rel="noopener noreferrer">Open Feed XML</a>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+</section>

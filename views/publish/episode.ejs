@@ -1,0 +1,65 @@
+<section class="published-episode-shell">
+  <article class="published-episode-card">
+    <div class="published-episode-hero">
+      <div class="published-episode-cover">
+        <img src="<%= publishedEpisode.coverImageUrl %>" alt="<%= publishedEpisode.showName %> cover art" />
+      </div>
+
+      <div class="published-episode-copy">
+        <span class="mini-label">Published with VicPods</span>
+        <h1><%= publishedEpisode.title %></h1>
+        <p class="published-episode-show"><strong><%= publishedEpisode.showName %></strong> · <%= publishedEpisode.showAuthor %></p>
+        <p class="published-episode-summary"><%= publishedEpisode.summary %></p>
+
+        <div class="inline-actions published-episode-meta">
+          <% if (publishedEpisode.publishedAt) { %>
+            <span class="mini-label"><%= new Date(publishedEpisode.publishedAt).toLocaleDateString() %></span>
+          <% } %>
+          <% if (publishedEpisode.durationLabel) { %>
+            <span class="mini-label"><%= publishedEpisode.durationLabel %></span>
+          <% } %>
+          <span class="mini-label"><%= publishedEpisode.explicit ? 'Explicit' : 'Clean' %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="published-episode-player">
+      <audio controls preload="none" src="<%= publishedEpisode.audioUrl %>"></audio>
+    </div>
+
+    <section class="published-episode-section">
+      <div class="section-head">
+        <h3>Episode Notes</h3>
+        <a class="btn btn-ghost" href="<%= publishedEpisode.feedUrl %>">Open Feed XML</a>
+      </div>
+      <p><%= publishedEpisode.description %></p>
+    </section>
+
+    <% if (publishedEpisode.outline.length) { %>
+      <section class="published-episode-section">
+        <div class="section-head">
+          <h3>Outline</h3>
+          <span class="mini-label">From the VicPods workspace</span>
+        </div>
+
+        <ol class="shared-episode-outline">
+          <% publishedEpisode.outline.forEach((item) => { %>
+            <li><%= item %></li>
+          <% }) %>
+        </ol>
+      </section>
+    <% } %>
+  </article>
+
+  <aside class="published-episode-rail">
+    <div class="shared-episode-rail-card">
+      <span class="mini-label">Show</span>
+      <strong><%= publishedEpisode.showName %></strong>
+      <p><%= publishedEpisode.showDescription || 'This episode is published from a hosted VicPods show.' %></p>
+      <div class="inline-actions">
+        <a class="btn btn-secondary" href="<%= publishedEpisode.showWebsiteUrl %>" target="_blank" rel="noopener noreferrer">Visit Website</a>
+        <a class="btn btn-primary" href="<%= publishedEpisode.feedUrl %>">Feed XML</a>
+      </div>
+    </div>
+  </aside>
+</section>

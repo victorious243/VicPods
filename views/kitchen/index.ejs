@@ -9,6 +9,25 @@
   <p>Workspace is where you start new episodes, launch new series, and manage every draft already in progress.</p>
 </section>
 
+<section class="card">
+  <div class="section-head">
+    <h3>Publish Foundation</h3>
+    <span class="mini-label">Phase 1</span>
+  </div>
+
+  <% if (effectivePlan === 'free') { %>
+    <p>Publishing is now the first paid expansion: hosted shows, live episode pages, and RSS feed URLs unlock on Pro.</p>
+    <div class="inline-actions">
+      <a href="/settings?section=billing" class="btn btn-primary">Upgrade to Pro</a>
+    </div>
+  <% } else { %>
+    <p>Create a hosted show, then use the episode editor to attach the final MP3 and publish Ready episodes live.</p>
+    <div class="inline-actions">
+      <a href="/publish/shows" class="btn btn-secondary">Manage Hosted Shows</a>
+    </div>
+  <% } %>
+</section>
+
 <% if (singleCollectionSeries) { %>
   <section class="card single-collection-card">
     <div class="section-head">

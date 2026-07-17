@@ -31,6 +31,7 @@ const kitchenRouter = require('./routes/kitchen');
 const pantryRouter = require('./routes/pantry');
 const aiRouter = require('./routes/ai');
 const billingRouter = require('./routes/billing');
+const publishRouter = require('./routes/publish');
 const settingsRouter = require('./routes/settings');
 const onboardingRouter = require('./routes/onboarding');
 const feedbackRouter = require('./routes/feedback');
@@ -99,8 +100,8 @@ app.use(compression({
   },
 }));
 app.use('/webhooks', webhooksRouter);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '80mb' }));
+app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
@@ -185,6 +186,7 @@ app.use('/kitchen', requireAuth, kitchenRouter);
 app.use('/pantry', requireAuth, pantryRouter);
 app.use('/ai', requireAuth, aiRouter);
 app.use('/billing', requireAuth, billingRouter);
+app.use('/publish', requireAuth, publishRouter);
 app.use('/onboarding', requireAuth, onboardingRouter);
 app.use('/settings', requireAuth, settingsRouter);
 app.use('/feedback', requireAuth, feedbackRouter);

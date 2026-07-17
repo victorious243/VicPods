@@ -106,6 +106,168 @@
   <% } %>
 </section>
 
+<section class="card publish-foundation-card">
+  <div class="section-head">
+    <h3>Publish Foundation</h3>
+    <span class="mini-label">Pro and above</span>
+  </div>
+
+  <% if (!publishFeatureAvailable) { %>
+    <div class="publish-locked-shell">
+      <p><strong>Turn Ready episodes into a live podcast feed on Pro.</strong></p>
+      <p class="mini-note">Hosted show setup, final MP3 upload, public episode pages, and RSS feed URLs unlock once you upgrade.</p>
+      <div class="inline-actions">
+        <a class="btn btn-primary" href="/settings?section=billing">Upgrade to Pro</a>
+        <span class="mini-label">Current episode status: <%= episode.status %></span>
+      </div>
+    </div>
+  <% } else { %>
+    <p class="mini-note">Create one hosted show, upload the final MP3, and make this Ready episode live with a public page and feed item.</p>
+
+    <div class="inline-actions">
+      <a class="btn btn-secondary" href="<%= podcastShowsPath %>"><%= podcastShows.length ? 'Manage Hosted Shows' : 'Create Hosted Show' %></a>
+      <% if (podcastFeedUrl) { %>
+        <a class="btn btn-ghost" href="<%= podcastFeedUrl %>" target="_blank" rel="noopener noreferrer">Open Feed XML</a>
+      <% } %>
+      <% if (publishedEpisodeUrl) { %>
+        <a class="btn btn-ghost" href="<%= publishedEpisodeUrl %>" target="_blank" rel="noopener noreferrer">Open Public Page</a>
+      <% } %>
+    </div>
+
+    <% if (!podcastShows.length) { %>
+      <div class="publish-empty-shell">
+        <strong>No hosted show yet.</strong>
+        <p>Create a show first, then come back here to attach the episode and publish it live.</p>
+      </div>
+    <% } else { %>
+      <% const defaultShowId = selectedPodcastShow ? String(selectedPodcastShow._id) : String(podcastShows[0]._id); %>
+      <% const publishDisabled = !['Ready', 'Served'].includes(episode.status) || !episodeAudioAsset; %>
+      <form method="POST" action="/publish/episodes/<%= episode._id %>/settings" class="form-grid">
+        <div class="two-col">
+          <label>
+            Hosted Show
+            <select name="showId" required>
+              <% podcastShows.forEach((show) => { %>
+                <option value="<%= show._id %>" <%= String(show._id) === defaultShowId ? 'selected' : '' %>><%= show.name %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>
+            Public Episode Slug
+            <input type="text" name="publicSlug" maxlength="120" value="<%= episode.publicSlug %>" placeholder="episode-title-slug" />
+          </label>
+        </div>
+
+        <label>
+          Public Summary
+          <textarea name="summary" rows="4" maxlength="3000"><%= publishSummaryValue %></textarea>
+        </label>
+
+        <div class="two-col">
+          <label>
+            Season Number
+            <input type="number" name="seasonNumber" min="1" value="<%= episode.seasonNumber || '' %>" />
+          </label>
+          <label>
+            Feed Episode Number
+            <input type="number" name="episodeNumberForFeed" min="1" value="<%= episode.episodeNumberForFeed || episode.globalEpisodeNumber || episode.episodeNumberWithinTheme %>" />
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Explicit Setting
+            <select name="explicitSetting">
+              <option value="inherit" <%= typeof episode.explicit !== 'boolean' ? 'selected' : '' %>>Inherit show default</option>
+              <option value="no" <%= episode.explicit === false ? 'selected' : '' %>>Clean</option>
+              <option value="yes" <%= episode.explicit === true ? 'selected' : '' %>>Explicit</option>
+            </select>
+          </label>
+          <label>
+            Publish At
+            <input type="datetime-local" name="scheduledFor" value="<%= publishScheduledForValue %>" />
+            <small class="mini-note">Leave empty to publish immediately.</small>
+          </label>
+        </div>
+
+        <div class="publish-audio-shell" data-audio-upload data-upload-endpoint="/publish/episodes/<%= episode._id %>/audio">
+          <div class="section-head">
+            <h4>Final MP3</h4>
+            <span class="mini-label"><%= episodeAudioAsset ? 'Attached' : 'Required' %></span>
+          </div>
+
+          <div class="publish-audio-current" data-audio-current <%= episodeAudioAsset ? '' : 'hidden' %>>
+            <div class="publish-audio-meta">
+              <strong data-audio-filename><%= episodeAudioAsset?.originalFilename || 'No file uploaded yet' %></strong>
+              <p class="mini-note">
+                <span data-audio-size><%= episodeAudioAsset ? `${(episodeAudioAsset.byteSize / (1024 * 1024)).toFixed(1)} MB` : '' %></span>
+                <span data-audio-divider><%= episodeAudioAsset?.durationSeconds ? ' · ' : '' %></span>
+                <span data-audio-duration><%= episodeAudioAsset?.durationSeconds ? `${Math.floor(episodeAudioAsset.durationSeconds / 60)}m ${String(episodeAudioAsset.durationSeconds % 60).padStart(2, '0')}s` : '' %></span>
+              </p>
+            </div>
+            <audio controls preload="none" src="<%= episodeAudioAssetUrl %>" data-audio-player <%= episodeAudioAssetUrl ? '' : 'hidden' %>></audio>
+          </div>
+
+          <div class="publish-audio-empty" data-audio-empty <%= episodeAudioAsset ? 'hidden' : '' %>>
+            <strong>Upload the final mastered MP3.</strong>
+            <p>Phase 1 supports MP3 only. The file is attached to the episode page and RSS enclosure.</p>
+          </div>
+
+          <div class="inline-actions publish-audio-actions">
+            <input type="file" accept=".mp3,audio/mpeg" data-audio-file />
+            <button class="btn btn-secondary" type="button" data-audio-upload-trigger><%= episodeAudioAsset ? 'Replace MP3' : 'Upload MP3' %></button>
+          </div>
+
+          <p class="mini-note" data-audio-status>Upload the final MP3 before going live.</p>
+        </div>
+
+        <% if (podcastFeedUrl || publishedEpisodeUrl) { %>
+          <div class="publish-link-grid">
+            <% if (podcastFeedUrl) { %>
+              <label class="share-link-field">
+                <span class="landing-preview-label">Feed URL</span>
+                <input type="text" value="<%= podcastFeedUrl %>" readonly data-copy-source="podcast-feed-url" />
+              </label>
+            <% } %>
+            <% if (publishedEpisodeUrl) { %>
+              <label class="share-link-field">
+                <span class="landing-preview-label">Public episode URL</span>
+                <input type="text" value="<%= publishedEpisodeUrl %>" readonly data-copy-source="podcast-episode-url" />
+              </label>
+            <% } %>
+            <div class="inline-actions">
+              <% if (podcastFeedUrl) { %>
+                <button class="btn btn-ghost" type="button" data-copy-trigger="podcast-feed-url" data-copy-label="Copy Feed URL">Copy Feed URL</button>
+              <% } %>
+              <% if (publishedEpisodeUrl) { %>
+                <button class="btn btn-ghost" type="button" data-copy-trigger="podcast-episode-url" data-copy-label="Copy Episode URL">Copy Episode URL</button>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="inline-actions">
+          <button class="btn btn-ghost" type="submit" name="publicationAction" value="save">Save Publish Setup</button>
+          <button class="btn btn-primary" type="submit" name="publicationAction" value="publish" <%= publishDisabled ? 'disabled' : '' %>><%= publishScheduledForValue ? 'Publish or Schedule Episode' : 'Publish Episode' %></button>
+          <% if (episode.publishStatus === 'published' || episode.publishStatus === 'scheduled') { %>
+            <button class="btn btn-danger" type="submit" name="publicationAction" value="unpublish">Unpublish</button>
+          <% } %>
+        </div>
+
+        <% if (!['Ready', 'Served'].includes(episode.status)) { %>
+          <p class="mini-note">Move this episode to <strong>Ready</strong> or <strong>Served</strong> before publishing it live.</p>
+        <% } else if (!episodeAudioAsset) { %>
+          <p class="mini-note">This episode is ready to publish once the final MP3 is attached.</p>
+        <% } else if (episode.publishStatus === 'scheduled' && episode.scheduledFor) { %>
+          <p class="mini-note">Scheduled for <strong><%= new Date(episode.scheduledFor).toLocaleString() %></strong>.</p>
+        <% } else if (episode.publishStatus === 'published' && episode.publishedAt) { %>
+          <p class="mini-note">Live since <strong><%= new Date(episode.publishedAt).toLocaleString() %></strong>.</p>
+        <% } %>
+      </form>
+    <% } %>
+  <% } %>
+</section>
+
 <section class="card">
   <div class="section-head">
     <h3>Episode Editor</h3>

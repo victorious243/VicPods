@@ -1,5 +1,6 @@
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
+const PodcastShow = require('../models/PodcastShow');
 const Series = require('../models/Series');
 const Theme = require('../models/Theme');
 const {
@@ -56,9 +57,16 @@ const {
   markLaunchPackStale,
 } = require('../services/launch/launchPackService');
 const { buildReferralProgramViewModel } = require('../services/marketing/referralService');
+const { buildPublicAudioUrl } = require('../services/publish/audioStorageService');
+const {
+  buildEpisodeSummary,
+  buildPodcastFeedUrl,
+  buildPublishedEpisodeUrl,
+} = require('../services/publish/publishService');
 const { ensureEpisodeShareUrl } = require('../services/sharing/episodeShareService');
 const { AppError } = require('../utils/errors');
-const { episodeEditorPath } = require('../utils/paths');
+const { episodeEditorPath, podcastShowsPath } = require('../utils/paths');
+const { buildRequestBaseUrl } = require('../utils/requestUrl');
 const { renderPage } = require('../utils/render');
 
 const VALID_STATUSES = ['Planned', 'Draft', 'Ready', 'Served'];
@@ -105,6 +113,31 @@ function toObjectIdList(value) {
   }
 
   return [value];
+}
+
+function formatDateTimeLocalValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+
+  const pad = (number) => String(number).padStart(2, '0');
+
+  return [
+    parsed.getFullYear(),
+    '-',
+    pad(parsed.getMonth() + 1),
+    '-',
+    pad(parsed.getDate()),
+    'T',
+    pad(parsed.getHours()),
+    ':',
+    pad(parsed.getMinutes()),
+  ].join('');
 }
 
 async function getOwnedSeries({ userId, seriesId }) {
@@ -474,14 +507,15 @@ async function showEpisodeEditor(req, res, next) {
     const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
     const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
     const effectivePlan = req.effectivePlan || 'free';
+    const publishFeatureAvailable = effectivePlan === 'pro' || effectivePlan === 'premium';
 
-    const [episode, allIdeas, seriesEpisodes, seriesThemes] = await Promise.all([
+    const [episode, allIdeas, seriesEpisodes, seriesThemes, podcastShows] = await Promise.all([
       Episode.findOne({
         _id: req.params.episodeId,
         userId,
         seriesId: series._id,
         themeId: theme._id,
-      }).populate('ideaIds'),
+      }).populate('ideaIds showId audioAssetId'),
       Idea.find({ userId }).sort({ updatedAt: -1 }),
       Episode.find({
         userId,
@@ -491,6 +525,9 @@ async function showEpisodeEditor(req, res, next) {
         userId,
         seriesId: series._id,
       }).sort({ orderIndex: 1, createdAt: 1 }),
+      publishFeatureAvailable
+        ? PodcastShow.find({ userId }).sort({ updatedAt: -1 })
+        : Promise.resolve([]),
     ]);
 
     if (!episode) {
@@ -540,6 +577,20 @@ async function showEpisodeEditor(req, res, next) {
     const referralProgram = await buildReferralProgramViewModel(req.currentUser, {
       appUrl: process.env.APP_URL || 'http://localhost:3000',
     });
+    const requestBaseUrl = buildRequestBaseUrl(req);
+    const publishSummaryValue = episode.summary || buildEpisodeSummary(episode);
+    const selectedPodcastShow = episode.showId || null;
+    const episodeAudioAsset = episode.audioAssetId || null;
+    const podcastFeedUrl = selectedPodcastShow
+      ? buildPodcastFeedUrl(selectedPodcastShow, requestBaseUrl)
+      : '';
+    const publishedEpisodeUrl = selectedPodcastShow && episode.publicSlug
+      ? buildPublishedEpisodeUrl(selectedPodcastShow, episode, requestBaseUrl)
+      : '';
+    const episodeAudioAssetUrl = episodeAudioAsset
+      ? buildPublicAudioUrl(episodeAudioAsset, requestBaseUrl)
+      : '';
+    const publishScheduledForValue = formatDateTimeLocalValue(episode.scheduledFor);
 
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
@@ -575,6 +626,16 @@ async function showEpisodeEditor(req, res, next) {
         sharedEpisodeUrl,
         referralProgram,
         effectivePlan,
+        publishFeatureAvailable,
+        podcastShows,
+        podcastShowsPath: podcastShowsPath(),
+        publishSummaryValue,
+        selectedPodcastShow,
+        podcastFeedUrl,
+        publishedEpisodeUrl,
+        episodeAudioAsset,
+        episodeAudioAssetUrl,
+        publishScheduledForValue,
       },
     });
   } catch (error) {
