@@ -290,6 +290,100 @@
     });
   }
 
+  function setCoverStatus(root, text, isError) {
+    var statusNode = root.querySelector('[data-cover-status]');
+    if (!statusNode) {
+      return;
+    }
+
+    statusNode.textContent = text;
+    statusNode.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function initCoverUploads() {
+    var widgets = document.querySelectorAll('[data-cover-upload]');
+
+    widgets.forEach(function bindCoverUpload(root) {
+      var fileInput = root.querySelector('[data-cover-file]');
+      var uploadTrigger = root.querySelector('[data-cover-upload-trigger]');
+      var uploadEndpoint = root.getAttribute('data-cover-endpoint');
+      var preview = root.querySelector('[data-cover-preview]');
+      var emptyState = root.querySelector('[data-cover-empty]');
+
+      if (!fileInput || !uploadTrigger || !uploadEndpoint) {
+        return;
+      }
+
+      uploadTrigger.addEventListener('click', function handleCoverUpload() {
+        var file = fileInput.files && fileInput.files[0];
+        var looksLikeImage = file && (/image\/(png|jpe?g|webp)/i.test(file.type));
+
+        if (!file) {
+          setCoverStatus(root, 'Choose a cover image first.', true);
+          return;
+        }
+
+        if (!looksLikeImage) {
+          setCoverStatus(root, 'Cover artwork must be JPG, PNG, or WebP.', true);
+          return;
+        }
+
+        uploadTrigger.disabled = true;
+        uploadTrigger.setAttribute('aria-busy', 'true');
+        setCoverStatus(root, 'Uploading cover artwork...', false);
+
+        readFileAsDataUrl(file)
+          .then(function handleCoverDataUrl(coverDataUrl) {
+            return fetch(uploadEndpoint, {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                coverDataUrl: coverDataUrl,
+              }),
+            });
+          })
+          .then(function handleCoverResponse(response) {
+            return response.json()
+              .catch(function handleInvalidResponse() {
+                return {};
+              })
+              .then(function resolvePayload(payload) {
+                if (!response.ok) {
+                  throw new Error(payload.error || 'Cover upload failed.');
+                }
+
+                return payload;
+              });
+          })
+          .then(function handleCoverSuccess(payload) {
+            if (preview && payload.coverImageUrl) {
+              preview.src = payload.coverImageUrl;
+              preview.hidden = false;
+            }
+
+            if (emptyState) {
+              emptyState.hidden = true;
+            }
+
+            fileInput.value = '';
+            setCoverStatus(root, 'Cover artwork uploaded.', false);
+          })
+          .catch(function handleCoverFailure(error) {
+            setCoverStatus(root, error.message || 'Cover upload failed.', true);
+          })
+          .finally(function finishCoverUpload() {
+            uploadTrigger.disabled = false;
+            uploadTrigger.removeAttribute('aria-busy');
+          });
+      });
+    });
+  }
+
   initCopyTriggers();
   initAudioUploads();
+  initCoverUploads();
 }());

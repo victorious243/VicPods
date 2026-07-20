@@ -7,6 +7,9 @@ const {
   removeStoredAudioFile,
   storeEpisodeAudioFile,
 } = require('../services/publish/audioStorageService');
+const { storeShowCoverFile } = require('../services/publish/coverStorageService');
+const { buildDirectoryChecklist } = require('../services/publish/directoryChecklistService');
+const { buildFeedValidation } = require('../services/publish/feedValidationService');
 const {
   buildEpisodeSummary,
   buildPodcastFeedUrl,
@@ -95,6 +98,30 @@ async function listShows(req, res, next) {
   try {
     const podcastShows = await PodcastShow.find({ userId: req.currentUser._id }).sort({ updatedAt: -1 });
     const requestBaseUrl = buildRequestBaseUrl(req);
+    const podcastShowDetails = await Promise.all(podcastShows.map(async (show) => {
+      const episodes = await Episode.find({
+        userId: req.currentUser._id,
+        showId: show._id,
+        publicPageEnabled: true,
+        publishStatus: { $in: ['published', 'scheduled'] },
+      })
+        .sort({ publishedAt: -1, scheduledFor: 1, createdAt: -1 })
+        .populate('audioAssetId')
+        .limit(12);
+      const feedValidation = buildFeedValidation({ show, episodes, baseUrl: requestBaseUrl });
+      const feedUrl = buildPodcastFeedUrl(show, requestBaseUrl);
+      const showUrl = requestBaseUrl.replace(/\/$/, '') + '/podcasts/' + show.slug;
+
+      return {
+        show,
+        episodes,
+        feedValidation,
+        directoryChecklist: buildDirectoryChecklist({ feedValidation, feedUrl }),
+        feedUrl,
+        showUrl,
+        embedUrl: showUrl + '/embed',
+      };
+    }));
 
     return renderPage(res, {
       title: 'Hosted Shows - VicPods',
@@ -103,6 +130,7 @@ async function listShows(req, res, next) {
       view: 'publish/shows',
       data: {
         podcastShows,
+        podcastShowDetails,
         defaultShowValues: buildShowDefaults(req),
         podcastFeedUrls: Object.fromEntries(
           podcastShows.map((show) => [String(show._id), buildPodcastFeedUrl(show, requestBaseUrl)])
@@ -111,6 +139,39 @@ async function listShows(req, res, next) {
     });
   } catch (error) {
     return next(error);
+  }
+}
+
+async function uploadShowCover(req, res) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      throw new AppError('Hosted show not found.', 404);
+    }
+
+    const requestBaseUrl = buildRequestBaseUrl(req);
+    const storedCover = await storeShowCoverFile({
+      userId: req.currentUser._id,
+      showId: show._id,
+      coverDataUrl: req.body.coverDataUrl,
+    });
+
+    show.coverImageUrl = requestBaseUrl.replace(/\/$/, '') + storedCover.publicPath;
+    await show.save();
+
+    return res.status(201).json({
+      message: 'Cover artwork uploaded.',
+      coverImageUrl: show.coverImageUrl,
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      error: error.message || 'Unable to upload cover artwork right now.',
+    });
   }
 }
 
@@ -363,5 +424,6 @@ module.exports = {
   createShow,
   listShows,
   updateEpisodePublication,
+  uploadShowCover,
   uploadEpisodeAudio,
 };

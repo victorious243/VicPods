@@ -93,7 +93,7 @@
       <p class="empty-state">No hosted shows yet. Create one to unlock your first live feed.</p>
     <% } else { %>
       <div class="list-stack">
-        <% podcastShows.forEach((show) => { %>
+        <% podcastShowDetails.forEach((detail) => { const show = detail.show; %>
           <article class="list-item publish-show-item">
             <div>
               <h4><%= show.name %></h4>
@@ -112,6 +112,82 @@
               <div class="inline-actions">
                 <button class="btn btn-ghost" type="button" data-copy-trigger="show-feed-<%= show._id %>" data-copy-label="Copy Feed URL">Copy Feed URL</button>
                 <a class="btn btn-secondary" href="<%= podcastFeedUrls[String(show._id)] %>" target="_blank" rel="noopener noreferrer">Open Feed XML</a>
+                <a class="btn btn-secondary" href="<%= detail.showUrl %>" target="_blank" rel="noopener noreferrer">Open Show Page</a>
+              </div>
+              <div class="publish-phase-grid">
+                <section class="publish-health-panel">
+                  <div class="section-head">
+                    <h5>Feed Health</h5>
+                    <span class="mini-label <%= detail.feedValidation.passed ? 'is-success' : 'is-error' %>">
+                      <%= detail.feedValidation.passed ? 'Ready' : String(detail.feedValidation.errorCount) + ' issues' %>
+                    </span>
+                  </div>
+                  <ul class="publish-check-list">
+                    <% detail.feedValidation.checks.forEach((check) => { %>
+                      <li class="<%= check.passed ? 'is-complete' : 'is-blocked' %>">
+                        <span><%= check.passed ? 'OK' : 'Fix' %></span>
+                        <div>
+                          <strong><%= check.label %></strong>
+                          <p><%= check.detail %></p>
+                        </div>
+                      </li>
+                    <% }) %>
+                  </ul>
+                </section>
+                <section class="publish-health-panel">
+                  <div class="section-head">
+                    <h5>Directory Checklist</h5>
+                    <span class="mini-label"><%= detail.directoryChecklist.length %> platforms</span>
+                  </div>
+                  <div class="publish-directory-list">
+                    <% detail.directoryChecklist.forEach((platform) => { %>
+                      <article>
+                        <div>
+                          <strong><%= platform.name %></strong>
+                          <p><%= platform.status === 'ready' ? platform.note : platform.blocker %></p>
+                        </div>
+                        <a class="btn btn-ghost" href="<%= platform.submissionUrl %>" target="_blank" rel="noopener noreferrer"><%= platform.status === 'ready' ? 'Submit' : 'Open' %></a>
+                      </article>
+                    <% }) %>
+                  </div>
+                </section>
+              </div>
+              <div class="publish-asset-grid">
+                <section class="publish-health-panel" data-cover-upload data-cover-endpoint="/publish/shows/<%= show._id %>/cover">
+                  <div class="section-head">
+                    <h5>Cover Artwork</h5>
+                    <span class="mini-label">JPG PNG WebP</span>
+                  </div>
+                  <% if (show.coverImageUrl) { %>
+                    <img class="publish-cover-preview" src="<%= show.coverImageUrl %>" alt="<%= show.name %> cover artwork" data-cover-preview />
+                  <% } else { %>
+                    <div class="publish-cover-empty" data-cover-empty>No managed cover uploaded yet.</div>
+                    <img class="publish-cover-preview" src="" alt="<%= show.name %> cover artwork" data-cover-preview hidden />
+                  <% } %>
+                  <div class="inline-actions publish-audio-actions">
+                    <input type="file" accept="image/png,image/jpeg,image/webp" data-cover-file />
+                    <button class="btn btn-secondary" type="button" data-cover-upload-trigger>Upload Cover</button>
+                  </div>
+                  <p class="mini-note" data-cover-status></p>
+                </section>
+                <section class="publish-health-panel">
+                  <div class="section-head">
+                    <h5>Embeds</h5>
+                    <span class="mini-label">Share</span>
+                  </div>
+                  <label class="share-link-field">
+                    <span class="landing-preview-label">Show Embed URL</span>
+                    <input type="text" value="<%= detail.embedUrl %>" readonly data-copy-source="show-embed-<%= show._id %>" />
+                  </label>
+                  <label class="share-link-field">
+                    <span class="landing-preview-label">Iframe Snippet</span>
+                    <input type="text" value="<iframe src=&quot;<%= detail.embedUrl %>&quot; width=&quot;100%&quot; height=&quot;220&quot; loading=&quot;lazy&quot; style=&quot;border:0;border-radius:12px;&quot;></iframe>" readonly data-copy-source="show-iframe-<%= show._id %>" />
+                  </label>
+                  <div class="inline-actions">
+                    <button class="btn btn-ghost" type="button" data-copy-trigger="show-embed-<%= show._id %>" data-copy-label="Copy Embed URL">Copy Embed URL</button>
+                    <button class="btn btn-ghost" type="button" data-copy-trigger="show-iframe-<%= show._id %>" data-copy-label="Copy Iframe">Copy Iframe</button>
+                  </div>
+                </section>
               </div>
             </div>
           </article>

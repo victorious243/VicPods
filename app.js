@@ -20,6 +20,7 @@ const { syncPlanStatus } = require('./middleware/requirePlan');
 const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtection');
 const { flashMiddleware } = require('./middleware/flash');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { startPublishScheduler } = require('./services/publish/publishSchedulerService');
 
 const webhooksRouter = require('./routes/webhooks');
 const indexRouter = require('./routes/index');
@@ -72,6 +73,7 @@ connectDatabase(process.env.MONGO_URI)
   .then(() => {
     // eslint-disable-next-line no-console
     console.log('Connected to MongoDB');
+    startPublishScheduler();
   })
   .catch((error) => {
     // eslint-disable-next-line no-console

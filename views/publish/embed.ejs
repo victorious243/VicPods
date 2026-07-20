@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'VicPods Player' %></title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111827;
+      --surface: #172033;
+      --text: #f8fafc;
+      --muted: #a8b3c7;
+      --border: rgba(255, 255, 255, 0.14);
+      --accent: #70e1b9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .embed-player {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 84px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--surface), var(--bg));
+    }
+
+    img {
+      width: 84px;
+      height: 84px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .copy {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .label {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    audio {
+      width: 100%;
+      height: 36px;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 420px) {
+      .embed-player {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="embed-player">
+    <% if (publishedEpisode) { %>
+      <img src="<%= publishedEpisode.coverImageUrl %>" alt="" />
+      <div class="copy">
+        <span class="label"><%= publishedEpisode.showName %></span>
+        <h1><%= publishedEpisode.title %></h1>
+        <p><%= publishedEpisode.summary %></p>
+        <audio controls preload="none" src="<%= publishedEpisode.audioUrl %>"></audio>
+      </div>
+    <% } else if (publishedShow) { %>
+      <img src="<%= publishedShow.coverImageUrl %>" alt="" />
+      <div class="copy">
+        <span class="label">Podcast</span>
+        <h1><%= publishedShow.name %></h1>
+        <p><%= publishedShow.description %></p>
+        <a class="label" href="<%= publishedShow.feedUrl %>" target="_blank" rel="noopener noreferrer">RSS Feed</a>
+      </div>
+    <% } else { %>
+      <p class="empty">This VicPods player does not have a published episode yet.</p>
+    <% } %>
+  </main>
+</body>
+</html>

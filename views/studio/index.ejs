@@ -1,37 +1,186 @@
-<section id="onboarding-studio-start" class="card studio-hero-card">
-  <div class="studio-hero-grid">
-    <div class="studio-hero-copy">
-      <span class="mini-label studio-hero-kicker">Command center</span>
-      <h3>Start your next episode with structure.</h3>
-      <p>Move from rough topic to launch-ready prep in one focused workflow.</p>
+<%
+  const studioData = commandCenter || {
+    pipeline: [],
+    nextActions: [],
+    calendarItems: [],
+    showHealth: { label: 'No hosted show', score: 0, detail: 'Create a hosted show to unlock feed health.', href: '/publish/shows' },
+    spotlight: null,
+    operatingMetrics: { shows: 0, scheduledEpisodes: 0, liveEpisodes: 0, readinessScore: 0 },
+  };
+  const spotlight = studioData.spotlight;
+  const nextAction = studioData.nextActions[0] || {
+    eyebrow: 'Start',
+    title: 'Open the podcast workspace',
+    body: 'Build your next episode from idea to launch assets.',
+    href: '/kitchen',
+    cta: 'Open Workspace',
+    tone: 'primary',
+  };
+%>
 
+<section id="onboarding-studio-start" class="studio-command-shell">
+  <div class="studio-command-hero">
+    <div class="studio-hero-album" aria-hidden="true">
+      <div class="studio-album-art">
+        <span class="studio-album-ring"></span>
+        <span class="studio-album-mark">VP</span>
+      </div>
+      <div class="studio-equalizer">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <div class="studio-command-copy">
+      <span class="mini-label studio-hero-kicker">Studio Command Center</span>
+      <h3>Run the whole podcast from one focused dashboard.</h3>
+      <p>Your next action, launch pipeline, show health, and recording calendar now sit together instead of scattered across cards.</p>
       <div class="inline-actions studio-hero-actions">
-        <a href="/kitchen" class="btn btn-primary">Open Workspace</a>
-        <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">New Single Episode</a>
+        <a href="<%= nextAction.href %>" class="btn btn-primary"><%= nextAction.cta %></a>
+        <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">New Episode</a>
         <a id="onboarding-start-series" href="/create/series" class="btn btn-ghost">Start Series</a>
       </div>
     </div>
 
-    <aside class="studio-hero-side">
-      <article class="studio-hero-stat">
-        <span class="mini-label">Current access</span>
-        <strong><%= effectivePlan === 'free' ? 'Free plan' : `${effectivePlan.charAt(0).toUpperCase()}${effectivePlan.slice(1)} plan` %></strong>
-      </article>
-      <article class="studio-hero-stat">
-        <span class="mini-label">AI remaining today</span>
-        <strong><%= stats.aiRemaining %></strong>
-      </article>
-      <article class="studio-hero-stat">
-        <span class="mini-label">Next milestone</span>
-        <strong><%= activationChecklist.nextStep?.label || 'Open Workspace' %></strong>
-      </article>
-      <a id="onboarding-open-settings" href="/settings?section=appearance" class="btn btn-tertiary studio-hero-settings">Open Settings</a>
+    <aside class="studio-now-panel">
+      <span class="mini-label">Now in focus</span>
+      <h4><%= spotlight ? spotlight.title : nextAction.title %></h4>
+      <p><%= spotlight ? (spotlight.seriesName + ' · ' + spotlight.themeName) : nextAction.body %></p>
+      <div class="studio-readiness-meter" aria-label="Latest episode readiness">
+        <span style="width:<%= studioData.operatingMetrics.readinessScore %>%"></span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= studioData.operatingMetrics.readinessScore %>% ready</span>
+        <span><%= spotlight ? spotlight.status : 'Start' %></span>
+      </div>
     </aside>
+  </div>
+
+  <div class="studio-command-metrics" id="onboarding-stats">
+    <a class="studio-metric-pill <%= selectedInspect === 'series' ? 'is-active' : '' %>" href="/studio?inspect=series">
+      <span>Series</span>
+      <strong><%= stats.seriesCount %></strong>
+    </a>
+    <a class="studio-metric-pill <%= selectedInspect === 'episodes' ? 'is-active' : '' %>" href="/studio?inspect=episodes">
+      <span>Episodes</span>
+      <strong><%= stats.episodeCount %></strong>
+    </a>
+    <a class="studio-metric-pill <%= selectedInspect === 'ready' ? 'is-active' : '' %>" href="/studio?inspect=ready">
+      <span>Ready</span>
+      <strong><%= stats.readyCount %></strong>
+    </a>
+    <a class="studio-metric-pill <%= selectedInspect === 'served' ? 'is-active' : '' %>" href="/studio?inspect=served">
+      <span>Live</span>
+      <strong><%= studioData.operatingMetrics.liveEpisodes || stats.servedCount %></strong>
+    </a>
+    <a class="studio-metric-pill <%= selectedInspect === 'ideas' ? 'is-active' : '' %>" href="/studio?inspect=ideas">
+      <span>Ideas</span>
+      <strong><%= stats.ideaCount %></strong>
+    </a>
+    <a class="studio-metric-pill <%= selectedInspect === 'ai' ? 'is-active' : '' %>" href="/studio?inspect=ai">
+      <span>AI Today</span>
+      <strong><%= stats.aiRemaining %></strong>
+    </a>
   </div>
 </section>
 
-<section class="studio-growth-grid">
-  <article class="card activation-checklist-card">
+<section class="studio-operating-grid">
+  <div class="studio-pipeline-panel">
+    <div class="section-head">
+      <div>
+        <h3>Launch Pipeline</h3>
+        <p class="mini-note">Idea to live episode, without losing the thread.</p>
+      </div>
+      <a href="/kitchen" class="btn btn-ghost">Open Workspace</a>
+    </div>
+
+    <div class="studio-pipeline-track">
+      <% studioData.pipeline.forEach((stage, index) => { %>
+        <a href="<%= stage.href %>" class="studio-pipeline-stage studio-pipeline-stage-<%= stage.key %>">
+          <span class="studio-pipeline-index"><%= String(index + 1).padStart(2, '0') %></span>
+          <span class="studio-pipeline-main">
+            <strong><%= stage.label %></strong>
+            <small><%= stage.detail %></small>
+            <% if (stage.featured) { %>
+              <em><%= stage.featured.title %></em>
+            <% } else { %>
+              <em>No items yet</em>
+            <% } %>
+          </span>
+          <span class="studio-pipeline-count"><%= stage.count %></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+
+  <aside class="studio-action-panel">
+    <div class="section-head">
+      <div>
+        <h3>Next Best Actions</h3>
+        <p class="mini-note">The work that moves the show forward.</p>
+      </div>
+    </div>
+
+    <div class="studio-action-stack">
+      <% studioData.nextActions.forEach((action, index) => { %>
+        <a href="<%= action.href %>" class="studio-action-row studio-action-<%= action.tone %>">
+          <span class="studio-action-number"><%= index + 1 %></span>
+          <span class="studio-action-copy">
+            <small><%= action.eyebrow %></small>
+            <strong><%= action.title %></strong>
+            <em><%= action.body %></em>
+          </span>
+          <span class="studio-action-cta"><%= action.cta %></span>
+        </a>
+      <% }) %>
+    </div>
+  </aside>
+</section>
+
+<section class="studio-secondary-grid">
+  <article class="studio-show-health-panel">
+    <div class="studio-health-score">
+      <span><%= studioData.showHealth.score %></span>
+      <small>Feed health</small>
+    </div>
+    <div>
+      <span class="mini-label"><%= studioData.showHealth.label %></span>
+      <h3>Publishing Readiness</h3>
+      <p><%= studioData.showHealth.detail %></p>
+      <a href="<%= studioData.showHealth.href %>" class="btn btn-secondary">Open Publish</a>
+    </div>
+  </article>
+
+  <article class="studio-calendar-panel">
+    <div class="section-head">
+      <div>
+        <h3>Creator Calendar</h3>
+        <p class="mini-note">Scheduled, published, and recently active episodes.</p>
+      </div>
+    </div>
+
+    <% if (!studioData.calendarItems.length) { %>
+      <p class="empty-state">No episode dates yet. Scheduled releases and active drafts will appear here.</p>
+    <% } else { %>
+      <div class="studio-calendar-list">
+        <% studioData.calendarItems.forEach((item) => { %>
+          <a href="<%= item.href %>" class="studio-calendar-item studio-calendar-<%= item.stage %>">
+            <span class="studio-calendar-date"><%= item.dateLabel %></span>
+            <span>
+              <strong><%= item.title %></strong>
+              <small><%= item.statusLabel %></small>
+            </span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+</section>
+
+<section class="studio-growth-grid studio-growth-grid-phase2">
+  <article class="activation-checklist-card studio-progress-panel">
     <div class="section-head">
       <div>
         <h3>First-Week Activation</h3>
@@ -58,16 +207,14 @@
     </div>
   </article>
 
-  <article class="card referral-growth-card">
+  <article class="referral-growth-card studio-referral-panel">
     <div class="section-head">
       <div>
         <h3>Referral Loop</h3>
         <p class="mini-note">Invite creators. Unlock extra usage.</p>
       </div>
-      <span class="mini-label">+<%= referralProgram.rewardPerReferral %> AI credits/day per verified invite</span>
+      <span class="mini-label">+<%= referralProgram.rewardPerReferral %> AI credits/day</span>
     </div>
-
-    <p>When another creator joins through your link and verifies their account, VicPods adds more daily AI capacity automatically.</p>
 
     <label class="share-link-field">
       <span class="landing-preview-label">Your invite link</span>
@@ -85,57 +232,19 @@
         <strong><%= referralProgram.referralCount %></strong>
       </article>
       <article>
-        <span class="mini-label">Bonus AI credits/day</span>
+        <span class="mini-label">Bonus/day</span>
         <strong>+<%= referralProgram.referralBonusCredits %></strong>
       </article>
       <article>
-        <span class="mini-label">Current daily ceiling</span>
+        <span class="mini-label">Daily ceiling</span>
         <strong><%= stats.aiLimit === null ? 'Unlimited' : stats.aiLimit %></strong>
       </article>
     </div>
   </article>
 </section>
 
-<section class="card-grid stats-grid" id="onboarding-stats">
-  <a id="onboarding-stats-series" class="card stat-card stat-card-link <%= selectedInspect === 'series' ? 'active-stat-card' : '' %>" href="/studio?inspect=series">
-    <p>Series</p>
-    <h3><%= stats.seriesCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'episodes' ? 'active-stat-card' : '' %>" href="/studio?inspect=episodes">
-    <p>Episodes</p>
-    <h3><%= stats.episodeCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'single' ? 'active-stat-card' : '' %>" href="/studio?inspect=single">
-    <p>Single</p>
-    <h3><%= stats.singleEpisodeCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'ready' ? 'active-stat-card' : '' %>" href="/studio?inspect=ready">
-    <p>Ready</p>
-    <h3><%= stats.readyCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'served' ? 'active-stat-card' : '' %>" href="/studio?inspect=served">
-    <p>Served</p>
-    <h3><%= stats.servedCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link <%= selectedInspect === 'ideas' ? 'active-stat-card' : '' %>" href="/studio?inspect=ideas">
-    <p>Ideas</p>
-    <h3><%= stats.ideaCount %></h3>
-    <span class="mini-note">Open list</span>
-  </a>
-  <a class="card stat-card stat-card-link wide <%= selectedInspect === 'ai' ? 'active-stat-card' : '' %>" href="/studio?inspect=ai">
-    <p>Chef AI Credits Today</p>
-    <h3><%= stats.aiRemaining %></h3>
-    <span class="mini-note"><%= stats.aiLimitNote %></span>
-  </a>
-</section>
-
 <% if (inspectPanel) { %>
-  <section class="card">
+  <section class="studio-inspect-panel">
     <div class="section-head">
       <h3><%= inspectPanel.title %></h3>
       <a href="/studio" class="btn btn-ghost">Clear</a>
@@ -185,10 +294,10 @@
           <% const hasTheme = Boolean(episode.themeId?._id); %>
           <a
             class="list-item"
-            href="<%= hasTheme ? `/kitchen/${episode.seriesId?._id}/themes/${episode.themeId?._id}/episodes/${episode._id}` : `/kitchen/${episode.seriesId?._id}` %>"
+            href="<%= hasTheme ? ('/kitchen/' + episode.seriesId?._id + '/themes/' + episode.themeId?._id + '/episodes/' + episode._id) : ('/kitchen/' + episode.seriesId?._id) %>"
           >
             <div>
-              <h4><%= episode.title || `Episode ${episode.episodeNumberWithinTheme || '?'}` %></h4>
+              <h4><%= episode.title || ('Episode ' + (episode.episodeNumberWithinTheme || '?')) %></h4>
               <p>
                 <%= episode.isSingle ? 'Single Episode' : (episode.seriesId?.name || 'Series') %>
                 · <%= episode.themeId?.name || 'Theme pending' %>
@@ -206,9 +315,12 @@
   </section>
 <% } %>
 
-<section class="card" id="onboarding-studio-recents">
+<section class="studio-recents-panel" id="onboarding-studio-recents">
   <div class="section-head">
-    <h3>Recent Episodes</h3>
+    <div>
+      <h3>Recent Episodes</h3>
+      <p class="mini-note">A cleaner list built like a creator media queue.</p>
+    </div>
     <a id="onboarding-open-kitchen" href="/kitchen" class="btn btn-ghost">Open Workspace</a>
   </div>
 
@@ -223,25 +335,23 @@
   <% if (!latestEpisodes.length) { %>
     <p class="empty-state">No episodes yet. Open Workspace to start your first episode.</p>
   <% } else { %>
-    <div class="list-stack studio-recent-list">
-      <% latestEpisodes.forEach((episode) => { %>
+    <div class="studio-queue-list">
+      <% latestEpisodes.forEach((episode, index) => { %>
         <% const hasTheme = Boolean(episode.themeId?._id); %>
         <a
-          class="list-item studio-recent-item"
-          href="<%= hasTheme ? `/kitchen/${episode.seriesId?._id}/themes/${episode.themeId?._id}/episodes/${episode._id}` : `/kitchen/${episode.seriesId?._id}` %>"
+          class="studio-queue-item"
+          href="<%= hasTheme ? ('/kitchen/' + episode.seriesId?._id + '/themes/' + episode.themeId?._id + '/episodes/' + episode._id) : ('/kitchen/' + episode.seriesId?._id) %>"
         >
-          <div class="studio-recent-main">
-            <h4><%= episode.title || `Episode ${episode.episodeNumberWithinTheme || '?'}` %></h4>
-            <p>
+          <span class="studio-queue-index"><%= String(index + 1).padStart(2, '0') %></span>
+          <span class="studio-queue-art"><%= (episode.title || 'VP').trim().charAt(0).toUpperCase() %></span>
+          <span class="studio-queue-main">
+            <strong><%= episode.title || ('Episode ' + (episode.episodeNumberWithinTheme || '?')) %></strong>
+            <small>
               <%= episode.isSingle ? 'Single Episode' : (episode.seriesId?.name || 'Series') %>
               · <%= episode.themeId?.name || 'Theme pending' %>
-              · Episode <%= episode.episodeNumberWithinTheme || '?' %>
-            </p>
-          </div>
-          <div class="inline-actions">
-            <span class="mini-label"><%= episode.isSingle ? 'Single' : 'Series' %></span>
-            <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
-          </div>
+            </small>
+          </span>
+          <span class="badge badge-<%= episode.status.toLowerCase() %>"><%= episode.status %></span>
         </a>
       <% }) %>
     </div>

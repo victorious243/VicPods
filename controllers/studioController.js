@@ -7,6 +7,8 @@ const {
 } = require('../services/limitService');
 const { buildActivationChecklist } = require('../services/marketing/activationChecklistService');
 const { buildReferralProgramViewModel } = require('../services/marketing/referralService');
+const { buildStudioCommandCenter } = require('../services/studio/studioCommandCenterService');
+const { buildRequestBaseUrl } = require('../utils/requestUrl');
 const { renderPage } = require('../utils/render');
 
 const INSPECT_KEYS = new Set(['series', 'episodes', 'single', 'ready', 'served', 'ideas', 'ai']);
@@ -115,6 +117,7 @@ async function showStudio(req, res, next) {
       inspectPanel,
       activationChecklist,
       referralProgram,
+      commandCenter,
     ] = await Promise.all([
       Series.countDocuments({ userId }),
       Episode.countDocuments({ userId }),
@@ -131,6 +134,10 @@ async function showStudio(req, res, next) {
       buildActivationChecklist({ userId }),
       buildReferralProgramViewModel(req.currentUser, {
         appUrl: process.env.APP_URL || 'http://localhost:3000',
+      }),
+      buildStudioCommandCenter({
+        userId,
+        baseUrl: buildRequestBaseUrl(req),
       }),
     ]);
 
@@ -164,6 +171,7 @@ async function showStudio(req, res, next) {
         inspectPanel,
         activationChecklist,
         referralProgram,
+        commandCenter,
       },
     });
   } catch (error) {
