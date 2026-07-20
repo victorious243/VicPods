@@ -1,0 +1,181 @@
+<%
+  const integrationData = integrations || {
+    providers: [],
+    events: [],
+    connections: [],
+    episodes: [],
+    jobs: [],
+    deliveries: [],
+    metrics: { connections: 0, activeConnections: 0, queuedJobs: 0, webhookQueue: 0 },
+  };
+  const metricCards = [
+    { label: 'Connections', value: integrationData.metrics.connections, note: 'Configured providers' },
+    { label: 'Active', value: integrationData.metrics.activeConnections, note: 'Ready to receive events' },
+    { label: 'Media Jobs', value: integrationData.metrics.queuedJobs, note: 'Queued processing requests' },
+    { label: 'Webhook Queue', value: integrationData.metrics.webhookQueue, note: 'Pending outbound events' },
+  ];
+%>
+
+<section class="studio-command-shell">
+  <div class="studio-command-hero">
+    <div class="studio-command-copy">
+      <span class="mini-label studio-hero-kicker">Phase 7 Integrations</span>
+      <h3>Connect VicPods to the media and growth stack around the show.</h3>
+      <p>Configure webhooks, Zapier, email platforms, social schedulers, Descript/Riverside handoff, AI clips, captions, and audio cleanup requests.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/studio" class="btn btn-secondary">Back To Studio</a>
+        <a href="/studio/teams" class="btn btn-ghost">Teams</a>
+      </div>
+    </div>
+
+    <aside class="studio-now-panel">
+      <span class="mini-label">Integration Layer</span>
+      <h4><%= integrationData.metrics.activeConnections || 0 %> active connections</h4>
+      <p>Event delivery and media processing are now tracked instead of living outside the product.</p>
+      <div class="studio-now-meta">
+        <span><%= integrationData.metrics.queuedJobs || 0 %> jobs</span>
+        <span><%= integrationData.metrics.webhookQueue || 0 %> webhooks</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="studio-command-metrics">
+    <% metricCards.forEach((metric) => { %>
+      <div class="studio-metric-pill">
+        <span><%= metric.label %></span>
+        <strong><%= metric.value || 0 %></strong>
+        <small><%= metric.note %></small>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="studio-operating-grid integration-grid">
+  <article class="studio-pipeline-panel">
+    <div class="section-head">
+      <div>
+        <h3>Add Connection</h3>
+        <p class="mini-note">Use webhook/Zapier URLs now; OAuth providers can be added later without changing the model.</p>
+      </div>
+    </div>
+
+    <form method="POST" action="/studio/integrations/connections" class="form-grid">
+      <div class="two-col">
+        <label>
+          Provider
+          <select name="provider">
+            <% integrationData.providers.forEach((provider) => { %>
+              <option value="<%= provider %>"><%= provider %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Label
+          <input type="text" name="label" maxlength="120" placeholder="Zapier episode published hook" />
+        </label>
+      </div>
+      <label>
+        Endpoint URL
+        <input type="url" name="endpointUrl" maxlength="500" placeholder="https://hooks.zapier.com/..." />
+      </label>
+      <div class="integration-event-grid">
+        <% integrationData.events.forEach((eventName) => { %>
+          <label class="checkbox-row">
+            <input type="checkbox" name="events" value="<%= eventName %>" />
+            <span><%= eventName %></span>
+          </label>
+        <% }) %>
+      </div>
+      <div class="three-col">
+        <label>
+          Audience/List ID
+          <input type="text" name="audienceId" maxlength="120" />
+        </label>
+        <label>
+          Default Channel
+          <input type="text" name="defaultChannel" maxlength="120" />
+        </label>
+        <label>
+          Export Folder
+          <input type="text" name="exportFolder" maxlength="200" />
+        </label>
+      </div>
+      <button class="btn btn-primary" type="submit">Save Connection</button>
+    </form>
+  </article>
+
+  <aside class="studio-action-panel">
+    <div class="section-head">
+      <div>
+        <h3>Connections</h3>
+        <p class="mini-note">Configured external destinations.</p>
+      </div>
+    </div>
+    <% if (!integrationData.connections.length) { %>
+      <p class="empty-state">No integrations configured yet.</p>
+    <% } else { %>
+      <div class="studio-action-stack">
+        <% integrationData.connections.forEach((connection) => { %>
+          <div class="studio-action-row">
+            <span class="studio-action-number"><%= connection.provider.charAt(0).toUpperCase() %></span>
+            <span class="studio-action-copy">
+              <small><%= connection.provider %> · <%= connection.status %></small>
+              <strong><%= connection.label || connection.provider %></strong>
+              <em><%= connection.events.join(', ') || 'No events selected' %></em>
+            </span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </aside>
+</section>
+
+<section class="studio-secondary-grid">
+  <article class="studio-calendar-panel">
+    <div class="section-head">
+      <div>
+        <h3>Advanced Media Episodes</h3>
+        <p class="mini-note">Open an episode to generate clips, captions, cleanup requests, or export packs.</p>
+      </div>
+    </div>
+    <% if (!integrationData.episodes.length) { %>
+      <p class="empty-state">No episodes yet.</p>
+    <% } else { %>
+      <div class="studio-calendar-list">
+        <% integrationData.episodes.forEach((episode) => { %>
+          <a class="studio-tab-episode" href="<%= episode.href %>">
+            <span class="studio-tab-episode-main">
+              <strong><%= episode.title %></strong>
+              <small><%= episode.showName %> · <%= episode.publishStatus %></small>
+            </span>
+            <span class="studio-tab-readiness">
+              <strong><%= episode.clipCount %></strong>
+              <small>clips</small>
+            </span>
+            <span class="studio-tab-date"><%= episode.hasCaptions ? 'captions' : episode.cleanupStatus %></span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </article>
+
+  <article class="studio-calendar-panel">
+    <div class="section-head">
+      <div>
+        <h3>Jobs And Webhooks</h3>
+        <p class="mini-note">Recent processing and outbound event records.</p>
+      </div>
+    </div>
+    <div class="studio-calendar-list">
+      <% [...integrationData.jobs.slice(0, 6), ...integrationData.deliveries.slice(0, 6)].forEach((item) => { %>
+        <div class="recording-panel">
+          <span class="mini-label"><%= item.jobType || item.eventType %> · <%= item.status %></span>
+          <p><%= item.provider || item.targetUrl || 'VicPods integration record' %></p>
+        </div>
+      <% }) %>
+      <% if (!integrationData.jobs.length && !integrationData.deliveries.length) { %>
+        <p class="empty-state">No jobs or webhook deliveries recorded yet.</p>
+      <% } %>
+    </div>
+  </article>
+</section>

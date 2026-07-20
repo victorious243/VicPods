@@ -16,8 +16,14 @@ const {
 } = require('../services/limitService');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
 const { getLandingPathFromRequest } = require('../services/analytics/contentAttributionService');
+const {
+  buildAnalyticsCsv,
+  buildPodcastAnalyticsDashboard,
+  recordPodcastAnalyticsEvent,
+} = require('../services/analytics/podcastAnalyticsService');
 const { getReferralBonusCredits } = require('../services/marketing/referralService');
 const Episode = require('../models/Episode');
+const PodcastShow = require('../models/PodcastShow');
 const Series = require('../models/Series');
 const Theme = require('../models/Theme');
 
@@ -430,6 +436,88 @@ async function studio(req, res, next) {
   }
 }
 
+async function podcastAnalytics(req, res, next) {
+  if (!requireVerifiedApiUser(req, res)) {
+    return;
+  }
+
+  try {
+    const analytics = await buildPodcastAnalyticsDashboard({
+      userId: req.currentUser._id,
+      from: req.query.from,
+      to: req.query.to,
+    });
+
+    return res.json({ analytics });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function podcastAnalyticsCsv(req, res, next) {
+  if (!requireVerifiedApiUser(req, res)) {
+    return;
+  }
+
+  try {
+    const analytics = await buildPodcastAnalyticsDashboard({
+      userId: req.currentUser._id,
+      from: req.query.from,
+      to: req.query.to,
+    });
+
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', 'attachment; filename="vicpods-podcast-analytics.csv"');
+    return res.send(buildAnalyticsCsv(analytics));
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function recordPodcastPlayerEvent(req, res, next) {
+  try {
+    const eventType = String(req.body?.eventType || '').trim();
+    const allowedEvents = new Set(['player_play', 'player_progress', 'player_complete']);
+
+    if (!allowedEvents.has(eventType)) {
+      return res.status(400).json({ error: 'Unsupported player event.' });
+    }
+
+    const episode = await Episode.findOne({
+      _id: req.body?.episodeId,
+      publishStatus: 'published',
+      publicPageEnabled: true,
+    }).select('_id userId showId audioAssetId publishStatus publicPageEnabled');
+
+    if (!episode?.showId) {
+      return res.status(404).json({ error: 'Published episode not found.' });
+    }
+
+    const show = await PodcastShow.findOne({ _id: episode.showId, userId: episode.userId }).select('_id userId');
+    if (!show) {
+      return res.status(404).json({ error: 'Published show not found.' });
+    }
+
+    await recordPodcastAnalyticsEvent({
+      userId: episode.userId,
+      showId: episode.showId,
+      episodeId: episode._id,
+      audioAssetId: episode.audioAssetId,
+      eventType,
+      source: req.body?.source === 'embed' ? 'embed' : 'web_player',
+      req,
+      metadata: {
+        positionSeconds: Number(req.body?.positionSeconds) || 0,
+        durationSeconds: Number(req.body?.durationSeconds) || 0,
+      },
+    });
+
+    return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function markEpisodeShareCopied(req, res, next) {
   if (!requireVerifiedApiUser(req, res)) {
     return;
@@ -466,5 +554,8 @@ module.exports = {
   session,
   logout,
   studio,
+  podcastAnalytics,
+  podcastAnalyticsCsv,
+  recordPodcastPlayerEvent,
   markEpisodeShareCopied,
 };

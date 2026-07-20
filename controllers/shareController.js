@@ -4,6 +4,7 @@ const {
   buildEpisodeShareUrl,
   normalizeShareToken,
 } = require('../services/sharing/episodeShareService');
+const { recordPodcastAnalyticsEvent } = require('../services/analytics/podcastAnalyticsService');
 const { AppError } = require('../utils/errors');
 const { renderPage } = require('../utils/render');
 
@@ -64,7 +65,7 @@ async function showSharedEpisode(req, res, next) {
     }
 
     const episode = await Episode.findOne({ shareToken })
-      .select('title hook outline launchPack createdAt updatedAt shareToken')
+      .select('title hook outline launchPack createdAt updatedAt shareToken userId showId')
       .lean();
 
     if (!episode) {
@@ -74,6 +75,17 @@ async function showSharedEpisode(req, res, next) {
     const shareEpisode = buildShareEpisodeView(episode);
     const sharePageUrl = buildEpisodeShareUrl(episode.shareToken);
     const createEpisodeHref = req.currentUser ? '/create/single' : '/auth/register';
+
+    if (episode.showId) {
+      recordPodcastAnalyticsEvent({
+        userId: episode.userId,
+        showId: episode.showId,
+        episodeId: episode._id,
+        eventType: 'share_click',
+        source: 'share',
+        req,
+      }).catch(() => {});
+    }
 
     return renderPage(res, {
       title: `${shareEpisode.title} - Shared with VicPods`,

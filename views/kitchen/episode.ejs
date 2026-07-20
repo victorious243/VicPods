@@ -1,7 +1,17 @@
 <% const isToneOverride = Boolean(episode.toneOverridePreset); %>
 <% const toneLabel = effectiveTone?.toneSource === 'override' ? 'Override' : 'Inherited'; %>
 
-<section class="card">
+<nav class="episode-command-tabs" aria-label="Episode workflow">
+  <% episodeDetailTabs.forEach((tab) => { %>
+    <a href="<%= tab.href %>" class="episode-command-tab <%= tab.complete ? 'is-complete' : '' %>">
+      <span><%= tab.label %></span>
+      <strong><%= tab.status %></strong>
+      <small><%= tab.body %></small>
+    </a>
+  <% }) %>
+</nav>
+
+<section class="card" id="episode-plan">
   <div class="section-head">
     <h3>Chef AI</h3>
     <div class="inline-actions">
@@ -106,7 +116,158 @@
   <% } %>
 </section>
 
-<section class="card publish-foundation-card">
+<section class="card recording-workflow-card" id="episode-record">
+  <div class="section-head">
+    <div>
+      <h3>Recording-Day Workflow</h3>
+      <p class="mini-note">Teleprompter, guest prep, interview questions, checklist, session notes, transcript import, and post-record upload.</p>
+    </div>
+    <span class="mini-label"><%= recordingWorkflow.checklistPercent %>% ready</span>
+  </div>
+
+  <div class="studio-readiness-meter" aria-label="Recording checklist progress">
+    <span style="width:<%= recordingWorkflow.checklistPercent %>%"></span>
+  </div>
+
+  <div class="recording-grid">
+    <article class="recording-panel recording-panel-teleprompter" data-teleprompter>
+      <div class="section-head">
+        <div>
+          <h4>Teleprompter</h4>
+          <p class="mini-note">A clean read mode built from the episode structure.</p>
+        </div>
+        <div class="inline-actions">
+          <button class="btn btn-ghost" type="button" data-teleprompter-decrease>A-</button>
+          <button class="btn btn-ghost" type="button" data-teleprompter-increase>A+</button>
+          <button class="btn btn-secondary" type="button" data-teleprompter-toggle>Read Mode</button>
+        </div>
+      </div>
+      <div class="teleprompter-script" data-teleprompter-script tabindex="0">
+        <% if (recordingWorkflow.teleprompterScript) { %>
+          <%= recordingWorkflow.teleprompterScript %>
+        <% } else { %>
+          Add a hook, outline, talking points, and ending to create a teleprompter script.
+        <% } %>
+      </div>
+      <textarea hidden readonly data-copy-source="teleprompter-script"><%= recordingWorkflow.teleprompterScript %></textarea>
+      <button class="btn btn-ghost" type="button" data-copy-trigger="teleprompter-script" data-copy-label="Copy Teleprompter">Copy Teleprompter</button>
+    </article>
+
+    <article class="recording-panel">
+      <div class="section-head">
+        <div>
+          <h4>Guest Prep Sheet</h4>
+          <p class="mini-note">Send this before the recording call.</p>
+        </div>
+        <button class="btn btn-ghost" type="button" data-copy-trigger="guest-prep-sheet" data-copy-label="Copy Prep">Copy Prep</button>
+      </div>
+      <pre class="recording-prep-sheet"><%= recordingWorkflow.guestPrepSheet %></pre>
+      <textarea hidden readonly data-copy-source="guest-prep-sheet"><%= recordingWorkflow.guestPrepSheet %></textarea>
+    </article>
+  </div>
+
+  <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/recording" class="form-grid recording-form">
+    <div class="two-col">
+      <label>
+        Recording Status
+        <select name="recordingStatus">
+          <option value="planned" <%= recordingWorkflow.status === 'planned' ? 'selected' : '' %>>Planned</option>
+          <option value="prepped" <%= recordingWorkflow.status === 'prepped' ? 'selected' : '' %>>Prepped</option>
+          <option value="recorded" <%= recordingWorkflow.status === 'recorded' ? 'selected' : '' %>>Recorded</option>
+          <option value="uploaded" <%= recordingWorkflow.status === 'uploaded' ? 'selected' : '' %>>Uploaded</option>
+          <option value="transcript_imported" <%= recordingWorkflow.status === 'transcript_imported' ? 'selected' : '' %>>Transcript Imported</option>
+        </select>
+      </label>
+      <label>
+        Recording Time
+        <input type="datetime-local" name="recordingScheduledFor" value="<%= recordingScheduledForValue %>" />
+      </label>
+    </div>
+
+    <div class="two-col">
+      <label>
+        Recording Location
+        <input type="text" name="recordingLocation" maxlength="180" value="<%= recordingWorkflow.location %>" placeholder="Riverside room, studio, Zoom link, or local setup" />
+      </label>
+      <label>
+        Post-Record Status
+        <select name="postRecordStatus">
+          <option value="planned" <%= recordingWorkflow.postRecordStatus === 'planned' ? 'selected' : '' %>>Not recorded yet</option>
+          <option value="recorded" <%= recordingWorkflow.postRecordStatus === 'recorded' ? 'selected' : '' %>>Recorded</option>
+          <option value="uploaded" <%= recordingWorkflow.postRecordStatus === 'uploaded' ? 'selected' : '' %>>Final MP3 uploaded</option>
+          <option value="transcript_imported" <%= recordingWorkflow.postRecordStatus === 'transcript_imported' ? 'selected' : '' %>>Transcript imported</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="two-col">
+      <label>
+        Guest Name
+        <input type="text" name="guestName" maxlength="160" value="<%= recordingWorkflow.guestName %>" />
+      </label>
+      <label>
+        Guest Email
+        <input type="email" name="guestEmail" maxlength="220" value="<%= recordingWorkflow.guestEmail %>" />
+      </label>
+    </div>
+
+    <label>
+      Guest Bio / Context
+      <textarea name="guestBio" rows="3" maxlength="1200"><%= recordingWorkflow.guestBio %></textarea>
+    </label>
+
+    <label>
+      Prep Notes
+      <textarea name="prepNotes" rows="4" maxlength="2000"><%= recordingWorkflow.prepNotes %></textarea>
+    </label>
+
+    <label>
+      Interview Questions
+      <textarea name="interviewQuestions" rows="6"><%= recordingWorkflow.interviewQuestions.join('\n') %></textarea>
+      <small class="mini-note">One question per line. These feed the guest prep sheet and teleprompter.</small>
+    </label>
+
+    <fieldset>
+      <legend>Recording Checklist</legend>
+      <div class="checkbox-grid">
+        <% recordingWorkflow.checklist.forEach((item) => { %>
+          <label class="check-item">
+            <input type="checkbox" name="checklistCompleted" value="<%= item.key %>" <%= item.completed ? 'checked' : '' %> />
+            <span><strong><%= item.label %></strong> · <%= item.detail %></span>
+          </label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+    <label>
+      Session Notes
+      <textarea name="sessionNotes" rows="6" maxlength="5000"><%= recordingWorkflow.sessionNotes %></textarea>
+      <small class="mini-note">Capture timestamps, retakes, strong quotes, edit notes, and follow-up tasks during or right after recording.</small>
+    </label>
+
+    <label>
+      Transcript Import
+      <textarea name="importedTranscript" rows="7" placeholder="Paste a transcript from Riverside, Descript, Zoom, or another recorder."></textarea>
+      <small class="mini-note">
+        <% if (recordingWorkflow.transcriptImportedAt) { %>
+          Last imported: <%= new Date(recordingWorkflow.transcriptImportedAt).toLocaleString() %>.
+        <% } else { %>
+          Importing a transcript also updates the Episode Brief source.
+        <% } %>
+      </small>
+    </label>
+
+    <div class="inline-actions">
+      <button type="submit" class="btn btn-primary">Save Recording Workflow</button>
+      <a class="btn btn-secondary" href="#episode-final-audio">Upload Final MP3</a>
+      <% if (episode.transcript && episode.transcript.trim()) { %>
+        <a class="btn btn-ghost" href="#episode-brief-export">Open Episode Brief</a>
+      <% } %>
+    </div>
+  </form>
+</section>
+
+<section class="card publish-foundation-card" id="episode-publish">
   <div class="section-head">
     <h3>Publish Foundation</h3>
     <span class="mini-label">Pro and above</span>
@@ -190,7 +351,82 @@
           </label>
         </div>
 
-        <div class="publish-audio-shell" data-audio-upload data-upload-endpoint="/publish/episodes/<%= episode._id %>/audio">
+        <details class="tone-override-card" <%= (episode.monetization?.visibility || 'public') !== 'public' || (episode.monetization?.adSlots || []).length ? 'open' : '' %>>
+          <summary>Monetization</summary>
+          <div class="tone-override-body">
+            <div class="two-col">
+              <label>
+                Episode Visibility
+                <select name="monetizationVisibility">
+                  <option value="public" <%= (episode.monetization?.visibility || 'public') === 'public' ? 'selected' : '' %>>Public feed</option>
+                  <option value="premium" <%= episode.monetization?.visibility === 'premium' ? 'selected' : '' %>>Premium/private feed only</option>
+                  <option value="private" <%= episode.monetization?.visibility === 'private' ? 'selected' : '' %>>Private feed only</option>
+                </select>
+              </label>
+              <label>
+                Episode Support Link Override
+                <input type="url" name="supportLinkOverride" maxlength="500" value="<%= episode.monetization?.supportLinkOverride || '' %>" placeholder="https://patreon.com/..." />
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label>
+                Sponsor Name
+                <input type="text" name="sponsorName" maxlength="160" value="<%= episode.monetization?.sponsorName || '' %>" />
+              </label>
+              <label>
+                Sponsor Campaign
+                <input type="text" name="sponsorCampaign" maxlength="160" value="<%= episode.monetization?.sponsorCampaign || '' %>" />
+              </label>
+            </div>
+
+            <div class="monetization-link-grid">
+              <%
+                const existingAdSlots = episode.monetization?.adSlots || [];
+                const adSlotDefaults = [
+                  { position: 'pre_roll', timestampSeconds: 15, sponsorName: '', status: 'planned', copy: '' },
+                  { position: 'mid_roll', timestampSeconds: 480, sponsorName: '', status: 'planned', copy: '' },
+                  { position: 'post_roll', timestampSeconds: '', sponsorName: '', status: 'planned', copy: '' },
+                ];
+                const adSlots = existingAdSlots.length ? existingAdSlots : adSlotDefaults;
+              %>
+              <% adSlots.slice(0, 3).forEach((slot) => { %>
+                <div class="recording-panel">
+                  <label>
+                    Ad Slot
+                    <select name="adSlotPosition">
+                      <option value="pre_roll" <%= slot.position === 'pre_roll' ? 'selected' : '' %>>Pre-roll</option>
+                      <option value="mid_roll" <%= slot.position === 'mid_roll' ? 'selected' : '' %>>Mid-roll</option>
+                      <option value="post_roll" <%= slot.position === 'post_roll' ? 'selected' : '' %>>Post-roll</option>
+                    </select>
+                  </label>
+                  <label>
+                    Timestamp Seconds
+                    <input type="number" name="adSlotTimestampSeconds" min="0" value="<%= slot.timestampSeconds || '' %>" />
+                  </label>
+                  <label>
+                    Sponsor
+                    <input type="text" name="adSlotSponsorName" maxlength="160" value="<%= slot.sponsorName || '' %>" />
+                  </label>
+                  <label>
+                    Status
+                    <select name="adSlotStatus">
+                      <option value="planned" <%= (slot.status || 'planned') === 'planned' ? 'selected' : '' %>>Planned</option>
+                      <option value="sold" <%= slot.status === 'sold' ? 'selected' : '' %>>Sold</option>
+                      <option value="delivered" <%= slot.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                    </select>
+                  </label>
+                  <label>
+                    Ad Copy
+                    <textarea name="adSlotCopy" rows="3" maxlength="1000"><%= slot.copy || '' %></textarea>
+                  </label>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </details>
+
+        <div class="publish-audio-shell" id="episode-final-audio" data-audio-upload data-upload-endpoint="/publish/episodes/<%= episode._id %>/audio">
           <div class="section-head">
             <h4>Final MP3</h4>
             <span class="mini-label"><%= episodeAudioAsset ? 'Attached' : 'Required' %></span>
@@ -268,7 +504,223 @@
   <% } %>
 </section>
 
-<section class="card">
+<section class="card" id="episode-advanced-media">
+  <div class="section-head">
+    <div>
+      <h3>Advanced Media And Integrations</h3>
+      <p class="mini-note">Clips, captions, cleanup, external editors, social handoff, and lightweight recording setup.</p>
+    </div>
+    <a href="/studio/integrations" class="btn btn-ghost">Integration Dashboard</a>
+  </div>
+
+  <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/advanced-media" class="form-grid">
+    <div class="two-col">
+      <label>
+        External Editor
+        <select name="externalProvider">
+          <option value="" <%= !advancedMediaPanel.externalProject.provider ? 'selected' : '' %>>None</option>
+          <option value="descript" <%= advancedMediaPanel.externalProject.provider === 'descript' ? 'selected' : '' %>>Descript</option>
+          <option value="riverside" <%= advancedMediaPanel.externalProject.provider === 'riverside' ? 'selected' : '' %>>Riverside</option>
+        </select>
+      </label>
+      <label>
+        External Project URL
+        <input type="url" name="externalProjectUrl" maxlength="500" value="<%= advancedMediaPanel.externalProject.projectUrl || '' %>" placeholder="https://..." />
+      </label>
+    </div>
+    <label>
+      External Project ID
+      <input type="text" name="externalId" maxlength="200" value="<%= advancedMediaPanel.externalProject.externalId || '' %>" />
+    </label>
+
+    <div class="two-col">
+      <label>
+        Cleanup Provider
+        <input type="text" name="cleanupProvider" maxlength="120" value="<%= advancedMediaPanel.cleanupRequest.provider || '' %>" placeholder="Auphonic, Adobe Enhance, external_cleanup" />
+      </label>
+      <label>
+        Recorder Status
+        <select name="recorderStatus">
+          <option value="not_started" <%= (advancedMediaPanel.recorderSession.status || 'not_started') === 'not_started' ? 'selected' : '' %>>Not started</option>
+          <option value="planned" <%= advancedMediaPanel.recorderSession.status === 'planned' ? 'selected' : '' %>>Planned</option>
+          <option value="recorded" <%= advancedMediaPanel.recorderSession.status === 'recorded' ? 'selected' : '' %>>Recorded</option>
+        </select>
+      </label>
+    </div>
+    <label>
+      Cleanup Notes
+      <textarea name="cleanupNotes" rows="3" maxlength="1200"><%= advancedMediaPanel.cleanupRequest.notes || '' %></textarea>
+    </label>
+    <div class="two-col">
+      <label>
+        Recorder Room URL
+        <input type="url" name="recorderRoomUrl" maxlength="500" value="<%= advancedMediaPanel.recorderSession.roomUrl || '' %>" placeholder="https://..." />
+      </label>
+      <label>
+        Recorder Notes
+        <input type="text" name="recorderNotes" maxlength="1200" value="<%= advancedMediaPanel.recorderSession.notes || '' %>" />
+      </label>
+    </div>
+
+    <div class="inline-actions">
+      <button class="btn btn-ghost" type="submit" name="mediaAction" value="save">Save Media Setup</button>
+      <button class="btn btn-secondary" type="submit" name="mediaAction" value="clips">Generate AI Clips</button>
+      <button class="btn btn-secondary" type="submit" name="mediaAction" value="captions">Generate Captions</button>
+      <button class="btn btn-secondary" type="submit" name="mediaAction" value="cleanup">Request Cleanup</button>
+      <button class="btn btn-ghost" type="submit" name="mediaAction" value="descript-export">Queue Descript Export</button>
+      <button class="btn btn-ghost" type="submit" name="mediaAction" value="riverside-export">Queue Riverside Export</button>
+    </div>
+  </form>
+
+  <div class="studio-secondary-grid">
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <h4>AI Clip Suggestions</h4>
+        <span class="mini-label"><%= advancedMediaPanel.clipSuggestions.length %></span>
+      </div>
+      <% if (!advancedMediaPanel.clipSuggestions.length) { %>
+        <p class="empty-state">No clip suggestions yet. Generate clips after adding transcript, summary, or a strong hook.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% advancedMediaPanel.clipSuggestions.forEach((clip) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= clip.platform %> · <%= clip.startSeconds %>s-<%= clip.endSeconds %>s</span>
+              <strong><%= clip.title %></strong>
+              <p><%= clip.hook %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <h4>Captions And Export Packs</h4>
+        <span class="mini-label"><%= advancedMediaPanel.captions.content ? advancedMediaPanel.captions.format : 'draft' %></span>
+      </div>
+      <% if (advancedMediaPanel.captions.content) { %>
+        <pre class="recording-prep-sheet"><%= advancedMediaPanel.captions.content %></pre>
+      <% } else { %>
+        <p class="empty-state">No captions generated yet.</p>
+      <% } %>
+      <div class="recording-panel">
+        <span class="mini-label">Descript Pack</span>
+        <p><%= advancedMediaPanel.descriptPack.markers.length %> markers · <%= advancedMediaPanel.descriptPack.transcript ? 'Transcript included' : 'Transcript missing' %></p>
+      </div>
+      <div class="recording-panel">
+        <span class="mini-label">Riverside Pack</span>
+        <p><%= advancedMediaPanel.riversidePack.questions.length %> prep questions · <%= advancedMediaPanel.riversidePack.guestName || 'No guest set' %></p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="card" id="episode-team">
+  <div class="section-head">
+    <div>
+      <h3>Team Workflow</h3>
+      <p class="mini-note">Comments, tasks, and approval state for serious production workflows.</p>
+    </div>
+    <a href="/studio/teams" class="btn btn-ghost">Team Dashboard</a>
+  </div>
+
+  <div class="team-panel-grid">
+    <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/approval" class="recording-panel form-grid">
+      <div class="section-head">
+        <h4>Approval</h4>
+        <span class="mini-label"><%= teamWorkflowPanel.approval.status %></span>
+      </div>
+      <label>
+        Approval Status
+        <select name="approvalStatus">
+          <option value="not_started" <%= teamWorkflowPanel.approval.status === 'not_started' ? 'selected' : '' %>>Not started</option>
+          <option value="in_review" <%= teamWorkflowPanel.approval.status === 'in_review' ? 'selected' : '' %>>In review</option>
+          <option value="changes_requested" <%= teamWorkflowPanel.approval.status === 'changes_requested' ? 'selected' : '' %>>Changes requested</option>
+          <option value="approved" <%= teamWorkflowPanel.approval.status === 'approved' ? 'selected' : '' %>>Approved</option>
+        </select>
+      </label>
+      <label>
+        Approval Notes
+        <textarea name="approvalNotes" rows="4" maxlength="1200"><%= teamWorkflowPanel.approval.notes %></textarea>
+      </label>
+      <button class="btn btn-primary" type="submit">Save Approval</button>
+    </form>
+
+    <form method="POST" action="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= episode._id %>/work-items" class="recording-panel form-grid">
+      <div class="section-head">
+        <h4>Add Comment Or Task</h4>
+        <span class="mini-label">Team</span>
+      </div>
+      <div class="two-col">
+        <label>
+          Type
+          <select name="type">
+            <option value="comment">Comment</option>
+            <option value="task">Task</option>
+          </select>
+        </label>
+        <label>
+          Assignee
+          <input type="text" name="assigneeName" maxlength="120" placeholder="Producer, editor, guest" />
+        </label>
+      </div>
+      <label>
+        Due Date
+        <input type="date" name="dueAt" />
+      </label>
+      <label>
+        Text
+        <textarea name="body" rows="4" maxlength="2000" required></textarea>
+      </label>
+      <button class="btn btn-secondary" type="submit">Add Item</button>
+    </form>
+  </div>
+
+  <div class="studio-secondary-grid">
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <h4>Open Tasks</h4>
+        <span class="mini-label"><%= teamWorkflowPanel.openTasks.length %></span>
+      </div>
+      <% if (!teamWorkflowPanel.openTasks.length) { %>
+        <p class="empty-state">No open tasks for this episode.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% teamWorkflowPanel.openTasks.forEach((task) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= task.status %><%= task.dueAt ? ' · due ' + new Date(task.dueAt).toLocaleDateString() : '' %></span>
+              <p><%= task.body %></p>
+              <% if (task.assigneeName) { %>
+                <small class="mini-note">Assigned to <%= task.assigneeName %></small>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <h4>Comments</h4>
+        <span class="mini-label"><%= teamWorkflowPanel.comments.length %></span>
+      </div>
+      <% if (!teamWorkflowPanel.comments.length) { %>
+        <p class="empty-state">No comments for this episode yet.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% teamWorkflowPanel.comments.forEach((comment) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= new Date(comment.createdAt).toLocaleDateString() %></span>
+              <p><%= comment.body %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+  </div>
+</section>
+
+<section class="card" id="episode-script">
   <div class="section-head">
     <h3>Episode Editor</h3>
     <a href="/kitchen/<%= series._id %>#theme-<%= theme._id %>" class="btn btn-ghost">Back to Theme</a>
@@ -507,7 +959,7 @@
   </form>
 </section>
 
-<section class="card share-link-card">
+<section class="card share-link-card" id="episode-grow">
   <div class="section-head">
     <h3>Share Episode</h3>
     <span class="mini-label">Read-only link</span>
@@ -900,7 +1352,7 @@ SOCIAL POSTS
   <% } %>
 </section>
 
-<section class="card">
+<section class="card" id="episode-brief-export">
   <div class="section-head">
     <h3>Episode Brief Export</h3>
     <span class="mini-label">TXT · PDF · DOCX</span>

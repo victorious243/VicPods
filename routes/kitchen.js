@@ -12,6 +12,10 @@ router.post('/:seriesId/themes', kitchenController.createTheme);
 router.post('/:seriesId/themes/:themeId/episodes', kitchenController.createEpisodeInTheme);
 router.get('/:seriesId/themes/:themeId/episodes/:episodeId', kitchenController.showEpisodeEditor);
 router.post('/:seriesId/themes/:themeId/episodes/:episodeId', kitchenController.saveEpisode);
+router.post('/:seriesId/themes/:themeId/episodes/:episodeId/recording', kitchenController.updateRecordingWorkflow);
+router.post('/:seriesId/themes/:themeId/episodes/:episodeId/work-items', kitchenController.addEpisodeWorkItem);
+router.post('/:seriesId/themes/:themeId/episodes/:episodeId/approval', kitchenController.updateEpisodeApproval);
+router.post('/:seriesId/themes/:themeId/episodes/:episodeId/advanced-media', kitchenController.updateAdvancedMedia);
 router.post('/:seriesId/themes/:themeId/episodes/:episodeId/delete', kitchenController.deleteEpisode);
 router.post(
   '/:seriesId/themes/:themeId/episodes/:episodeId/transcript/generate',

@@ -383,7 +383,52 @@
     });
   }
 
+  function initTeleprompter() {
+    var roots = document.querySelectorAll('[data-teleprompter]');
+
+    roots.forEach(function bindTeleprompter(root) {
+      var script = root.querySelector('[data-teleprompter-script]');
+      var increase = root.querySelector('[data-teleprompter-increase]');
+      var decrease = root.querySelector('[data-teleprompter-decrease]');
+      var toggle = root.querySelector('[data-teleprompter-toggle]');
+      var fontSize = 18;
+
+      if (!script) {
+        return;
+      }
+
+      function applyFontSize() {
+        script.style.fontSize = fontSize + 'px';
+      }
+
+      if (increase) {
+        increase.addEventListener('click', function handleIncrease() {
+          fontSize = Math.min(fontSize + 2, 34);
+          applyFontSize();
+        });
+      }
+
+      if (decrease) {
+        decrease.addEventListener('click', function handleDecrease() {
+          fontSize = Math.max(fontSize - 2, 14);
+          applyFontSize();
+        });
+      }
+
+      if (toggle) {
+        toggle.addEventListener('click', function handleToggle() {
+          root.classList.toggle('is-read-mode');
+          toggle.textContent = root.classList.contains('is-read-mode') ? 'Exit Read Mode' : 'Read Mode';
+          script.focus();
+        });
+      }
+
+      applyFontSize();
+    });
+  }
+
   initCopyTriggers();
   initAudioUploads();
   initCoverUploads();
+  initTeleprompter();
 }());

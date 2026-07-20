@@ -63,7 +63,25 @@ const {
   buildPodcastFeedUrl,
   buildPublishedEpisodeUrl,
 } = require('../services/publish/publishService');
+const {
+  buildRecordingWorkflowView,
+  normalizeRecordingWorkflowInput,
+} = require('../services/recording/recordingWorkflowService');
+const { buildEpisodeDetailTabs } = require('../services/studio/studioCommandCenterService');
+const {
+  buildEpisodeWorkflowPanel,
+  normalizeApprovalInput,
+  normalizeWorkItemInput,
+} = require('../services/team/teamWorkflowService');
+const {
+  buildCaptionDraft,
+  buildClipSuggestions,
+  buildDescriptExportPack,
+  buildRiversideExportPack,
+  requestMediaJob,
+} = require('../services/integrations/advancedMediaIntegrationService');
 const { ensureEpisodeShareUrl } = require('../services/sharing/episodeShareService');
+const { EpisodeWorkItem } = require('../models/EpisodeWorkItem');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath, podcastShowsPath } = require('../utils/paths');
 const { buildRequestBaseUrl } = require('../utils/requestUrl');
@@ -534,6 +552,11 @@ async function showEpisodeEditor(req, res, next) {
       throw new AppError('Episode not found.', 404);
     }
 
+    const episodeWorkItems = await EpisodeWorkItem.find({
+      userId,
+      episodeId: episode._id,
+    }).sort({ updatedAt: -1, createdAt: -1 });
+
     const previousEpisode = await Episode.findOne({
       userId,
       seriesId: series._id,
@@ -591,6 +614,22 @@ async function showEpisodeEditor(req, res, next) {
       ? buildPublicAudioUrl(episodeAudioAsset, requestBaseUrl)
       : '';
     const publishScheduledForValue = formatDateTimeLocalValue(episode.scheduledFor);
+    const episodeDetailTabs = buildEpisodeDetailTabs({ episode, releaseReadiness });
+    const recordingWorkflow = buildRecordingWorkflowView({ episode, series, theme });
+    const recordingScheduledForValue = formatDateTimeLocalValue(recordingWorkflow.scheduledFor);
+    const teamWorkflowPanel = buildEpisodeWorkflowPanel({
+      episode,
+      workItems: episodeWorkItems,
+    });
+    const advancedMediaPanel = {
+      clipSuggestions: episode.advancedMedia?.clipSuggestions || [],
+      captions: episode.advancedMedia?.captions || {},
+      cleanupRequest: episode.advancedMedia?.cleanupRequest || {},
+      externalProject: episode.advancedMedia?.externalProject || {},
+      recorderSession: episode.advancedMedia?.recorderSession || {},
+      descriptPack: buildDescriptExportPack({ episode, show: selectedPodcastShow }),
+      riversidePack: buildRiversideExportPack({ episode, show: selectedPodcastShow }),
+    };
 
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
@@ -635,9 +674,164 @@ async function showEpisodeEditor(req, res, next) {
         publishedEpisodeUrl,
         episodeAudioAsset,
         episodeAudioAssetUrl,
+        episodeDetailTabs,
+        recordingWorkflow,
+        recordingScheduledForValue,
         publishScheduledForValue,
+        teamWorkflowPanel,
+        advancedMediaPanel,
       },
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function addEpisodeWorkItem(req, res, next) {
+  try {
+    const userId = req.currentUser._id;
+    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const episode = await Episode.findOne({
+      _id: req.params.episodeId,
+      userId,
+      seriesId: series._id,
+      themeId: theme._id,
+    });
+
+    if (!episode) {
+      throw new AppError('Episode not found.', 404);
+    }
+
+    const input = normalizeWorkItemInput(req.body);
+    if (!input.body) {
+      req.flash('error', 'Comment or task text is required.');
+      return res.redirect(episodeEditorPath({ seriesId: series._id, themeId: theme._id, episodeId: episode._id }) + '#episode-team');
+    }
+
+    await EpisodeWorkItem.create({
+      userId,
+      episodeId: episode._id,
+      showId: episode.showId || null,
+      ...input,
+    });
+
+    req.flash('success', input.type === 'task' ? 'Task added.' : 'Comment added.');
+    return res.redirect(episodeEditorPath({ seriesId: series._id, themeId: theme._id, episodeId: episode._id }) + '#episode-team');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateEpisodeApproval(req, res, next) {
+  try {
+    const userId = req.currentUser._id;
+    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const episode = await Episode.findOne({
+      _id: req.params.episodeId,
+      userId,
+      seriesId: series._id,
+      themeId: theme._id,
+    });
+
+    if (!episode) {
+      throw new AppError('Episode not found.', 404);
+    }
+
+    const previousStatus = episode.approvalWorkflow?.status || 'not_started';
+    const input = normalizeApprovalInput(req.body);
+    const now = new Date();
+
+    episode.approvalWorkflow = {
+      ...(episode.approvalWorkflow?.toObject ? episode.approvalWorkflow.toObject() : episode.approvalWorkflow || {}),
+      status: input.status,
+      notes: input.notes,
+      requestedBy: input.status === 'in_review' ? userId : episode.approvalWorkflow?.requestedBy || null,
+      requestedAt: input.status === 'in_review' && previousStatus !== 'in_review' ? now : episode.approvalWorkflow?.requestedAt || null,
+      reviewedBy: ['approved', 'changes_requested'].includes(input.status) ? userId : episode.approvalWorkflow?.reviewedBy || null,
+      reviewedAt: ['approved', 'changes_requested'].includes(input.status) ? now : episode.approvalWorkflow?.reviewedAt || null,
+    };
+
+    await episode.save();
+
+    req.flash('success', 'Approval status saved.');
+    return res.redirect(episodeEditorPath({ seriesId: series._id, themeId: theme._id, episodeId: episode._id }) + '#episode-team');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateAdvancedMedia(req, res, next) {
+  try {
+    const userId = req.currentUser._id;
+    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const episode = await Episode.findOne({
+      _id: req.params.episodeId,
+      userId,
+      seriesId: series._id,
+      themeId: theme._id,
+    });
+
+    if (!episode) {
+      throw new AppError('Episode not found.', 404);
+    }
+
+    const action = String(req.body.mediaAction || 'save').trim();
+    const currentAdvancedMedia = episode.advancedMedia?.toObject ? episode.advancedMedia.toObject() : episode.advancedMedia || {};
+    episode.advancedMedia = {
+      ...currentAdvancedMedia,
+      externalProject: {
+        ...(currentAdvancedMedia.externalProject || {}),
+        provider: ['', 'descript', 'riverside'].includes(req.body.externalProvider) ? req.body.externalProvider : '',
+        projectUrl: String(req.body.externalProjectUrl || '').trim().slice(0, 500),
+        externalId: String(req.body.externalId || '').trim().slice(0, 200),
+      },
+      recorderSession: {
+        ...(currentAdvancedMedia.recorderSession || {}),
+        status: ['not_started', 'planned', 'recorded'].includes(req.body.recorderStatus) ? req.body.recorderStatus : 'not_started',
+        roomUrl: String(req.body.recorderRoomUrl || '').trim().slice(0, 500),
+        notes: String(req.body.recorderNotes || '').trim().slice(0, 1200),
+      },
+    };
+
+    if (action === 'clips') {
+      episode.advancedMedia.clipSuggestions = buildClipSuggestions(episode);
+      await requestMediaJob({ userId, episode, jobType: 'clip_suggestions', provider: 'vicpods-ai' });
+      req.flash('success', 'AI clip suggestions generated.');
+    } else if (action === 'captions') {
+      episode.advancedMedia.captions = {
+        format: 'srt',
+        content: buildCaptionDraft(episode),
+        updatedAt: new Date(),
+      };
+      await requestMediaJob({ userId, episode, jobType: 'captions', provider: 'vicpods-ai' });
+      req.flash('success', 'Caption draft generated.');
+    } else if (action === 'cleanup') {
+      episode.advancedMedia.cleanupRequest = {
+        status: 'requested',
+        provider: String(req.body.cleanupProvider || 'external_cleanup').trim().slice(0, 120),
+        notes: String(req.body.cleanupNotes || '').trim().slice(0, 1200),
+        requestedAt: new Date(),
+      };
+      await requestMediaJob({ userId, episode, jobType: 'audio_cleanup', provider: episode.advancedMedia.cleanupRequest.provider });
+      req.flash('success', 'Audio cleanup request queued.');
+    } else if (action === 'descript-export') {
+      episode.advancedMedia.externalProject.lastExportedAt = new Date();
+      await requestMediaJob({ userId, episode, jobType: 'descript_export', provider: 'descript' });
+      req.flash('success', 'Descript export pack queued.');
+    } else if (action === 'riverside-export') {
+      episode.advancedMedia.externalProject.lastExportedAt = new Date();
+      await requestMediaJob({ userId, episode, jobType: 'riverside_export', provider: 'riverside' });
+      req.flash('success', 'Riverside export pack queued.');
+    } else {
+      req.flash('success', 'Advanced media settings saved.');
+    }
+
+    await episode.save();
+
+    return res.redirect(episodeEditorPath({ seriesId: series._id, themeId: theme._id, episodeId: episode._id }) + '#episode-advanced-media');
   } catch (error) {
     return next(error);
   }
@@ -742,6 +936,53 @@ async function saveEpisode(req, res, next) {
   }
 }
 
+async function updateRecordingWorkflow(req, res, next) {
+  try {
+    const userId = req.currentUser._id;
+    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
+    const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
+    const episode = await Episode.findOne({
+      _id: req.params.episodeId,
+      userId,
+      seriesId: series._id,
+      themeId: theme._id,
+    });
+
+    if (!episode) {
+      throw new AppError('Episode not found.', 404);
+    }
+
+    const normalized = normalizeRecordingWorkflowInput(req.body, episode);
+    episode.recordingWorkflow = {
+      ...(episode.recordingWorkflow?.toObject ? episode.recordingWorkflow.toObject() : episode.recordingWorkflow || {}),
+      ...normalized.workflow,
+    };
+
+    if (normalized.importedTranscript) {
+      episode.transcript = normalized.importedTranscript;
+      episode.transcriptUpdatedAt = new Date();
+      episode.recordingWorkflow.status = 'transcript_imported';
+      episode.recordingWorkflow.postRecordStatus = 'transcript_imported';
+    }
+
+    await episode.save();
+
+    req.flash('success', 'Recording workflow saved.');
+    return res.redirect(episodeEditorPath({
+      seriesId: series._id,
+      themeId: theme._id,
+      episodeId: episode._id,
+    }) + '#episode-record');
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect('/kitchen/' + req.params.seriesId);
+    }
+
+    return next(error);
+  }
+}
+
 async function deleteEpisode(req, res, next) {
   try {
     const userId = req.currentUser._id;
@@ -778,7 +1019,11 @@ module.exports = {
   updateSeriesSettings,
   createTheme,
   createEpisodeInTheme,
+  addEpisodeWorkItem,
   showEpisodeEditor,
   saveEpisode,
+  updateEpisodeApproval,
+  updateAdvancedMedia,
+  updateRecordingWorkflow,
   deleteEpisode,
 };

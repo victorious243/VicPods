@@ -20,6 +20,7 @@ const { syncPlanStatus } = require('./middleware/requirePlan');
 const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtection');
 const { flashMiddleware } = require('./middleware/flash');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { trackAudioDownload } = require('./middleware/podcastAnalyticsTracking');
 const { startPublishScheduler } = require('./services/publish/publishSchedulerService');
 
 const webhooksRouter = require('./routes/webhooks');
@@ -105,6 +106,7 @@ app.use('/webhooks', webhooksRouter);
 app.use(express.json({ limit: '80mb' }));
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 app.use(cookieParser());
+app.use('/uploads/audio', trackAudioDownload);
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,

@@ -1,0 +1,234 @@
+<%
+  const monetizationData = monetization || {
+    metrics: { shows: 0, supportLinks: 0, premiumEpisodes: 0, sponsorReadyShows: 0 },
+    shows: [],
+  };
+  const metricCards = [
+    { label: 'Shows', value: monetizationData.metrics.shows, note: 'Hosted shows with monetization workspace' },
+    { label: 'Support Links', value: monetizationData.metrics.supportLinks, note: 'Listener payment and community links' },
+    { label: 'Premium Episodes', value: monetizationData.metrics.premiumEpisodes, note: 'Premium or private visibility' },
+    { label: 'Sponsor Ready', value: monetizationData.metrics.sponsorReadyShows, note: 'Shows with kit essentials complete' },
+  ];
+%>
+
+<section class="studio-command-shell">
+  <div class="studio-command-hero">
+    <div class="studio-command-copy">
+      <span class="mini-label studio-hero-kicker">Phase 5 Monetization</span>
+      <h3>Turn the show into something sponsors and listeners can support.</h3>
+      <p>Add listener support links, prepare premium feeds, generate sponsor-ready media kit details, and plan ad inventory around upcoming episodes.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/studio" class="btn btn-secondary">Back To Studio</a>
+        <a href="/studio/analytics" class="btn btn-ghost">Open Analytics</a>
+      </div>
+    </div>
+
+    <aside class="studio-now-panel">
+      <span class="mini-label">Monetization Goal</span>
+      <h4>Sponsor-ready in under 10 minutes</h4>
+      <p>One support destination, one audience summary, one sponsor pitch, and clear ad slots.</p>
+      <div class="studio-now-meta">
+        <span><%= monetizationData.metrics.sponsorReadyShows %> ready</span>
+        <span><%= monetizationData.metrics.premiumEpisodes %> premium</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="studio-command-metrics">
+    <% metricCards.forEach((metric) => { %>
+      <div class="studio-metric-pill">
+        <span><%= metric.label %></span>
+        <strong><%= metric.value || 0 %></strong>
+        <small><%= metric.note %></small>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<% if (!monetizationData.shows.length) { %>
+  <section class="card">
+    <h3>No Hosted Shows Yet</h3>
+    <p class="empty-state">Create a hosted show before building support links, private feeds, and sponsor material.</p>
+    <a href="/publish/shows" class="btn btn-primary">Create Hosted Show</a>
+  </section>
+<% } %>
+
+<% monetizationData.shows.forEach((item) => {
+  const show = item.show;
+  const monetizationSettings = show.monetization || {};
+  const rateCard = monetizationSettings.rateCard || {};
+  const supportLinks = item.supportLinks.length ? item.supportLinks : [{ label: '', url: '', provider: '' }];
+  while (supportLinks.length < 3) {
+    supportLinks.push({ label: '', url: '', provider: '' });
+  }
+%>
+  <section class="studio-operating-grid monetization-show-grid">
+    <article class="studio-pipeline-panel">
+      <div class="section-head">
+        <div>
+          <span class="mini-label">Show Monetization</span>
+          <h3><%= show.name %></h3>
+          <p class="mini-note">Support links, premium feed settings, sponsor positioning, and ad rates.</p>
+        </div>
+        <a href="/podcasts/<%= show.slug %>" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Public Page</a>
+      </div>
+
+      <form method="POST" action="/studio/monetization/shows/<%= show._id %>" class="form-grid monetization-form">
+        <div class="two-col">
+          <label>
+            Sponsor Contact Email
+            <input type="email" name="sponsorContactEmail" maxlength="200" value="<%= monetizationSettings.sponsorContactEmail || show.ownerEmail || '' %>" />
+          </label>
+          <label>
+            Audience Summary
+            <input type="text" name="audienceSummary" maxlength="1200" value="<%= monetizationSettings.audienceSummary || '' %>" placeholder="Independent creators, founders, and operators" />
+          </label>
+        </div>
+
+        <label>
+          Sponsor Pitch
+          <textarea name="sponsorPitch" rows="4" maxlength="1200" placeholder="Why this show is valuable to a sponsor"><%= monetizationSettings.sponsorPitch || '' %></textarea>
+        </label>
+
+        <div class="monetization-link-grid">
+          <% supportLinks.slice(0, 3).forEach((link, index) => { %>
+            <div class="recording-panel">
+              <span class="mini-label">Support Link <%= index + 1 %></span>
+              <label>
+                Label
+                <input type="text" name="supportLinkLabel" maxlength="80" value="<%= link.label %>" placeholder="Support the show" />
+              </label>
+              <label>
+                URL
+                <input type="url" name="supportLinkUrl" maxlength="500" value="<%= link.url %>" placeholder="https://buymeacoffee.com/..." />
+              </label>
+              <label>
+                Provider
+                <input type="text" name="supportLinkProvider" maxlength="80" value="<%= link.provider %>" placeholder="Patreon, Ko-fi, Stripe" />
+              </label>
+            </div>
+          <% }) %>
+        </div>
+
+        <div class="three-col">
+          <label>
+            Pre-roll Rate
+            <input type="number" name="preRollRate" min="0" step="1" value="<%= rateCard.preRoll || '' %>" />
+          </label>
+          <label>
+            Mid-roll Rate
+            <input type="number" name="midRollRate" min="0" step="1" value="<%= rateCard.midRoll || '' %>" />
+          </label>
+          <label>
+            Post-roll Rate
+            <input type="number" name="postRollRate" min="0" step="1" value="<%= rateCard.postRoll || '' %>" />
+          </label>
+        </div>
+
+        <div class="inline-actions">
+          <label class="checkbox-row">
+            <input type="checkbox" name="premiumEnabled" <%= monetizationSettings.premiumEnabled ? 'checked' : '' %> />
+            <span>Enable premium episode planning</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" name="privateFeedsEnabled" <%= monetizationSettings.privateFeedsEnabled ? 'checked' : '' %> />
+            <span>Enable private feed URL</span>
+          </label>
+        </div>
+
+        <div class="inline-actions">
+          <button class="btn btn-primary" type="submit">Save Monetization</button>
+          <% if (item.privateFeedUrl) { %>
+            <label class="share-link-field">
+              <span class="landing-preview-label">Private Feed</span>
+              <input type="text" value="<%= item.privateFeedUrl %>" readonly />
+            </label>
+          <% } %>
+        </div>
+      </form>
+    </article>
+
+    <aside class="studio-action-panel">
+      <div class="section-head">
+        <div>
+          <h3>Sponsor Media Kit</h3>
+          <p class="mini-note">Generated from show, analytics, support, and rate-card data.</p>
+        </div>
+      </div>
+
+      <div class="studio-action-stack">
+        <% item.mediaKit.metrics.forEach((metric) => { %>
+          <div class="studio-action-row">
+            <span class="studio-action-number"><%= metric.value %></span>
+            <span class="studio-action-copy">
+              <strong><%= metric.label %></strong>
+              <em><%= item.mediaKit.showName %></em>
+            </span>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="recording-panel">
+        <span class="mini-label">Pitch</span>
+        <p><%= item.mediaKit.sponsorPitch %></p>
+        <div class="studio-calendar-list">
+          <% item.mediaKit.rateCard.forEach((rate) => { %>
+            <div class="studio-calendar-item">
+              <span><%= rate.label %></span>
+              <strong><%= rate.price %></strong>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="studio-secondary-grid">
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <div>
+          <h3>Sponsor Outreach Templates</h3>
+          <p class="mini-note">Copy-ready sponsor emails based on the current media kit.</p>
+        </div>
+      </div>
+      <div class="studio-calendar-list monetization-template-list">
+        <% item.outreachTemplates.forEach((template) => { %>
+          <div class="recording-panel">
+            <span class="mini-label"><%= template.label %></span>
+            <strong><%= template.subject %></strong>
+            <pre class="recording-prep-sheet"><%= template.body %></pre>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <div>
+          <h3>Ad Slot Planner</h3>
+          <p class="mini-note">Pre-roll, mid-roll, and post-roll inventory for recent show episodes.</p>
+        </div>
+      </div>
+      <% if (!item.adSlotPlanner.length) { %>
+        <p class="empty-state">Published or planned episodes attached to this show will appear here.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% item.adSlotPlanner.forEach((episodePlan) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= episodePlan.visibility %> · <%= episodePlan.publishStatus %></span>
+              <strong><%= episodePlan.title %></strong>
+              <div class="studio-calendar-list">
+                <% episodePlan.slots.forEach((slot) => { %>
+                  <div class="studio-calendar-item">
+                    <span><%= slot.label %><%= slot.timestampSeconds ? ' · ' + Math.floor(slot.timestampSeconds / 60) + 'm' : '' %></span>
+                    <strong><%= slot.sponsorName || slot.status %></strong>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+  </section>
+<% }) %>

@@ -5,6 +5,8 @@
     const currentView = typeof view === 'string' ? view : '';
     const needsSettingsScript = currentView === 'settings/index';
     const needsCreateScripts = currentView === 'create/single' || currentView === 'create/series';
+    const needsStudioCommandScript = currentView === 'studio/index';
+    const needsPodcastPlayerAnalytics = currentView === 'publish/episode';
     const needsAiLoader = needsCreateScripts || currentView === 'kitchen/episode';
     const needsEpisodeTools = currentView === 'studio/index' || currentView === 'kitchen/episode' || currentView === 'admin/dashboard' || currentView === 'publish/shows';
     const needsI18nUi = (language || 'en') !== 'en';
@@ -146,6 +148,12 @@
   <% if (needsCreateScripts) { %>
     <script src="/javascripts/tone.js" defer></script>
     <script src="/javascripts/create.js" defer></script>
+  <% } %>
+  <% if (needsStudioCommandScript) { %>
+    <script src="/javascripts/studio-command-center.js" defer></script>
+  <% } %>
+  <% if (needsPodcastPlayerAnalytics) { %>
+    <script src="/javascripts/podcast-player-analytics.js" defer></script>
   <% } %>
   <% if (needsAiLoader) { %>
     <script src="/javascripts/ai-loading.js" defer></script>

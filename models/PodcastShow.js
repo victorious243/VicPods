@@ -93,6 +93,107 @@ const podcastShowSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    monetization: {
+      supportLinks: {
+        type: [
+          {
+            label: {
+              type: String,
+              trim: true,
+              maxlength: 80,
+            },
+            url: {
+              type: String,
+              trim: true,
+              maxlength: 500,
+            },
+            provider: {
+              type: String,
+              trim: true,
+              maxlength: 80,
+              default: '',
+            },
+          },
+        ],
+        default: [],
+      },
+      premiumEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      privateFeedsEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      sponsorContactEmail: {
+        type: String,
+        default: '',
+        trim: true,
+        lowercase: true,
+        maxlength: 200,
+      },
+      sponsorPitch: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+      audienceSummary: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+      rateCard: {
+        preRoll: {
+          type: Number,
+          default: null,
+          min: 0,
+        },
+        midRoll: {
+          type: Number,
+          default: null,
+          min: 0,
+        },
+        postRoll: {
+          type: Number,
+          default: null,
+          min: 0,
+        },
+      },
+    },
+    brandKit: {
+      positioning: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1000,
+      },
+      voiceRules: {
+        type: [String],
+        default: [],
+      },
+      visualNotes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1000,
+      },
+      sponsorSafetyNotes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1000,
+      },
+      approvedPhrases: {
+        type: [String],
+        default: [],
+      },
+      bannedPhrases: {
+        type: [String],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,

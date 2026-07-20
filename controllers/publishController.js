@@ -65,6 +65,30 @@ function parseExplicitSetting(value) {
   return null;
 }
 
+function parseEpisodeVisibility(value) {
+  const visibility = String(value || 'public').trim();
+  return ['public', 'premium', 'private'].includes(visibility) ? visibility : 'public';
+}
+
+function parseAdSlots(body) {
+  const positions = Array.isArray(body.adSlotPosition) ? body.adSlotPosition : [body.adSlotPosition];
+  const timestamps = Array.isArray(body.adSlotTimestampSeconds) ? body.adSlotTimestampSeconds : [body.adSlotTimestampSeconds];
+  const sponsors = Array.isArray(body.adSlotSponsorName) ? body.adSlotSponsorName : [body.adSlotSponsorName];
+  const statuses = Array.isArray(body.adSlotStatus) ? body.adSlotStatus : [body.adSlotStatus];
+  const copyItems = Array.isArray(body.adSlotCopy) ? body.adSlotCopy : [body.adSlotCopy];
+
+  return positions
+    .map((position, index) => ({
+      position: ['pre_roll', 'mid_roll', 'post_roll'].includes(position) ? position : 'mid_roll',
+      timestampSeconds: parseOptionalPositiveInteger(timestamps[index]),
+      sponsorName: clampText(sponsors[index], 160),
+      status: ['planned', 'sold', 'delivered'].includes(statuses[index]) ? statuses[index] : 'planned',
+      copy: clampText(copyItems[index], 1000),
+    }))
+    .filter((slot) => slot.sponsorName || slot.copy || slot.status !== 'planned')
+    .slice(0, 6);
+}
+
 function buildShowDefaults(req) {
   return {
     authorName: clampText(req.currentUser?.name || '', 120),
@@ -329,6 +353,14 @@ async function updateEpisodePublication(req, res, next) {
       || episode.globalEpisodeNumber
       || episode.episodeNumberWithinTheme;
     episode.explicit = parseExplicitSetting(req.body.explicitSetting);
+    episode.monetization = {
+      ...(episode.monetization?.toObject ? episode.monetization.toObject() : episode.monetization || {}),
+      visibility: parseEpisodeVisibility(req.body.monetizationVisibility),
+      supportLinkOverride: clampText(req.body.supportLinkOverride, 500),
+      sponsorName: clampText(req.body.sponsorName, 160),
+      sponsorCampaign: clampText(req.body.sponsorCampaign, 160),
+      adSlots: parseAdSlots(req.body),
+    };
     episode.publicSlug = await generateUniqueEpisodeSlug({
       showId: show._id,
       episodeId: episode._id,

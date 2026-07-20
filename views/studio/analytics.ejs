@@ -1,0 +1,136 @@
+<%
+  const analyticsData = analytics || {
+    totals: {},
+    timeline: [],
+    topEpisodes: [],
+    breakdowns: { platforms: [], countries: [], referrers: [], devices: [] },
+    recommendations: [],
+    range: { from: '', to: '' },
+  };
+  const totals = analyticsData.totals || {};
+  const metricCards = [
+    { label: 'Downloads', value: totals.audioDownloads || 0, note: 'Audio file requests' },
+    { label: 'Plays', value: totals.playerPlays || 0, note: 'Web and embed player starts' },
+    { label: 'Completions', value: totals.playerCompletions || 0, note: 'Completed listens' },
+    { label: 'Shares', value: totals.shareClicks || 0, note: 'Shared episode visits' },
+  ];
+  const breakdownGroups = [
+    { title: 'Apps', items: analyticsData.breakdowns?.platforms || [] },
+    { title: 'Countries', items: analyticsData.breakdowns?.countries || [] },
+    { title: 'Referrers', items: analyticsData.breakdowns?.referrers || [] },
+    { title: 'Devices', items: analyticsData.breakdowns?.devices || [] },
+  ];
+%>
+
+<section class="studio-command-shell">
+  <div class="studio-command-hero">
+    <div class="studio-command-copy">
+      <span class="mini-label studio-hero-kicker">Phase 3 Analytics</span>
+      <h3>Know what worked after publishing.</h3>
+      <p>Track feed requests, downloads, web player events, shares, source breakdowns, and the next growth move for each show.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/studio" class="btn btn-secondary">Back To Studio</a>
+        <a href="/api/podcast/analytics.csv" class="btn btn-primary">Export CSV</a>
+      </div>
+    </div>
+
+    <aside class="studio-now-panel">
+      <span class="mini-label">Current range</span>
+      <h4><%= analyticsData.range?.from || 'Last 30 days' %></h4>
+      <p>Through <%= analyticsData.range?.to || 'today' %></p>
+      <div class="studio-now-meta">
+        <span><%= totals.feedRequests || 0 %> feed requests</span>
+        <span><%= (analyticsData.topEpisodes || []).length %> ranked episodes</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="studio-command-metrics">
+    <% metricCards.forEach((metric) => { %>
+      <div class="studio-metric-pill">
+        <span><%= metric.label %></span>
+        <strong><%= metric.value %></strong>
+        <small><%= metric.note %></small>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="studio-operating-grid">
+  <div class="studio-pipeline-panel">
+    <div class="section-head">
+      <div>
+        <h3>Top Episodes</h3>
+        <p class="mini-note">Ranked by downloads, plays, and share momentum.</p>
+      </div>
+    </div>
+
+    <% if (!(analyticsData.topEpisodes || []).length) { %>
+      <p class="empty-state">No analytics yet. Published episodes will appear here after feed, audio, player, or share activity.</p>
+    <% } else { %>
+      <div class="studio-tab-episode-list">
+        <% analyticsData.topEpisodes.forEach((episode, index) => { %>
+          <div class="studio-tab-episode">
+            <span class="studio-action-number"><%= index + 1 %></span>
+            <span class="studio-tab-episode-main">
+              <strong><%= episode.title %></strong>
+              <small><%= episode.showName %> · <%= episode.audioDownloads %> downloads · <%= episode.playerPlays %> plays</small>
+            </span>
+            <span class="studio-tab-readiness">
+              <strong><%= episode.completionRate %>%</strong>
+              <small>completion</small>
+            </span>
+            <span class="studio-tab-date"><%= episode.shareClicks %> shares</span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <aside class="studio-action-panel">
+    <div class="section-head">
+      <div>
+        <h3>Growth Recommendations</h3>
+        <p class="mini-note">What VicPods thinks you should do next.</p>
+      </div>
+    </div>
+
+    <div class="studio-action-stack">
+      <% (analyticsData.recommendations || []).forEach((recommendation, index) => { %>
+        <div class="studio-action-row studio-action-primary">
+          <span class="studio-action-number"><%= index + 1 %></span>
+          <span class="studio-action-copy">
+            <small><%= recommendation.priority %></small>
+            <strong><%= recommendation.title %></strong>
+            <em><%= recommendation.body %></em>
+          </span>
+        </div>
+      <% }) %>
+    </div>
+  </aside>
+</section>
+
+<section class="studio-secondary-grid">
+  <% breakdownGroups.forEach((group) => { %>
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <div>
+          <h3><%= group.title %></h3>
+          <p class="mini-note">Top listener source breakdown.</p>
+        </div>
+      </div>
+      <% if (!group.items.length) { %>
+        <p class="empty-state">No data yet.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% group.items.forEach((item) => { %>
+            <div class="studio-calendar-item">
+              <span><%= item.label %></span>
+              <strong><%= item.count %></strong>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+  <% }) %>
+</section>

@@ -1,0 +1,235 @@
+<%
+  const workflow = teamWorkflow || {
+    metrics: { shows: 0, collaborators: 0, openTasks: 0, approvalsInReview: 0, changesRequested: 0 },
+    shows: [],
+  };
+  const metricCards = [
+    { label: 'Shows', value: workflow.metrics.shows, note: 'Managed workspaces' },
+    { label: 'Collaborators', value: workflow.metrics.collaborators, note: 'People across shows' },
+    { label: 'Open Tasks', value: workflow.metrics.openTasks, note: 'Unresolved production work' },
+    { label: 'In Review', value: workflow.metrics.approvalsInReview, note: 'Episodes awaiting approval' },
+    { label: 'Changes', value: workflow.metrics.changesRequested, note: 'Episodes needing revision' },
+  ];
+%>
+
+<section class="studio-command-shell">
+  <div class="studio-command-hero">
+    <div class="studio-command-copy">
+      <span class="mini-label studio-hero-kicker">Phase 6 Teams</span>
+      <h3>Operate multiple shows with clear people, roles, and approvals.</h3>
+      <p>Manage collaborators, keep a reusable brand kit, track comments and tasks, and see approval pressure across every hosted show.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/studio" class="btn btn-secondary">Back To Studio</a>
+        <a href="/publish/shows" class="btn btn-ghost">Hosted Shows</a>
+      </div>
+    </div>
+
+    <aside class="studio-now-panel">
+      <span class="mini-label">Agency View</span>
+      <h4><%= workflow.metrics.openTasks || 0 %> open tasks</h4>
+      <p><%= workflow.metrics.approvalsInReview || 0 %> episodes are waiting for review.</p>
+      <div class="studio-now-meta">
+        <span><%= workflow.metrics.collaborators || 0 %> collaborators</span>
+        <span><%= workflow.metrics.changesRequested || 0 %> changes</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="studio-command-metrics">
+    <% metricCards.forEach((metric) => { %>
+      <div class="studio-metric-pill">
+        <span><%= metric.label %></span>
+        <strong><%= metric.value || 0 %></strong>
+        <small><%= metric.note %></small>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<% if (!workflow.shows.length) { %>
+  <section class="card">
+    <h3>No Hosted Shows Yet</h3>
+    <p class="empty-state">Create a hosted show before adding collaborators, brand rules, and approval workflows.</p>
+    <a href="/publish/shows" class="btn btn-primary">Create Hosted Show</a>
+  </section>
+<% } %>
+
+<% workflow.shows.forEach((item) => {
+  const show = item.show;
+  const brandKit = item.brandKit || {};
+%>
+  <section class="studio-operating-grid team-show-grid">
+    <article class="studio-pipeline-panel">
+      <div class="section-head">
+        <div>
+          <span class="mini-label">Team Workspace</span>
+          <h3><%= show.name %></h3>
+          <p class="mini-note"><%= item.metrics.episodes %> episodes · <%= item.metrics.collaborators %> collaborators · <%= item.metrics.openTasks %> open tasks</p>
+        </div>
+        <a href="/podcasts/<%= show.slug %>" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Public Page</a>
+      </div>
+
+      <div class="studio-command-metrics">
+        <div class="studio-metric-pill">
+          <span>Review</span>
+          <strong><%= item.metrics.approvalsInReview %></strong>
+          <small>Episodes in review</small>
+        </div>
+        <div class="studio-metric-pill">
+          <span>Approved</span>
+          <strong><%= item.metrics.approvalsApproved %></strong>
+          <small>Ready for publishing</small>
+        </div>
+        <div class="studio-metric-pill">
+          <span>Changes</span>
+          <strong><%= item.metrics.changesRequested %></strong>
+          <small>Needs revision</small>
+        </div>
+      </div>
+
+      <div class="team-panel-grid">
+        <form method="POST" action="/studio/teams/shows/<%= show._id %>/collaborators" class="recording-panel form-grid">
+          <div class="section-head">
+            <h4>Add Collaborator</h4>
+            <span class="mini-label">Roles</span>
+          </div>
+          <label>
+            Name
+            <input type="text" name="name" maxlength="120" />
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" maxlength="200" required />
+          </label>
+          <div class="two-col">
+            <label>
+              Role
+              <select name="role">
+                <option value="producer">Producer</option>
+                <option value="editor">Editor</option>
+                <option value="analyst">Analyst</option>
+                <option value="guest">Guest</option>
+                <option value="owner">Owner</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="invited">Invited</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Collaborator</button>
+        </form>
+
+        <form method="POST" action="/studio/teams/shows/<%= show._id %>/brand-kit" class="recording-panel form-grid">
+          <div class="section-head">
+            <h4>Brand Kit</h4>
+            <span class="mini-label">Reusable</span>
+          </div>
+          <label>
+            Positioning
+            <textarea name="positioning" rows="3" maxlength="1000"><%= brandKit.positioning || '' %></textarea>
+          </label>
+          <label>
+            Voice Rules
+            <textarea name="voiceRules" rows="3"><%= (brandKit.voiceRules || []).join('\n') %></textarea>
+          </label>
+          <div class="two-col">
+            <label>
+              Approved Phrases
+              <textarea name="approvedPhrases" rows="3"><%= (brandKit.approvedPhrases || []).join('\n') %></textarea>
+            </label>
+            <label>
+              Banned Phrases
+              <textarea name="bannedPhrases" rows="3"><%= (brandKit.bannedPhrases || []).join('\n') %></textarea>
+            </label>
+          </div>
+          <label>
+            Visual Notes
+            <textarea name="visualNotes" rows="3" maxlength="1000"><%= brandKit.visualNotes || '' %></textarea>
+          </label>
+          <label>
+            Sponsor Safety Notes
+            <textarea name="sponsorSafetyNotes" rows="3" maxlength="1000"><%= brandKit.sponsorSafetyNotes || '' %></textarea>
+          </label>
+          <button type="submit" class="btn btn-secondary">Save Brand Kit</button>
+        </form>
+      </div>
+    </article>
+
+    <aside class="studio-action-panel">
+      <div class="section-head">
+        <div>
+          <h3>Collaborators</h3>
+          <p class="mini-note">Role-based operating access.</p>
+        </div>
+      </div>
+      <% if (!item.collaborators.length) { %>
+        <p class="empty-state">No collaborators yet.</p>
+      <% } else { %>
+        <div class="studio-action-stack">
+          <% item.collaborators.forEach((collaborator) => { %>
+            <div class="studio-action-row">
+              <span class="studio-action-number"><%= collaborator.roleLabel.charAt(0) %></span>
+              <span class="studio-action-copy">
+                <small><%= collaborator.roleLabel %> · <%= collaborator.status %></small>
+                <strong><%= collaborator.name %></strong>
+                <em><%= collaborator.email %></em>
+              </span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </aside>
+  </section>
+
+  <section class="studio-secondary-grid">
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <div>
+          <h3>Approval Queue</h3>
+          <p class="mini-note">Episodes waiting for review or changes.</p>
+        </div>
+      </div>
+      <% if (!item.approvalQueue.length) { %>
+        <p class="empty-state">No episodes are waiting on approval.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% item.approvalQueue.forEach((episode) => { %>
+            <div class="studio-calendar-item">
+              <span><%= episode.title %></span>
+              <strong><%= episode.status %></strong>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <div>
+          <h3>Recent Comments And Tasks</h3>
+          <p class="mini-note">Open production discussion across the show.</p>
+        </div>
+      </div>
+      <% if (!item.recentWorkItems.length) { %>
+        <p class="empty-state">No comments or tasks yet.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% item.recentWorkItems.forEach((workItem) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= workItem.type %> · <%= workItem.status %></span>
+              <p><%= workItem.body %></p>
+              <% if (workItem.assigneeName) { %>
+                <small class="mini-note">Assigned to <%= workItem.assigneeName %></small>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+  </section>
+<% }) %>

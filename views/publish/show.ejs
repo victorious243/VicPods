@@ -18,6 +18,13 @@
       <a class="btn btn-secondary" href="<%= publishedShow.websiteUrl %>" target="_blank" rel="noopener noreferrer">Website</a>
       <a class="btn btn-ghost" href="<%= publishedShow.embedUrl %>" target="_blank" rel="noopener noreferrer">Embed</a>
     </div>
+    <% if ((publishedShow.supportLinks || []).length) { %>
+      <div class="inline-actions published-support-links">
+        <% publishedShow.supportLinks.forEach((link) => { %>
+          <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+        <% }) %>
+      </div>
+    <% } %>
   </div>
 </section>
 
@@ -42,7 +49,17 @@
                 <span class="mini-label"><%= episode.durationLabel %></span>
               <% } %>
               <span class="mini-label"><%= episode.explicit ? 'Explicit' : 'Clean' %></span>
+              <% if (episode.visibility !== 'public') { %>
+                <span class="mini-label">Premium</span>
+              <% } %>
             </div>
+            <% if ((episode.supportLinks || []).length) { %>
+              <div class="inline-actions published-support-links">
+                <% episode.supportLinks.forEach((link) => { %>
+                  <a class="btn btn-ghost" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+                <% }) %>
+              </div>
+            <% } %>
           </div>
           <audio controls preload="none" src="<%= episode.audioUrl %>"></audio>
         </article>

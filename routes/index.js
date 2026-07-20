@@ -24,6 +24,7 @@ router.get('/guides', guideController.showGuidesIndex);
 router.get('/guides/:slug', guideController.showGuide);
 router.get('/share/:token', shareController.showSharedEpisode);
 router.get('/podcasts/:showSlug/feed.xml', publicPodcastController.showPodcastFeed);
+router.get('/podcasts/:showSlug/private/:feedToken/feed.xml', publicPodcastController.showPrivatePodcastFeed);
 router.get('/podcasts/:showSlug/embed', publicPodcastController.showPodcastEmbed);
 router.get('/podcasts/:showSlug/:episodeSlug/embed', publicPodcastController.showEpisodeEmbed);
 router.get('/podcasts/:showSlug', publicPodcastController.showPublishedShow);

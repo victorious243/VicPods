@@ -264,6 +264,71 @@ const episodeSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    recordingWorkflow: {
+      status: {
+        type: String,
+        enum: ['planned', 'prepped', 'recorded', 'uploaded', 'transcript_imported'],
+        default: 'planned',
+      },
+      scheduledFor: {
+        type: Date,
+        default: null,
+      },
+      location: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 180,
+      },
+      guestName: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 160,
+      },
+      guestEmail: {
+        type: String,
+        default: '',
+        trim: true,
+        lowercase: true,
+        maxlength: 220,
+      },
+      guestBio: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+      prepNotes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 2000,
+      },
+      interviewQuestions: {
+        type: [String],
+        default: [],
+      },
+      checklistCompleted: {
+        type: [String],
+        default: [],
+      },
+      sessionNotes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 5000,
+      },
+      postRecordStatus: {
+        type: String,
+        enum: ['planned', 'prepped', 'recorded', 'uploaded', 'transcript_imported'],
+        default: 'planned',
+      },
+      transcriptImportedAt: {
+        type: Date,
+        default: null,
+      },
+    },
     toneScore: {
       type: Number,
       min: 0,
@@ -417,6 +482,218 @@ const episodeSchema = new mongoose.Schema(
         default: '',
         trim: true,
         maxlength: 64,
+      },
+    },
+    monetization: {
+      visibility: {
+        type: String,
+        enum: ['public', 'premium', 'private'],
+        default: 'public',
+        index: true,
+      },
+      supportLinkOverride: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 500,
+      },
+      sponsorName: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 160,
+      },
+      sponsorCampaign: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 160,
+      },
+      adSlots: {
+        type: [
+          {
+            position: {
+              type: String,
+              enum: ['pre_roll', 'mid_roll', 'post_roll'],
+              default: 'mid_roll',
+            },
+            timestampSeconds: {
+              type: Number,
+              default: null,
+              min: 0,
+            },
+            sponsorName: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 160,
+            },
+            copy: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 1000,
+            },
+            status: {
+              type: String,
+              enum: ['planned', 'sold', 'delivered'],
+              default: 'planned',
+            },
+          },
+        ],
+        default: [],
+      },
+    },
+    approvalWorkflow: {
+      status: {
+        type: String,
+        enum: ['not_started', 'in_review', 'changes_requested', 'approved'],
+        default: 'not_started',
+        index: true,
+      },
+      requestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+      },
+      requestedAt: {
+        type: Date,
+        default: null,
+      },
+      reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+      },
+      reviewedAt: {
+        type: Date,
+        default: null,
+      },
+      notes: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: 1200,
+      },
+    },
+    advancedMedia: {
+      externalProject: {
+        provider: {
+          type: String,
+          enum: ['', 'descript', 'riverside'],
+          default: '',
+        },
+        projectUrl: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 500,
+        },
+        externalId: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 200,
+        },
+        lastImportedAt: {
+          type: Date,
+          default: null,
+        },
+        lastExportedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+      clipSuggestions: {
+        type: [
+          {
+            title: {
+              type: String,
+              trim: true,
+              maxlength: 160,
+            },
+            startSeconds: {
+              type: Number,
+              min: 0,
+              default: 0,
+            },
+            endSeconds: {
+              type: Number,
+              min: 0,
+              default: 0,
+            },
+            hook: {
+              type: String,
+              trim: true,
+              maxlength: 300,
+            },
+            platform: {
+              type: String,
+              enum: ['shorts', 'tiktok', 'reels', 'linkedin', 'youtube'],
+              default: 'shorts',
+            },
+          },
+        ],
+        default: [],
+      },
+      captions: {
+        format: {
+          type: String,
+          enum: ['srt', 'vtt'],
+          default: 'srt',
+        },
+        content: {
+          type: String,
+          default: '',
+          maxlength: 50000,
+        },
+        updatedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+      cleanupRequest: {
+        status: {
+          type: String,
+          enum: ['none', 'requested', 'processing', 'completed', 'failed'],
+          default: 'none',
+          index: true,
+        },
+        provider: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 120,
+        },
+        notes: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 1200,
+        },
+        requestedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+      recorderSession: {
+        status: {
+          type: String,
+          enum: ['not_started', 'planned', 'recorded'],
+          default: 'not_started',
+        },
+        roomUrl: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 500,
+        },
+        notes: {
+          type: String,
+          default: '',
+          trim: true,
+          maxlength: 1200,
+        },
       },
     },
     ideaIds: [

@@ -19,11 +19,21 @@
             <span class="mini-label"><%= publishedEpisode.durationLabel %></span>
           <% } %>
           <span class="mini-label"><%= publishedEpisode.explicit ? 'Explicit' : 'Clean' %></span>
+          <% if (publishedEpisode.visibility !== 'public') { %>
+            <span class="mini-label">Premium</span>
+          <% } %>
         </div>
+        <% if ((publishedEpisode.supportLinks || []).length) { %>
+          <div class="inline-actions published-support-links">
+            <% publishedEpisode.supportLinks.forEach((link) => { %>
+              <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+            <% }) %>
+          </div>
+        <% } %>
       </div>
     </div>
 
-    <div class="published-episode-player">
+    <div class="published-episode-player" data-podcast-player data-episode-id="<%= publishedEpisode.episodeId %>">
       <audio controls preload="none" src="<%= publishedEpisode.audioUrl %>"></audio>
     </div>
 

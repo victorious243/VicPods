@@ -1,5 +1,6 @@
 const Episode = require('../models/Episode');
 const Idea = require('../models/Idea');
+const PodcastShow = require('../models/PodcastShow');
 const Series = require('../models/Series');
 const {
   getBaseDailyLimitForPlan,
@@ -7,7 +8,24 @@ const {
 } = require('../services/limitService');
 const { buildActivationChecklist } = require('../services/marketing/activationChecklistService');
 const { buildReferralProgramViewModel } = require('../services/marketing/referralService');
+const { buildPodcastAnalyticsDashboard } = require('../services/analytics/podcastAnalyticsService');
+const {
+  buildCreatorMonetizationDashboard,
+  ensurePrivateFeedToken,
+  normalizeSupportLinks,
+} = require('../services/monetization/creatorMonetizationService');
 const { buildStudioCommandCenter } = require('../services/studio/studioCommandCenterService');
+const {
+  buildTeamWorkflowDashboard,
+  normalizeBrandKitInput,
+  normalizeCollaboratorInput,
+} = require('../services/team/teamWorkflowService');
+const { ShowCollaborator } = require('../models/ShowCollaborator');
+const {
+  buildAdvancedMediaDashboard,
+  normalizeConnectionInput,
+} = require('../services/integrations/advancedMediaIntegrationService');
+const { IntegrationConnection } = require('../models/IntegrationConnection');
 const { buildRequestBaseUrl } = require('../utils/requestUrl');
 const { renderPage } = require('../utils/render');
 
@@ -179,6 +197,266 @@ async function showStudio(req, res, next) {
   }
 }
 
+async function showStudioCalendar(req, res, next) {
+  try {
+    const commandCenter = await buildStudioCommandCenter({
+      userId: req.currentUser._id,
+      baseUrl: buildRequestBaseUrl(req),
+    });
+
+    return res.json({
+      calendar: {
+        items: commandCenter.calendarItems,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showAnalytics(req, res, next) {
+  try {
+    const analytics = await buildPodcastAnalyticsDashboard({
+      userId: req.currentUser._id,
+      from: req.query.from,
+      to: req.query.to,
+    });
+
+    return renderPage(res, {
+      title: 'Analytics - VicPods',
+      pageTitle: 'Analytics',
+      subtitle: 'Podcast performance and growth signals.',
+      view: 'studio/analytics',
+      data: {
+        analytics,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+function numberOrNull(value) {
+  if (value === null || typeof value === 'undefined' || value === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parseSupportLinks(body) {
+  const labels = Array.isArray(body.supportLinkLabel) ? body.supportLinkLabel : [body.supportLinkLabel];
+  const urls = Array.isArray(body.supportLinkUrl) ? body.supportLinkUrl : [body.supportLinkUrl];
+  const providers = Array.isArray(body.supportLinkProvider) ? body.supportLinkProvider : [body.supportLinkProvider];
+
+  return normalizeSupportLinks(labels.map((label, index) => ({
+    label,
+    url: urls[index],
+    provider: providers[index],
+  })));
+}
+
+async function showMonetization(req, res, next) {
+  try {
+    const analytics = await buildPodcastAnalyticsDashboard({
+      userId: req.currentUser._id,
+    });
+    const monetization = await buildCreatorMonetizationDashboard({
+      userId: req.currentUser._id,
+      baseUrl: buildRequestBaseUrl(req),
+      analytics,
+    });
+
+    return renderPage(res, {
+      title: 'Monetization - VicPods',
+      pageTitle: 'Monetization',
+      subtitle: 'Support links, premium feeds, sponsor kits, outreach templates, and ad planning.',
+      view: 'studio/monetization',
+      data: {
+        monetization,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateShowMonetization(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      req.flash('error', 'Hosted show not found.');
+      return res.redirect('/studio/monetization');
+    }
+
+    show.monetization = {
+      ...(show.monetization?.toObject ? show.monetization.toObject() : show.monetization || {}),
+      supportLinks: parseSupportLinks(req.body),
+      premiumEnabled: req.body.premiumEnabled === 'on',
+      privateFeedsEnabled: req.body.privateFeedsEnabled === 'on',
+      sponsorContactEmail: String(req.body.sponsorContactEmail || '').trim().toLowerCase().slice(0, 200),
+      sponsorPitch: String(req.body.sponsorPitch || '').trim().slice(0, 1200),
+      audienceSummary: String(req.body.audienceSummary || '').trim().slice(0, 1200),
+      rateCard: {
+        preRoll: numberOrNull(req.body.preRollRate),
+        midRoll: numberOrNull(req.body.midRollRate),
+        postRoll: numberOrNull(req.body.postRollRate),
+      },
+    };
+
+    await show.save();
+
+    if (show.monetization.privateFeedsEnabled) {
+      await ensurePrivateFeedToken({
+        userId: req.currentUser._id,
+        showId: show._id,
+      });
+    }
+
+    req.flash('success', 'Monetization settings saved.');
+    return res.redirect('/studio/monetization');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showTeams(req, res, next) {
+  try {
+    const teamWorkflow = await buildTeamWorkflowDashboard({
+      userId: req.currentUser._id,
+    });
+
+    return renderPage(res, {
+      title: 'Teams - VicPods',
+      pageTitle: 'Teams',
+      subtitle: 'Collaborators, roles, approvals, brand kit, and multi-show operations.',
+      view: 'studio/teams',
+      data: {
+        teamWorkflow,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function addShowCollaborator(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      req.flash('error', 'Hosted show not found.');
+      return res.redirect('/studio/teams');
+    }
+
+    const input = normalizeCollaboratorInput(req.body);
+    if (!input.email) {
+      req.flash('error', 'Collaborator email is required.');
+      return res.redirect('/studio/teams');
+    }
+
+    await ShowCollaborator.findOneAndUpdate(
+      {
+        userId: req.currentUser._id,
+        showId: show._id,
+        email: input.email,
+      },
+      {
+        $set: input,
+        $setOnInsert: {
+          userId: req.currentUser._id,
+          showId: show._id,
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      }
+    );
+
+    req.flash('success', 'Collaborator saved.');
+    return res.redirect('/studio/teams');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateShowBrandKit(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      req.flash('error', 'Hosted show not found.');
+      return res.redirect('/studio/teams');
+    }
+
+    show.brandKit = normalizeBrandKitInput(req.body, show.brandKit);
+    await show.save();
+
+    req.flash('success', 'Brand kit saved.');
+    return res.redirect('/studio/teams');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showIntegrations(req, res, next) {
+  try {
+    const integrations = await buildAdvancedMediaDashboard({
+      userId: req.currentUser._id,
+    });
+
+    return renderPage(res, {
+      title: 'Integrations - VicPods',
+      pageTitle: 'Integrations',
+      subtitle: 'Webhooks, Zapier, email platforms, social sharing, media exports, captions, clips, and cleanup workflows.',
+      view: 'studio/integrations',
+      data: {
+        integrations,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function saveIntegrationConnection(req, res, next) {
+  try {
+    const input = normalizeConnectionInput(req.body);
+
+    await IntegrationConnection.create({
+      userId: req.currentUser._id,
+      ...input,
+    });
+
+    req.flash('success', 'Integration connection saved.');
+    return res.redirect('/studio/integrations');
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
+  addShowCollaborator,
+  showAnalytics,
+  showMonetization,
+  showStudioCalendar,
   showStudio,
+  showTeams,
+  showIntegrations,
+  saveIntegrationConnection,
+  updateShowBrandKit,
+  updateShowMonetization,
 };

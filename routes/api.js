@@ -27,6 +27,9 @@ router.get('/auth/session', apiController.session);
 router.post('/auth/logout', apiController.logout);
 
 router.get('/studio', apiController.studio);
+router.get('/podcast/analytics', apiController.podcastAnalytics);
+router.get('/podcast/analytics.csv', apiController.podcastAnalyticsCsv);
+router.post('/podcast/player-events', apiController.recordPodcastPlayerEvent);
 router.post('/episodes/:episodeId/share/copied', apiController.markEpisodeShareCopied);
 
 module.exports = router;

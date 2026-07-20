@@ -1,5 +1,6 @@
 const Episode = require('../models/Episode');
 const PodcastShow = require('../models/PodcastShow');
+const PrivateFeedToken = require('../models/PrivateFeedToken');
 const { buildPublicAudioUrl } = require('../services/publish/audioStorageService');
 const { buildPodcastFeedXml } = require('../services/publish/rssFeedService');
 const {
@@ -11,6 +12,8 @@ const {
   resolveShowCoverImageUrl,
   resolveShowWebsiteUrl,
 } = require('../services/publish/publishService');
+const { recordPodcastAnalyticsEvent } = require('../services/analytics/podcastAnalyticsService');
+const { normalizeSupportLinks } = require('../services/monetization/creatorMonetizationService');
 const { AppError } = require('../utils/errors');
 const { buildRequestBaseUrl } = require('../utils/requestUrl');
 const { renderPage } = require('../utils/render');
@@ -44,8 +47,11 @@ async function getPublishedShowBySlug(showSlug) {
 function formatPublishedEpisode({ show, episode, baseUrl }) {
   const summary = buildEpisodeSummary(episode) || 'Published episode from VicPods.';
   const episodeUrl = buildPublishedEpisodeUrl(show, episode, baseUrl);
+  const showSupportLinks = normalizeSupportLinks(show.monetization?.supportLinks || []);
+  const episodeSupportOverride = String(episode.monetization?.supportLinkOverride || '').trim();
 
   return {
+    episodeId: String(episode._id),
     title: episode.title || 'Untitled episode',
     summary,
     description: episode.launchPack?.showNotes || episode.launchPack?.description || summary,
@@ -62,10 +68,29 @@ function formatPublishedEpisode({ show, episode, baseUrl }) {
     showWebsiteUrl: resolveShowWebsiteUrl(show, baseUrl),
     feedUrl: buildPodcastFeedUrl(show, baseUrl),
     outline: Array.isArray(episode.outline) ? episode.outline.filter(Boolean) : [],
+    visibility: episode.monetization?.visibility || 'public',
+    supportLinks: episodeSupportOverride
+      ? [{ label: 'Support this episode', url: episodeSupportOverride, provider: 'episode' }]
+      : showSupportLinks,
   };
 }
 
 async function getPublishedEpisodes(showId) {
+  return Episode.find({
+    showId,
+    publishStatus: 'published',
+    publicPageEnabled: true,
+    publishedAt: { $lte: new Date() },
+    $or: [
+      { 'monetization.visibility': { $exists: false } },
+      { 'monetization.visibility': 'public' },
+    ],
+  })
+    .sort({ publishedAt: -1, createdAt: -1 })
+    .populate('audioAssetId');
+}
+
+async function getPrivateFeedEpisodes(showId) {
   return Episode.find({
     showId,
     publishStatus: 'published',
@@ -87,11 +112,55 @@ async function showPodcastFeed(req, res, next) {
       publishStatus: 'published',
       publicPageEnabled: true,
       publishedAt: { $lte: new Date() },
+      $or: [
+        { 'monetization.visibility': { $exists: false } },
+        { 'monetization.visibility': 'public' },
+      ],
     })
       .sort({ publishedAt: -1, createdAt: -1 })
       .populate('audioAssetId');
 
     const feedXml = buildPodcastFeedXml({ show, episodes, baseUrl: requestBaseUrl });
+
+    recordPodcastAnalyticsEvent({
+      userId: show.userId,
+      showId: show._id,
+      episodeId: episodes[0]?._id || null,
+      eventType: 'feed_request',
+      source: 'rss',
+      req,
+      metadata: {
+        episodeCount: episodes.length,
+      },
+    }).catch(() => {});
+
+    res.set('Content-Type', 'application/rss+xml; charset=utf-8');
+    return res.send(feedXml);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showPrivatePodcastFeed(req, res, next) {
+  try {
+    const show = await getPublishedShowBySlug(req.params.showSlug);
+    const privateToken = await PrivateFeedToken.findOne({
+      showId: show._id,
+      token: String(req.params.feedToken || '').trim(),
+      status: 'active',
+    });
+
+    if (!show.monetization?.privateFeedsEnabled || !privateToken) {
+      throw new AppError('Private feed not found.', 404);
+    }
+
+    const requestBaseUrl = buildRequestBaseUrl(req);
+    await publishDueEpisodesForShow(show._id);
+    const episodes = await getPrivateFeedEpisodes(show._id);
+    const feedXml = buildPodcastFeedXml({ show, episodes, baseUrl: requestBaseUrl });
+
+    privateToken.lastAccessedAt = new Date();
+    await privateToken.save();
 
     res.set('Content-Type', 'application/rss+xml; charset=utf-8');
     return res.send(feedXml);
@@ -131,6 +200,7 @@ async function showPublishedShow(req, res, next) {
           websiteUrl: resolveShowWebsiteUrl(show, requestBaseUrl),
           feedUrl: buildPodcastFeedUrl(show, requestBaseUrl),
           embedUrl: showUrl + '/embed',
+          supportLinks: normalizeSupportLinks(show.monetization?.supportLinks || []),
           episodeCount: publicEpisodes.length,
           lastPublishedAt: publicEpisodes[0]?.publishedAt || show.lastPublishedAt,
           episodes: publicEpisodes,
@@ -154,6 +224,10 @@ async function showPublishedEpisode(req, res, next) {
       publishStatus: 'published',
       publicPageEnabled: true,
       publishedAt: { $lte: new Date() },
+      $or: [
+        { 'monetization.visibility': { $exists: false } },
+        { 'monetization.visibility': 'public' },
+      ],
     }).populate('audioAssetId');
 
     if (!episode) {
@@ -177,6 +251,7 @@ async function showPublishedEpisode(req, res, next) {
         ogDescription: summary,
         ogType: 'article',
         publishedEpisode: {
+          episodeId: String(episode._id),
           title: episode.title || 'Untitled episode',
           summary,
           description: episode.launchPack?.showNotes || episode.launchPack?.description || summary,
@@ -191,6 +266,8 @@ async function showPublishedEpisode(req, res, next) {
           showWebsiteUrl: resolveShowWebsiteUrl(show, requestBaseUrl),
           feedUrl,
           outline: Array.isArray(episode.outline) ? episode.outline.filter(Boolean) : [],
+          visibility: episode.monetization?.visibility || 'public',
+          supportLinks: formatPublishedEpisode({ show, episode, baseUrl: requestBaseUrl }).supportLinks,
         },
       },
     });
@@ -255,6 +332,7 @@ async function showPodcastEmbed(req, res, next) {
 module.exports = {
   showEpisodeEmbed,
   showPodcastFeed,
+  showPrivatePodcastFeed,
   showPodcastEmbed,
   showPublishedShow,
   showPublishedEpisode,

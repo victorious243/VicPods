@@ -3,7 +3,13 @@
     pipeline: [],
     nextActions: [],
     calendarItems: [],
+    episodeTabs: [],
     showHealth: { label: 'No hosted show', score: 0, detail: 'Create a hosted show to unlock feed health.', href: '/publish/shows' },
+    showDashboard: {
+      summary: { totalShows: 0, liveShows: 0, averageFeedScore: 0, scheduledEpisodes: 0 },
+      shows: [],
+    },
+    globalSearchItems: [],
     spotlight: null,
     operatingMetrics: { shows: 0, scheduledEpisodes: 0, liveEpisodes: 0, readinessScore: 0 },
   };
@@ -40,6 +46,9 @@
       <div class="inline-actions studio-hero-actions">
         <a href="<%= nextAction.href %>" class="btn btn-primary"><%= nextAction.cta %></a>
         <a id="onboarding-start-single" href="/create/single" class="btn btn-secondary">New Episode</a>
+        <a href="/studio/monetization" class="btn btn-ghost">Monetization</a>
+        <a href="/studio/teams" class="btn btn-ghost">Teams</a>
+        <a href="/studio/integrations" class="btn btn-ghost">Integrations</a>
         <a id="onboarding-start-series" href="/create/series" class="btn btn-ghost">Start Series</a>
       </div>
     </div>
@@ -83,6 +92,21 @@
       <span>AI Today</span>
       <strong><%= stats.aiRemaining %></strong>
     </a>
+  </div>
+
+  <div class="studio-global-search" data-studio-search>
+    <label for="studio-global-search-input">
+      <span class="mini-label">Global Search</span>
+      <input
+        id="studio-global-search-input"
+        type="search"
+        placeholder="Search episodes, ideas, series, and shows"
+        autocomplete="off"
+        data-studio-search-input
+      />
+    </label>
+    <div class="studio-search-results" data-studio-search-results hidden></div>
+    <script type="application/json" data-studio-search-data><%- JSON.stringify(studioData.globalSearchItems || []).replace(/</g, '\\u003c') %></script>
   </div>
 </section>
 
@@ -139,6 +163,79 @@
   </aside>
 </section>
 
+<section class="studio-episode-tabs-panel">
+  <div class="section-head">
+    <div>
+      <h3>Episode Tabs</h3>
+      <p class="mini-note">Switch between drafting, recording, scheduling, and live work without leaving Studio.</p>
+    </div>
+    <a href="/create/single" class="btn btn-secondary">New Episode</a>
+  </div>
+
+  <% if (!studioData.episodeTabs.length) { %>
+    <p class="empty-state">No episode workflow tabs yet. Create an episode to start filling the command center.</p>
+  <% } else { %>
+    <div class="studio-tabs" data-studio-tabs>
+      <div class="studio-tab-list" role="tablist" aria-label="Episode workflow tabs">
+        <% studioData.episodeTabs.forEach((tab, index) => { %>
+          <button
+            type="button"
+            class="studio-tab-button <%= index === 0 ? 'is-active' : '' %>"
+            id="studio-tab-button-<%= tab.key %>"
+            role="tab"
+            aria-selected="<%= index === 0 ? 'true' : 'false' %>"
+            aria-controls="studio-tab-panel-<%= tab.key %>"
+            data-studio-tab="<%= tab.key %>"
+          >
+            <span><%= tab.label %></span>
+            <strong><%= tab.count %></strong>
+          </button>
+        <% }) %>
+      </div>
+
+      <% studioData.episodeTabs.forEach((tab, index) => { %>
+        <div
+          class="studio-tab-panel <%= index === 0 ? 'is-active' : '' %>"
+          id="studio-tab-panel-<%= tab.key %>"
+          role="tabpanel"
+          aria-labelledby="studio-tab-button-<%= tab.key %>"
+          data-studio-tab-panel="<%= tab.key %>"
+          <%= index === 0 ? '' : 'hidden' %>
+        >
+          <div class="studio-tab-panel-head">
+            <div>
+              <span class="mini-label"><%= tab.label %></span>
+              <h4><%= tab.description %></h4>
+            </div>
+            <span class="studio-tab-total"><%= tab.count %> total</span>
+          </div>
+
+          <% if (!tab.items.length) { %>
+            <p class="empty-state">Nothing in this stage yet.</p>
+          <% } else { %>
+            <div class="studio-tab-episode-list">
+              <% tab.items.forEach((episode) => { %>
+                <a href="<%= episode.href %>" class="studio-tab-episode studio-tab-stage-<%= episode.stage %>">
+                  <span class="studio-tab-episode-art"><%= episode.title.trim().charAt(0).toUpperCase() %></span>
+                  <span class="studio-tab-episode-main">
+                    <strong><%= episode.title %></strong>
+                    <small><%= episode.seriesName %> · <%= episode.themeName %></small>
+                  </span>
+                  <span class="studio-tab-readiness">
+                    <strong><%= episode.readinessScore %>%</strong>
+                    <small><%= episode.status %></small>
+                  </span>
+                  <span class="studio-tab-date"><%= episode.dateLabel %></span>
+                </a>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
 <section class="studio-secondary-grid">
   <article class="studio-show-health-panel">
     <div class="studio-health-score">
@@ -177,6 +274,67 @@
       </div>
     <% } %>
   </article>
+</section>
+
+<section class="studio-show-dashboard-panel">
+  <div class="section-head">
+    <div>
+      <h3>Show Dashboard</h3>
+      <p class="mini-note">Feed health, release momentum, and hosted shows in one operating view.</p>
+    </div>
+    <a href="/publish/shows" class="btn btn-ghost">Manage Shows</a>
+  </div>
+
+  <div class="studio-show-summary-grid">
+    <article>
+      <span class="mini-label">Shows</span>
+      <strong><%= studioData.showDashboard.summary.totalShows %></strong>
+    </article>
+    <article>
+      <span class="mini-label">Live Feeds</span>
+      <strong><%= studioData.showDashboard.summary.liveShows %></strong>
+    </article>
+    <article>
+      <span class="mini-label">Avg Feed Score</span>
+      <strong><%= studioData.showDashboard.summary.averageFeedScore %>%</strong>
+    </article>
+    <article>
+      <span class="mini-label">Scheduled</span>
+      <strong><%= studioData.showDashboard.summary.scheduledEpisodes %></strong>
+    </article>
+  </div>
+
+  <% if (!studioData.showDashboard.shows.length) { %>
+    <p class="empty-state">No hosted shows yet. Create a hosted show to manage RSS readiness and releases from Studio.</p>
+  <% } else { %>
+    <div class="studio-show-card-grid">
+      <% studioData.showDashboard.shows.forEach((show) => { %>
+        <article class="studio-show-card">
+          <div class="studio-show-card-head">
+            <div>
+              <span class="mini-label"><%= show.feedStatus === 'live' ? 'Live feed' : 'Draft feed' %></span>
+              <h4><%= show.name %></h4>
+            </div>
+            <span class="studio-show-score"><%= show.feedScore %>%</span>
+          </div>
+          <p><%= show.description %></p>
+          <div class="studio-show-card-stats">
+            <span><strong><%= show.publishedCount %></strong> published</span>
+            <span><strong><%= show.scheduledCount %></strong> scheduled</span>
+            <span><strong><%= show.issueCount %></strong> issues</span>
+          </div>
+          <div class="studio-show-card-meta">
+            <span>Next: <%= show.nextReleaseLabel %></span>
+            <span>Latest: <%= show.latestEpisodeTitle %></span>
+          </div>
+          <div class="inline-actions">
+            <a href="<%= show.href %>" class="btn btn-secondary">Manage</a>
+            <a href="<%= show.feedHref %>" class="btn btn-ghost">RSS</a>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
 </section>
 
 <section class="studio-growth-grid studio-growth-grid-phase2">
