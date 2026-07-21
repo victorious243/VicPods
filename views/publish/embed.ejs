@@ -1,3 +1,23 @@
+<%
+  const isEpisodeEmbed = Boolean(publishedEpisode);
+  const resolvedTitle = isEpisodeEmbed
+    ? publishedEpisode.title
+    : (publishedShow ? publishedShow.name : 'VicPods Player');
+  const resolvedShowName = isEpisodeEmbed
+    ? publishedEpisode.showName
+    : (publishedShow ? publishedShow.name : 'VicPods');
+  const resolvedDescription = isEpisodeEmbed
+    ? publishedEpisode.summary
+    : (publishedShow ? publishedShow.description : 'This VicPods player does not have a published episode yet.');
+  const resolvedCover = isEpisodeEmbed
+    ? publishedEpisode.coverImageUrl
+    : (publishedShow ? publishedShow.coverImageUrl : '/images/logo/vicpods-icon-circle-dark.svg');
+  const resolvedShowUrl = isEpisodeEmbed ? publishedEpisode.showUrl : (publishedShow ? publishedShow.showUrl : '/');
+  const resolvedFeedUrl = isEpisodeEmbed ? publishedEpisode.feedUrl : (publishedShow ? publishedShow.feedUrl : '');
+  const latestEpisodeLabel = isEpisodeEmbed
+    ? 'Now playing'
+    : (publishedEpisode ? 'Latest episode' : 'Podcast channel');
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,16 +27,26 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #111827;
-      --surface: #172033;
-      --text: #f8fafc;
-      --muted: #a8b3c7;
-      --border: rgba(255, 255, 255, 0.14);
-      --accent: #70e1b9;
+      --bg: #080a0f;
+      --surface: #141922;
+      --surface-2: #1b222d;
+      --text: #f7f3ec;
+      --muted: #a9b0bc;
+      --border: rgba(226, 232, 240, 0.14);
+      --primary: #2dd36f;
+      --rose: #f15b6c;
+      --cyan: #43c7e8;
+      --yellow: #f4bf4f;
+      --record: #050608;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
     }
 
     body {
@@ -26,94 +56,306 @@
       color: var(--text);
     }
 
+    a {
+      color: inherit;
+    }
+
     .embed-player {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: 84px minmax(0, 1fr);
+      align-items: stretch;
+      padding: 8px;
+    }
+
+    .embed-shell {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(96px, 0.34fr) minmax(0, 1fr);
       gap: 14px;
-      align-items: center;
+      align-items: stretch;
+      min-height: 176px;
       padding: 14px;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--surface), var(--bg));
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.036) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(20, 25, 34, 0.98), rgba(8, 10, 15, 0.98));
+      background-size: 34px 34px, 34px 34px, auto;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
 
-    img {
-      width: 84px;
-      height: 84px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-
-    .copy {
-      display: grid;
-      gap: 8px;
+    .embed-art {
       min-width: 0;
+      display: grid;
+      gap: 10px;
+      align-content: start;
     }
 
-    .label {
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .embed-cover {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 1;
+      min-height: 96px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, var(--yellow), var(--rose) 48%, var(--cyan)),
+        var(--surface-2);
+    }
+
+    .embed-cover img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .embed-record {
+      position: absolute;
+      right: -18%;
+      bottom: -18%;
+      width: 58%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, #242b35 0 13%, transparent 14%),
+        repeating-radial-gradient(circle at 50% 50%, var(--record) 0 5px, #161a22 6px 7px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
+      opacity: 0.9;
+    }
+
+    .embed-meter {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 5px;
+      align-items: end;
+      min-height: 42px;
+      padding: 8px;
+      border: 1px solid rgba(226, 232, 240, 0.1);
+      border-radius: 8px;
+      background: rgba(5, 6, 8, 0.28);
+    }
+
+    .embed-meter span {
+      display: block;
+      min-height: 14px;
+      border-radius: 999px 999px 4px 4px;
+      background: var(--primary);
+    }
+
+    .embed-meter span:nth-child(2) {
+      min-height: 31px;
+      background: var(--rose);
+    }
+
+    .embed-meter span:nth-child(3) {
+      min-height: 24px;
+      background: var(--cyan);
+    }
+
+    .embed-meter span:nth-child(4) {
+      min-height: 36px;
+      background: var(--yellow);
+    }
+
+    .embed-meter span:nth-child(5) {
+      min-height: 20px;
+    }
+
+    .embed-copy {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 8px;
+      align-content: center;
+    }
+
+    .embed-label-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .embed-label,
+    .embed-pill {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 0 9px;
+      border: 1px solid rgba(45, 211, 111, 0.38);
+      border-radius: 999px;
+      background: rgba(45, 211, 111, 0.1);
+      color: #78f2ad;
+      font-size: 0.72rem;
+      font-weight: 850;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .embed-pill {
+      border-color: rgba(226, 232, 240, 0.13);
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--muted);
     }
 
     h1 {
       margin: 0;
-      font-size: 16px;
-      line-height: 1.2;
+      color: var(--text);
+      font-size: clamp(1.12rem, 3.2vw, 1.55rem);
+      line-height: 1.08;
+      letter-spacing: 0;
       overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     p {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       margin: 0;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.35;
+      font-size: 0.86rem;
+      line-height: 1.42;
+    }
+
+    .embed-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
     }
 
     audio {
       width: 100%;
+      min-width: 0;
       height: 36px;
     }
 
-    .empty {
-      grid-column: 1 / -1;
-      color: var(--muted);
-      font-size: 14px;
+    .embed-button {
+      display: inline-flex;
+      min-height: 36px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border: 1px solid rgba(226, 232, 240, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
     }
 
-    @media (max-width: 420px) {
-      .embed-player {
+    .embed-button-primary {
+      border-color: rgba(45, 211, 111, 0.58);
+      background: var(--primary);
+      color: #05130b;
+    }
+
+    .empty {
+      align-self: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 520px) {
+      .embed-shell {
         grid-template-columns: 1fr;
+      }
+
+      .embed-art {
+        grid-template-columns: 96px minmax(0, 1fr);
+        align-items: stretch;
+      }
+
+      .embed-cover {
+        min-height: 96px;
+      }
+
+      .embed-meter {
+        min-height: auto;
+      }
+
+      .embed-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .embed-button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 340px) {
+      .embed-player {
+        padding: 0;
+      }
+
+      .embed-shell {
+        border-radius: 0;
       }
     }
   </style>
 </head>
 <body>
   <main class="embed-player">
-    <% if (publishedEpisode) { %>
-      <img src="<%= publishedEpisode.coverImageUrl %>" alt="" />
-      <div class="copy">
-        <span class="label"><%= publishedEpisode.showName %></span>
-        <h1><%= publishedEpisode.title %></h1>
-        <p><%= publishedEpisode.summary %></p>
-        <audio controls preload="none" src="<%= publishedEpisode.audioUrl %>" data-podcast-player data-episode-id="<%= publishedEpisode.episodeId %>" data-podcast-player-source="embed"></audio>
-      </div>
-    <% } else if (publishedShow) { %>
-      <img src="<%= publishedShow.coverImageUrl %>" alt="" />
-      <div class="copy">
-        <span class="label">Podcast</span>
-        <h1><%= publishedShow.name %></h1>
-        <p><%= publishedShow.description %></p>
-        <a class="label" href="<%= publishedShow.feedUrl %>" target="_blank" rel="noopener noreferrer">RSS Feed</a>
-      </div>
-    <% } else { %>
-      <p class="empty">This VicPods player does not have a published episode yet.</p>
-    <% } %>
+    <section class="embed-shell <%= isEpisodeEmbed ? 'embed-shell-episode' : 'embed-shell-show' %>">
+      <% if (publishedEpisode || publishedShow) { %>
+        <div class="embed-art" aria-hidden="true">
+          <div class="embed-cover">
+            <img src="<%= resolvedCover %>" alt="" />
+            <span class="embed-record"></span>
+          </div>
+          <div class="embed-meter">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <div class="embed-copy">
+          <div class="embed-label-row">
+            <span class="embed-label"><%= latestEpisodeLabel %></span>
+            <% if (publishedShow && publishedShow.episodeCount) { %>
+              <span class="embed-pill"><%= publishedShow.episodeCount %> live</span>
+            <% } %>
+          </div>
+
+          <h1><%= resolvedTitle %></h1>
+          <p><%= resolvedDescription %></p>
+
+          <div class="embed-actions">
+            <% if (publishedEpisode && publishedEpisode.audioUrl) { %>
+              <audio controls preload="none" src="<%= publishedEpisode.audioUrl %>" data-podcast-player data-episode-id="<%= publishedEpisode.episodeId %>" data-podcast-player-source="embed"></audio>
+            <% } else { %>
+              <span class="embed-pill">Feed ready</span>
+            <% } %>
+
+            <% if (resolvedShowUrl) { %>
+              <a class="embed-button embed-button-primary" href="<%= resolvedShowUrl %>" target="_blank" rel="noopener noreferrer">Open</a>
+            <% } %>
+            <% if (resolvedFeedUrl) { %>
+              <a class="embed-button" href="<%= resolvedFeedUrl %>" target="_blank" rel="noopener noreferrer">RSS</a>
+            <% } %>
+          </div>
+        </div>
+      <% } else { %>
+        <p class="empty">This VicPods player does not have a published episode yet.</p>
+      <% } %>
+    </section>
   </main>
-  <script src="/javascripts/podcast-player-analytics.js" defer></script>
+  <% if (publishedEpisode) { %>
+    <script src="/javascripts/podcast-player-analytics.js" defer></script>
+  <% } %>
 </body>
 </html>

@@ -47,6 +47,7 @@ async function getPublishedShowBySlug(showSlug) {
 function formatPublishedEpisode({ show, episode, baseUrl }) {
   const summary = buildEpisodeSummary(episode) || 'Published episode from VicPods.';
   const episodeUrl = buildPublishedEpisodeUrl(show, episode, baseUrl);
+  const showUrl = baseUrl.replace(/\/$/, '') + '/podcasts/' + show.slug;
   const showSupportLinks = normalizeSupportLinks(show.monetization?.supportLinks || []);
   const episodeSupportOverride = String(episode.monetization?.supportLinkOverride || '').trim();
 
@@ -62,6 +63,7 @@ function formatPublishedEpisode({ show, episode, baseUrl }) {
     coverImageUrl: resolveShowCoverImageUrl(show, baseUrl),
     episodeUrl,
     embedUrl: episodeUrl + '/embed',
+    showUrl,
     showName: show.name,
     showDescription: show.description,
     showAuthor: show.authorName || show.name,
@@ -236,7 +238,6 @@ async function showPublishedEpisode(req, res, next) {
 
     const summary = buildEpisodeSummary(episode) || 'Published episode from VicPods.';
     const episodeUrl = buildPublishedEpisodeUrl(show, episode, requestBaseUrl);
-    const feedUrl = buildPodcastFeedUrl(show, requestBaseUrl);
 
     return renderPage(res, {
       title: `${episode.title || 'Untitled episode'} - ${show.name}`,
@@ -250,25 +251,8 @@ async function showPublishedEpisode(req, res, next) {
         ogTitle: `${episode.title || 'Untitled episode'} - ${show.name}`,
         ogDescription: summary,
         ogType: 'article',
-        publishedEpisode: {
-          episodeId: String(episode._id),
-          title: episode.title || 'Untitled episode',
-          summary,
-          description: episode.launchPack?.showNotes || episode.launchPack?.description || summary,
-          publishedAt: episode.publishedAt,
-          durationLabel: formatDurationLabel(episode.durationSeconds || episode.audioAssetId?.durationSeconds),
-          explicit: resolveEpisodeExplicit(episode, show),
-          audioUrl: buildPublicAudioUrl(episode.audioAssetId, requestBaseUrl),
-          coverImageUrl: resolveShowCoverImageUrl(show, requestBaseUrl),
-          showName: show.name,
-          showDescription: show.description,
-          showAuthor: show.authorName || show.name,
-          showWebsiteUrl: resolveShowWebsiteUrl(show, requestBaseUrl),
-          feedUrl,
-          outline: Array.isArray(episode.outline) ? episode.outline.filter(Boolean) : [],
-          visibility: episode.monetization?.visibility || 'public',
-          supportLinks: formatPublishedEpisode({ show, episode, baseUrl: requestBaseUrl }).supportLinks,
-        },
+        ogImage: resolveShowCoverImageUrl(show, requestBaseUrl),
+        publishedEpisode: formatPublishedEpisode({ show, episode, baseUrl: requestBaseUrl }),
       },
     });
   } catch (error) {
@@ -319,6 +303,8 @@ async function showPodcastEmbed(req, res, next) {
         description: show.description || 'A podcast published with VicPods.',
         coverImageUrl: resolveShowCoverImageUrl(show, requestBaseUrl),
         feedUrl: buildPodcastFeedUrl(show, requestBaseUrl),
+        showUrl: requestBaseUrl.replace(/\/$/, '') + '/podcasts/' + show.slug,
+        episodeCount: episodes.length,
       },
       publishedEpisode: episodes[0]
         ? formatPublishedEpisode({ show, episode: episodes[0], baseUrl: requestBaseUrl })

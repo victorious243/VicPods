@@ -21,44 +21,108 @@
     <%- include('../partials/proof-snippet-grid', { proofSnippets }) %>
   </section>
 
-  <section class="example-library-section" data-help-reveal>
-    <div class="section-head">
+  <section class="example-library-section example-studio-library" data-help-reveal>
+    <div class="section-head example-studio-head">
       <div>
+        <span class="landing-kicker">Episode shelf</span>
         <h2>Episode examples</h2>
-        <p class="mini-note">Realistic example workflows showing the structure and launch preview users see inside VicPods.</p>
+        <p class="mini-note">Each sample is laid out like a production brief: recording angle, run of show, and the launch assets a creator can use next.</p>
       </div>
       <a href="/auth/register" class="btn btn-ghost">Create account</a>
     </div>
-    <%- include('../partials/example-preview-grid', { examples }) %>
+
+    <div class="example-studio-board">
+      <% (examples || []).forEach((example, index) => { %>
+        <article class="example-studio-episode" id="<%= example.slug %>">
+          <div class="example-studio-cover" aria-hidden="true">
+            <span class="example-studio-cover-label"><%= example.styleLabel %></span>
+            <span class="example-studio-record"></span>
+            <span class="example-studio-episode-number"><%= String(index + 1).padStart(2, '0') %></span>
+          </div>
+
+          <div class="example-studio-main">
+            <div class="example-studio-topline">
+              <span class="mini-label"><%= example.styleLabel %></span>
+              <% if (example.templateKey) { %>
+                <span><%= example.templateKey.replace(/_/g, ' ') %></span>
+              <% } %>
+            </div>
+            <h3><%= example.title %></h3>
+            <p class="example-studio-hook"><%= example.hook %></p>
+
+            <div class="example-studio-rundown">
+              <span class="example-studio-section-label">Recording arc</span>
+              <% (example.outline || []).forEach((item, itemIndex) => { %>
+                <div class="example-studio-cue">
+                  <span class="example-studio-cue-mark" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </span>
+                  <p><%= item %></p>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+
+          <aside class="example-studio-launch">
+            <span class="example-studio-section-label">Launch Pack</span>
+            <p><%= example.launchPack?.description %></p>
+            <div class="example-studio-title-stack">
+              <strong>Title direction</strong>
+              <% if (example.launchPack?.titles?.[0]) { %>
+                <span><%= example.launchPack.titles[0] %></span>
+              <% } %>
+              <% if (example.launchPack?.titles?.[1]) { %>
+                <small><%= example.launchPack.titles[1] %></small>
+              <% } %>
+            </div>
+            <% if (example.takeaway) { %>
+              <p class="example-studio-takeaway"><%= example.takeaway %></p>
+            <% } %>
+            <div class="inline-actions">
+              <a href="/?idea=<%= encodeURIComponent(example.ideaSeed || example.title) %>#idea-to-episode-generator" class="btn btn-primary">Use this angle</a>
+              <a href="/examples#<%= example.slug %>" class="btn btn-ghost">Open example</a>
+            </div>
+          </aside>
+        </article>
+      <% }) %>
+    </div>
   </section>
 
-  <section class="example-library-section" data-help-reveal>
-    <div class="section-head">
+  <section class="example-library-section example-style-studio" data-help-reveal>
+    <div class="section-head example-studio-head">
       <div>
+        <span class="landing-kicker">Format presets</span>
         <h2>Podcast styles already modeled</h2>
-        <p class="mini-note">Start with structure instead of a blank page.</p>
+        <p class="mini-note">Choose a format that matches the show, then start with a recording structure instead of a blank page.</p>
       </div>
     </div>
 
-    <div class="template-proof-grid">
-      <% (podcastStyles || []).forEach((template) => { %>
-        <article class="card template-proof-card">
-          <div class="template-proof-head">
-            <span class="mini-label"><%= template.label %></span>
-            <span class="template-proof-bestfor"><%= template.bestFor %></span>
+    <div class="example-style-board">
+      <% (podcastStyles || []).forEach((template, index) => { %>
+        <article class="example-style-tile">
+          <div class="example-style-art" aria-hidden="true">
+            <span class="example-style-disc"></span>
+            <span class="example-style-bars"><i></i><i></i><i></i><i></i></span>
           </div>
-          <p><%= template.description %></p>
-          <ul class="template-proof-labels">
-            <% (template.sectionLabels || []).slice(0, 4).forEach((label) => { %>
-              <li><%= label %></li>
-            <% }) %>
-          </ul>
-          <div class="inline-actions">
-            <% if (currentUser) { %>
-              <a href="/create/single?template=<%= encodeURIComponent(template.key) %>" class="btn btn-primary">Start with this style</a>
-            <% } else { %>
-              <a href="/auth/register" class="btn btn-primary">Create account</a>
-            <% } %>
+          <div class="example-style-copy">
+            <div class="example-style-topline">
+              <span class="mini-label"><%= template.label %></span>
+              <strong><%= String(index + 1).padStart(2, '0') %></strong>
+            </div>
+            <h3><%= template.label %></h3>
+            <p class="example-style-bestfor"><%= template.bestFor %></p>
+            <p><%= template.description %></p>
+            <div class="example-style-cues">
+              <span class="example-style-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              <p><%= (template.sectionLabels || []).slice(0, 3).join(' / ') %></p>
+            </div>
+            <div class="inline-actions">
+              <% if (currentUser) { %>
+                <a href="/create/single?template=<%= encodeURIComponent(template.key) %>" class="btn btn-primary">Start with this style</a>
+              <% } else { %>
+                <a href="/auth/register" class="btn btn-primary">Start with this style</a>
+              <% } %>
+            </div>
           </div>
         </article>
       <% }) %>

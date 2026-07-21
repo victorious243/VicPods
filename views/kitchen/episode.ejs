@@ -1,5 +1,80 @@
-<% const isToneOverride = Boolean(episode.toneOverridePreset); %>
-<% const toneLabel = effectiveTone?.toneSource === 'override' ? 'Override' : 'Inherited'; %>
+<%
+  const isToneOverride = Boolean(episode.toneOverridePreset);
+  const toneLabel = effectiveTone?.toneSource === 'override' ? 'Override' : 'Inherited';
+  const episodeInitial = (episode.title || series.name || 'E').trim().charAt(0).toUpperCase();
+  const readinessScore = releaseReadiness?.overallScore || 0;
+  const launchPackReady = Boolean(launchPackView?.updatedAt);
+  const showNotesReady = Boolean(episode.showNotesPack?.updatedAt);
+  const briefReady = Boolean(episode.transcript && episode.transcript.trim());
+  const audioReady = Boolean(episodeAudioAsset);
+  const statusKey = String(episode.status || 'Draft').toLowerCase();
+%>
+
+<section class="episode-command-shell">
+  <div class="episode-command-hero">
+    <div class="episode-album-stack" aria-hidden="true">
+      <div class="episode-album-art">
+        <span class="episode-album-ring"></span>
+        <span class="episode-album-mark"><%= episodeInitial %></span>
+      </div>
+      <div class="episode-mini-console">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="episode-command-copy">
+      <span class="mini-label studio-hero-kicker"><%= episode.isSingle ? 'Single Episode' : theme.name %></span>
+      <h3><%= episode.title || 'Untitled episode' %></h3>
+      <p>Edit structure, launch assets, and recording readiness from one production surface before this episode moves to the public feed.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="#episode-script" class="btn btn-primary">Edit Structure</a>
+        <a href="#episode-launch-pack" class="btn btn-secondary">Launch Assets</a>
+        <a href="#episode-record" class="btn btn-ghost">Recording</a>
+        <a href="/kitchen/<%= series._id %>#theme-<%= theme._id %>" class="btn btn-ghost">Back to Theme</a>
+      </div>
+    </div>
+
+    <aside class="episode-now-panel">
+      <span class="mini-label">Release Readiness</span>
+      <h4><%= releaseReadiness?.stateLabel || 'Needs Work' %></h4>
+      <p><%= releaseReadiness?.nextActions?.[0] || 'Tighten the structure, generate launch assets, and finish recording prep.' %></p>
+      <div class="studio-readiness-meter" aria-label="Release readiness score">
+        <span style="width:<%= readinessScore %>%"></span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= readinessScore %>/100</span>
+        <span class="status-<%= statusKey %>"><%= episode.status %></span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="episode-command-metrics">
+    <a class="studio-metric-pill" href="#episode-plan">
+      <span>Status</span>
+      <strong><%= episode.status %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#episode-record">
+      <span>Recording</span>
+      <strong><%= recordingWorkflow.checklistPercent %>%</strong>
+    </a>
+    <a class="studio-metric-pill" href="#episode-launch-pack">
+      <span>Launch Pack</span>
+      <strong><%= launchPackReady ? 'Ready' : 'Draft' %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#episode-show-notes">
+      <span>Show Notes</span>
+      <strong><%= showNotesReady ? 'Ready' : 'Draft' %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#episode-final-audio">
+      <span>Audio</span>
+      <strong><%= audioReady ? 'Ready' : 'Needed' %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#episode-brief-export">
+      <span>Brief</span>
+      <strong><%= briefReady ? 'Ready' : 'Draft' %></strong>
+    </a>
+  </div>
+</section>
 
 <nav class="episode-command-tabs" aria-label="Episode workflow">
   <% episodeDetailTabs.forEach((tab) => { %>
@@ -11,7 +86,7 @@
   <% }) %>
 </nav>
 
-<section class="card" id="episode-plan">
+<section class="episode-command-panel" id="episode-plan">
   <div class="section-head">
     <h3>Chef AI</h3>
     <div class="inline-actions">
@@ -83,7 +158,7 @@
   <% } %>
 </section>
 
-<section class="card">
+<section class="episode-readiness-panel">
   <div class="section-head">
     <h3>Release Readiness</h3>
     <span class="mini-label"><%= releaseReadiness?.stateLabel || 'Needs Work' %></span>
@@ -116,7 +191,7 @@
   <% } %>
 </section>
 
-<section class="card recording-workflow-card" id="episode-record">
+<section class="episode-recording-panel recording-workflow-card" id="episode-record">
   <div class="section-head">
     <div>
       <h3>Recording-Day Workflow</h3>
@@ -267,7 +342,7 @@
   </form>
 </section>
 
-<section class="card publish-foundation-card" id="episode-publish">
+<section class="episode-publish-panel publish-foundation-card" id="episode-publish">
   <div class="section-head">
     <h3>Publish Foundation</h3>
     <span class="mini-label">Pro and above</span>
@@ -504,7 +579,7 @@
   <% } %>
 </section>
 
-<section class="card" id="episode-advanced-media">
+<section class="episode-media-panel" id="episode-advanced-media">
   <div class="section-head">
     <div>
       <h3>Advanced Media And Integrations</h3>
@@ -615,7 +690,7 @@
   </div>
 </section>
 
-<section class="card" id="episode-team">
+<section class="episode-team-panel" id="episode-team">
   <div class="section-head">
     <div>
       <h3>Team Workflow</h3>
@@ -720,7 +795,7 @@
   </div>
 </section>
 
-<section class="card" id="episode-script">
+<section class="episode-structure-panel" id="episode-script">
   <div class="section-head">
     <h3>Episode Editor</h3>
     <a href="/kitchen/<%= series._id %>#theme-<%= theme._id %>" class="btn btn-ghost">Back to Theme</a>
@@ -959,7 +1034,7 @@
   </form>
 </section>
 
-<section class="card share-link-card" id="episode-grow">
+<section class="episode-share-panel share-link-card" id="episode-grow">
   <div class="section-head">
     <h3>Share Episode</h3>
     <span class="mini-label">Read-only link</span>
@@ -1008,7 +1083,7 @@
   </div>
 </section>
 
-<section class="card">
+<section class="episode-launch-panel" id="episode-launch-pack">
   <div class="section-head">
     <h3>Your Launch Pack</h3>
     <span class="mini-label">Publish-ready assets</span>
@@ -1143,7 +1218,7 @@ CTA SCRIPT
   <% } %>
 </section>
 
-<section class="card">
+<section class="episode-continuity-panel">
   <div class="section-head">
     <h3>Series Continuity</h3>
     <span class="mini-label">Phase 3</span>
@@ -1166,7 +1241,7 @@ CTA SCRIPT
   <% } %>
 </section>
 
-<section class="card">
+<section class="episode-launch-panel" id="episode-show-notes">
   <div class="section-head">
     <h3>Show Notes Pack</h3>
     <span class="mini-label">Launch Assets</span>
@@ -1241,7 +1316,7 @@ SOCIAL POSTS
   <% } %>
 </section>
 
-<section class="card">
+<section class="episode-writing-panel">
   <div class="section-head">
     <h3>Writing Intelligence</h3>
     <span class="mini-label">Phase 2</span>
@@ -1329,7 +1404,7 @@ SOCIAL POSTS
   <% } %>
 </section>
 
-<section class="card">
+<section class="episode-tone-panel">
   <div class="section-head">
     <h3>Tone Consistency</h3>
     <span class="mini-label">Tone Engine v1</span>
@@ -1352,7 +1427,7 @@ SOCIAL POSTS
   <% } %>
 </section>
 
-<section class="card" id="episode-brief-export">
+<section class="episode-export-panel" id="episode-brief-export">
   <div class="section-head">
     <h3>Episode Brief Export</h3>
     <span class="mini-label">TXT · PDF · DOCX</span>

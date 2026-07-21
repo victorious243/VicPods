@@ -1,43 +1,136 @@
-<section id="onboarding-pantry" class="card">
-  <div class="section-head">
-    <h3>Add Ingredient</h3>
-    <span class="mini-label">Idea Bank</span>
-  </div>
-  <form method="POST" action="/pantry" class="form-grid">
-    <label>
-      Hook (1-2 lines)
-      <textarea name="hook" rows="2" required maxlength="240" placeholder="A counterintuitive lesson that flips assumptions..."></textarea>
-    </label>
-    <div class="two-col">
-      <label>
-        Tag
-        <input type="text" name="tag" maxlength="60" placeholder="story, growth, monetization" />
-      </label>
-      <label>
-        Notes
-        <input type="text" name="notes" maxlength="1000" placeholder="Optional context" />
-      </label>
+<%
+  const ideaTotal = ideas.length;
+  const taggedIdeas = ideas.filter((idea) => idea.tag && idea.tag !== 'general').length;
+  const notedIdeas = ideas.filter((idea) => idea.notes).length;
+  const featuredIdea = ideas[0];
+  const featuredTag = featuredIdea ? (featuredIdea.tag || 'general') : 'empty crate';
+%>
+
+<section class="pantry-command-shell" id="onboarding-pantry">
+  <div class="pantry-command-hero">
+    <div class="pantry-vinyl-stack" aria-hidden="true">
+      <div class="pantry-vinyl-art">
+        <span class="pantry-vinyl-ring"></span>
+        <span class="pantry-vinyl-mark">ID</span>
+      </div>
+      <div class="pantry-tape-strip">
+        <span></span><span></span><span></span><span></span>
+      </div>
     </div>
-    <button type="submit" class="btn btn-primary">Add to Pantry</button>
-  </form>
+
+    <div class="pantry-command-copy">
+      <span class="mini-label studio-hero-kicker">Idea Pantry</span>
+      <h3>Keep every hook within reach for the next episode.</h3>
+      <p>Save raw angles, tags, and notes before they become full drafts. Pantry is the crate you dig through when the Studio needs a sharper opening.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="#pantry-add-idea" class="btn btn-primary">Add Ingredient</a>
+        <a href="/kitchen" class="btn btn-secondary">Open Workspace</a>
+        <a href="/studio" class="btn btn-ghost">Back to Studio</a>
+      </div>
+    </div>
+
+    <aside class="pantry-now-panel">
+      <span class="mini-label">Top Shelf</span>
+      <h4><%= featuredIdea ? featuredIdea.hook : 'No hooks saved yet' %></h4>
+      <p><%= featuredIdea ? featuredTag : 'Add one sharp line and start building your reusable episode library.' %></p>
+      <div class="studio-readiness-meter" aria-label="Pantry fill level">
+        <span style="width:<%= ideaTotal ? Math.min(100, 24 + (ideaTotal * 8)) : 10 %>%"></span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= ideaTotal %> ideas</span>
+        <span><%= notedIdeas %> with notes</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="pantry-command-metrics">
+    <a class="studio-metric-pill" href="#pantry-shelf">
+      <span>Total Ideas</span>
+      <strong><%= ideaTotal %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#pantry-shelf">
+      <span>Tagged</span>
+      <strong><%= taggedIdeas %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#pantry-shelf">
+      <span>Notes</span>
+      <strong><%= notedIdeas %></strong>
+    </a>
+    <a class="studio-metric-pill" href="/create/single">
+      <span>Next Move</span>
+      <strong>Draft</strong>
+    </a>
+  </div>
 </section>
 
-<section class="card">
+<section class="pantry-operating-grid">
+  <article class="pantry-add-panel" id="pantry-add-idea">
+    <div class="section-head">
+      <div>
+        <h3>Add Ingredient</h3>
+        <p class="mini-note">Capture the hook first. You can shape it later inside Workspace.</p>
+      </div>
+      <span class="mini-label">Idea Bank</span>
+    </div>
+
+    <form method="POST" action="/pantry" class="pantry-form">
+      <label>
+        Hook
+        <textarea name="hook" rows="3" required maxlength="240" placeholder="A counterintuitive lesson that flips assumptions..."></textarea>
+      </label>
+      <div class="two-col">
+        <label>
+          Tag
+          <input type="text" name="tag" maxlength="60" placeholder="story, growth, monetization" />
+        </label>
+        <label>
+          Notes
+          <input type="text" name="notes" maxlength="1000" placeholder="Optional context" />
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Add to Pantry</button>
+    </form>
+  </article>
+
+  <aside class="pantry-context-panel">
+    <span class="mini-label">Workflow Cue</span>
+    <h3>Use Pantry before the blank page wins.</h3>
+    <p>Hooks belong here while they are still messy. When one starts to feel recordable, open Workspace and turn it into a structured episode.</p>
+    <div class="pantry-cue-list" aria-label="Pantry workflow">
+      <span>Save hook</span>
+      <span>Tag angle</span>
+      <span>Draft episode</span>
+    </div>
+  </aside>
+</section>
+
+<section class="pantry-shelf-panel" id="pantry-shelf">
   <div class="section-head">
-    <h3>Pantry Shelf</h3>
+    <div>
+      <h3>Pantry Shelf</h3>
+      <p class="mini-note">Edit hooks inline, keep tags short, and delete anything that no longer earns a slot.</p>
+    </div>
     <span class="mini-label"><%= ideas.length %> ideas</span>
   </div>
 
   <% if (!ideas.length) { %>
     <p class="empty-state">No ideas saved yet.</p>
   <% } else { %>
-    <div class="list-stack">
-      <% ideas.forEach((idea) => { %>
-        <article class="idea-item">
-          <form method="POST" action="/pantry/<%= idea._id %>/update" class="form-grid">
+    <div class="pantry-idea-grid">
+      <% ideas.forEach((idea, index) => { %>
+        <article class="pantry-idea-card">
+          <div class="pantry-idea-head">
+            <span class="pantry-idea-art"><%= String(index + 1).padStart(2, '0') %></span>
+            <div>
+              <span class="mini-label"><%= idea.tag || 'general' %></span>
+              <h4><%= idea.hook %></h4>
+            </div>
+          </div>
+
+          <form method="POST" action="/pantry/<%= idea._id %>/update" class="pantry-form pantry-form-compact">
             <label>
               Hook
-              <textarea name="hook" rows="2" maxlength="240" required><%= idea.hook %></textarea>
+              <textarea name="hook" rows="3" maxlength="240" required><%= idea.hook %></textarea>
             </label>
             <div class="two-col">
               <label>
@@ -53,7 +146,8 @@
               <button type="submit" class="btn btn-ghost">Update</button>
             </div>
           </form>
-          <form method="POST" action="/pantry/<%= idea._id %>/delete">
+
+          <form method="POST" action="/pantry/<%= idea._id %>/delete" class="pantry-delete-form">
             <button class="btn btn-danger" type="submit">Delete</button>
           </form>
         </article>

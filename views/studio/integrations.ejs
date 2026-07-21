@@ -16,9 +16,24 @@
   ];
 %>
 
-<section class="studio-command-shell">
-  <div class="studio-command-hero">
-    <div class="studio-command-copy">
+<section class="studio-command-shell integration-command-shell">
+  <div class="team-command-hero integration-command-hero">
+    <div class="integration-visual-panel" aria-hidden="true">
+      <div class="integration-node-map">
+        <span>VP</span>
+        <i></i>
+        <span>Z</span>
+        <i></i>
+        <span>M</span>
+        <i></i>
+        <span>S</span>
+      </div>
+      <div class="team-waveform integration-waveform">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+    <div class="studio-command-copy team-command-copy">
       <span class="mini-label studio-hero-kicker">Phase 7 Integrations</span>
       <h3>Connect VicPods to the media and growth stack around the show.</h3>
       <p>Configure webhooks, Zapier, email platforms, social schedulers, Descript/Riverside handoff, AI clips, captions, and audio cleanup requests.</p>
@@ -51,7 +66,7 @@
 </section>
 
 <section class="studio-operating-grid integration-grid">
-  <article class="studio-pipeline-panel">
+  <article class="studio-pipeline-panel integration-workspace-panel">
     <div class="section-head">
       <div>
         <h3>Add Connection</h3>
@@ -59,44 +74,53 @@
       </div>
     </div>
 
-    <form method="POST" action="/studio/integrations/connections" class="form-grid">
-      <div class="two-col">
-        <label>
-          Provider
+    <form method="POST" action="/studio/integrations/connections" class="form-grid team-form-panel integration-form-panel">
+      <div class="team-form-head">
+        <div>
+          <span class="mini-label">Connection</span>
+          <h4>Route show events into your stack</h4>
+          <p>Send published episodes, launch assets, and media jobs to external tools without leaving the Studio workflow.</p>
+        </div>
+        <span class="team-form-icon integration-form-icon" aria-hidden="true">IO</span>
+      </div>
+
+      <div class="team-field-row">
+        <label class="team-field">
+          <span>Provider</span>
           <select name="provider">
             <% integrationData.providers.forEach((provider) => { %>
               <option value="<%= provider %>"><%= provider %></option>
             <% }) %>
           </select>
         </label>
-        <label>
-          Label
+        <label class="team-field">
+          <span>Label</span>
           <input type="text" name="label" maxlength="120" placeholder="Zapier episode published hook" />
         </label>
       </div>
-      <label>
-        Endpoint URL
+      <label class="team-field team-field-wide">
+        <span>Endpoint URL</span>
         <input type="url" name="endpointUrl" maxlength="500" placeholder="https://hooks.zapier.com/..." />
       </label>
       <div class="integration-event-grid">
         <% integrationData.events.forEach((eventName) => { %>
-          <label class="checkbox-row">
+          <label class="checkbox-row integration-event-card">
             <input type="checkbox" name="events" value="<%= eventName %>" />
             <span><%= eventName %></span>
           </label>
         <% }) %>
       </div>
-      <div class="three-col">
-        <label>
-          Audience/List ID
+      <div class="integration-meta-grid">
+        <label class="team-field">
+          <span>Audience/List ID</span>
           <input type="text" name="audienceId" maxlength="120" />
         </label>
-        <label>
-          Default Channel
+        <label class="team-field">
+          <span>Default channel</span>
           <input type="text" name="defaultChannel" maxlength="120" />
         </label>
-        <label>
-          Export Folder
+        <label class="team-field">
+          <span>Export folder</span>
           <input type="text" name="exportFolder" maxlength="200" />
         </label>
       </div>

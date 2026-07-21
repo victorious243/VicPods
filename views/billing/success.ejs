@@ -5,9 +5,21 @@
   const planStatusLabel = String(billing?.planStatus || 'pending').replace(/_/g, ' ');
 %>
 
-<section class="card billing-hero billing-hero-premium billing-hero-success">
-  <div class="billing-hero-copy">
-    <span class="billing-kicker">Checkout Complete</span>
+<section class="billing-checkout-shell billing-checkout-shell-success">
+  <div class="billing-checkout-art" aria-hidden="true">
+    <div class="billing-album-art billing-album-art-main">
+      <span class="billing-album-ring"></span>
+      <span class="billing-album-mark">VP</span>
+    </div>
+    <div class="billing-mini-player">
+      <span class="billing-play-dot"></span>
+      <span class="billing-player-lines"><i></i><i></i></span>
+      <span class="billing-eq"><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <div class="billing-checkout-copy">
+    <span class="mini-label studio-hero-kicker">Checkout Complete</span>
     <h3><%= checkoutSync.title %></h3>
     <p><%= checkoutSync.body %></p>
     <div class="billing-chip-row">
@@ -46,7 +58,7 @@
   </aside>
 </section>
 
-<section class="card billing-timeline-card">
+<section class="billing-timeline-card">
   <div class="section-head">
     <h3>What Happens Next</h3>
     <span class="mini-label">Stripe + VicPods</span>

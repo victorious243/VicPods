@@ -1,88 +1,9 @@
 <% const planLabels = { free: t('plan.free', 'Free'), pro: t('plan.pro', 'Pro'), premium: t('plan.premium', 'Premium') }; %>
 
-<section class="card">
-  <div class="section-head">
-    <h3>Subscription Status</h3>
-    <span class="badge <%= billing.statusBadgeClass %>"><%= billing.planStatusLabel %></span>
-  </div>
-  <p>
-    <strong>Current Access:</strong> <%= planLabels[billing.effectivePlan] || billing.effectivePlan %>
-    <% if (billing.storedPlan !== billing.effectivePlan) { %>
-      <span class="mini-note">(stored: <%= planLabels[billing.storedPlan] || billing.storedPlan %>)</span>
-    <% } %>
-  </p>
-  <% if (billing.currentPeriodStartLabel) { %>
-    <p><strong>Current period started:</strong> <%= billing.currentPeriodStartLabel %></p>
-  <% } %>
-  <% if (billing.currentPeriodEndLabel) { %>
-    <p><strong>Current period ends:</strong> <%= billing.currentPeriodEndLabel %></p>
-  <% } %>
-  <% if (billing.cancelAtPeriodEnd && billing.currentPeriodEndLabel) { %>
-    <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
-  <% } %>
-  <% if (billing.planStatus === 'past_due') { %>
-    <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
-  <% } %>
-  <div class="inline-actions">
-    <form method="POST" action="/billing/portal">
-      <button class="btn btn-secondary" type="submit">Manage Billing</button>
-    </form>
-  </div>
-</section>
-
-<section class="card-grid plan-grid">
-  <article class="card plan-card <%= billing.effectivePlan === 'free' ? 'active-plan' : '' %>">
-    <h3>Free</h3>
-    <p class="price"><%= (typeof pricing !== 'undefined' && pricing.free) ? pricing.free : '€0' %></p>
-    <ul>
-      <li>Core Studio + Workspace + Pantry access</li>
-      <li>5 AI generations/day</li>
-      <li>Release Readiness Score + Show Notes Pack</li>
-      <li>Episode Brief TXT export</li>
-    </ul>
-    <button class="btn btn-secondary" disabled>Current Access</button>
-  </article>
-
-  <article class="card plan-card <%= billing.effectivePlan === 'pro' ? 'active-plan' : '' %>">
-    <h3>Pro</h3>
-    <p class="price"><%= (typeof pricing !== 'undefined' && pricing.pro) ? pricing.pro : '€19.00/mo' %></p>
-    <ul>
-      <li>50 AI generations/day</li>
-      <li>Continuity refresh + stronger series planning</li>
-      <li>Tone consistency scoring</li>
-      <li>Episode Brief TXT + PDF exports</li>
-    </ul>
-    <% if (billing.effectivePlan === 'pro' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
-      <button class="btn btn-secondary" disabled>Current Access</button>
-    <% } else { %>
-      <form method="POST" action="/billing/checkout">
-        <input type="hidden" name="plan" value="pro" />
-        <button class="btn btn-primary" type="submit">Upgrade to Pro</button>
-      </form>
-    <% } %>
-  </article>
-
-  <article class="card plan-card <%= billing.effectivePlan === 'premium' ? 'active-plan' : '' %>">
-    <h3>Premium</h3>
-    <p class="price"><%= (typeof pricing !== 'undefined' && pricing.premium) ? pricing.premium : '€39.00/mo' %></p>
-    <ul>
-      <li>Unlimited AI generations</li>
-      <li>Tone Fix + Voice Persona controls</li>
-      <li>Highest continuity workflow access</li>
-      <li>Episode Brief TXT + PDF + DOCX exports</li>
-    </ul>
-    <% if (billing.effectivePlan === 'premium' && (billing.planStatus === 'active' || billing.planStatus === 'trialing')) { %>
-      <button class="btn btn-secondary" disabled>Current Access</button>
-    <% } else { %>
-      <form method="POST" action="/billing/checkout">
-        <input type="hidden" name="plan" value="premium" />
-        <button class="btn btn-primary" type="submit">Upgrade to Premium</button>
-      </form>
-    <% } %>
-  </article>
-</section>
-
-<section class="card">
-  <h3>Billing Notes</h3>
-  <p>Stripe webhooks are the source of truth for activation, renewal, cancellation, and expiry. Success pages are informational only.</p>
-</section>
+<%- include('../partials/billing-upgrade', {
+  planLabels,
+  billing,
+  pricing,
+  billingProofSnippets,
+  featuredExamples,
+}) %>

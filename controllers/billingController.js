@@ -5,8 +5,30 @@ const { getPricingDisplay } = require('../services/billing/pricing');
 const { reconcileCheckoutSession } = require('../services/stripe/webhookHandlers');
 const { resolveEffectivePlan } = require('../middleware/requirePlan');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
+const {
+  getBillingProofSnippets,
+  getFeaturedExamples,
+} = require('../services/marketing/exampleLibraryService');
 
 const ACTIVE_BILLING_STATUSES = new Set(['active', 'trialing']);
+
+function statusBadgeClass(status) {
+  const normalized = String(status || '').toLowerCase();
+
+  if (normalized === 'active' || normalized === 'trialing') {
+    return 'badge-ready';
+  }
+
+  if (normalized === 'past_due' || normalized === 'unpaid') {
+    return 'badge-draft';
+  }
+
+  if (normalized === 'canceled') {
+    return 'badge-served';
+  }
+
+  return 'badge-planned';
+}
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -22,6 +44,8 @@ function buildBillingSnapshot(user, effectivePlan) {
     effectivePlan,
     storedPlan: String(user?.plan || 'free').toLowerCase(),
     planStatus,
+    planStatusLabel: planStatus.replace(/_/g, ' '),
+    statusBadgeClass: statusBadgeClass(planStatus),
     currentPeriodStartLabel: formatDate(user?.currentPeriodStart),
     currentPeriodEndLabel: formatDate(user?.currentPeriodEnd),
     cancelAtPeriodEnd: Boolean(user?.cancelAtPeriodEnd),
@@ -81,7 +105,32 @@ function buildCheckoutSyncViewModel({ sessionId, syncResult, billing }) {
 }
 
 function showBilling(req, res) {
-  return res.redirect('/settings?section=billing');
+  const effectivePlan = req.effectivePlan || resolveEffectivePlan(req.currentUser);
+  const billing = buildBillingSnapshot(req.currentUser, effectivePlan);
+
+  void recordActivityEvent(req, {
+    eventType: 'billing_page_viewed',
+    user: req.currentUser,
+    statusCode: 200,
+    metadata: {
+      effectivePlan,
+      surface: 'standalone',
+    },
+  });
+
+  return renderPage(res, {
+    title: req.t('page.billing.title', 'Upgrade - VicPods'),
+    pageTitle: req.t('page.billing.header', 'Upgrade'),
+    subtitle: req.t('page.billing.subtitle', 'Choose the VicPods plan that fits your production rhythm.'),
+    view: 'billing/index',
+    data: {
+      effectivePlan,
+      billing,
+      pricing: getPricingDisplay(),
+      billingProofSnippets: getBillingProofSnippets(),
+      featuredExamples: getFeaturedExamples({ limit: 2 }),
+    },
+  });
 }
 
 async function createCheckout(req, res, next) {

@@ -1,69 +1,132 @@
-<section class="published-show-hero">
-  <div class="published-show-cover">
-    <img src="<%= publishedShow.coverImageUrl %>" alt="<%= publishedShow.name %> cover art" />
-  </div>
-  <div class="published-show-copy">
-    <span class="mini-label">Podcast</span>
-    <h1><%= publishedShow.name %></h1>
-    <p><%= publishedShow.description %></p>
-    <div class="inline-actions published-episode-meta">
-      <span class="mini-label"><%= publishedShow.authorName %></span>
-      <span class="mini-label"><%= publishedShow.episodeCount %> episodes</span>
-      <% if (publishedShow.lastPublishedAt) { %>
-        <span class="mini-label">Updated <%= new Date(publishedShow.lastPublishedAt).toLocaleDateString() %></span>
+<%
+  const showEpisodes = Array.isArray(publishedShow.episodes) ? publishedShow.episodes : [];
+  const latestEpisode = showEpisodes[0] || null;
+  const showMeta = [
+    publishedShow.authorName,
+    `${publishedShow.episodeCount} ${publishedShow.episodeCount === 1 ? 'episode' : 'episodes'}`,
+    publishedShow.lastPublishedAt ? `Updated ${new Date(publishedShow.lastPublishedAt).toLocaleDateString()}` : '',
+  ].filter(Boolean);
+%>
+
+<div class="published-podcast-page published-show-page">
+  <section class="published-show-stage">
+    <div class="published-show-art-panel">
+      <div class="published-cover-frame">
+        <img src="<%= publishedShow.coverImageUrl %>" alt="<%= publishedShow.name %> cover art" />
+      </div>
+      <div class="published-eq-line" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <div class="published-show-copy">
+      <span class="mini-label published-live-label">Live podcast channel</span>
+      <h1><%= publishedShow.name %></h1>
+      <p class="published-show-description"><%= publishedShow.description %></p>
+
+      <div class="published-meta-strip">
+        <% showMeta.forEach((item) => { %>
+          <span><%= item %></span>
+        <% }) %>
+      </div>
+
+      <div class="inline-actions published-action-row">
+        <a class="btn btn-primary" href="<%= publishedShow.feedUrl %>">RSS Feed</a>
+        <a class="btn btn-secondary" href="<%= publishedShow.websiteUrl %>" target="_blank" rel="noopener noreferrer">Website</a>
+        <a class="btn btn-ghost" href="<%= publishedShow.embedUrl %>" target="_blank" rel="noopener noreferrer">Embed</a>
+      </div>
+
+      <% if ((publishedShow.supportLinks || []).length) { %>
+        <div class="published-support-panel">
+          <span class="mini-label">Support links</span>
+          <div class="inline-actions published-support-links">
+            <% publishedShow.supportLinks.forEach((link) => { %>
+              <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+            <% }) %>
+          </div>
+        </div>
       <% } %>
     </div>
-    <div class="inline-actions">
-      <a class="btn btn-primary" href="<%= publishedShow.feedUrl %>">RSS Feed</a>
-      <a class="btn btn-secondary" href="<%= publishedShow.websiteUrl %>" target="_blank" rel="noopener noreferrer">Website</a>
-      <a class="btn btn-ghost" href="<%= publishedShow.embedUrl %>" target="_blank" rel="noopener noreferrer">Embed</a>
+
+    <aside class="published-signal-panel" aria-label="Podcast status">
+      <span class="mini-label">Now on deck</span>
+      <% if (latestEpisode) { %>
+        <strong><%= latestEpisode.title %></strong>
+        <p><%= latestEpisode.summary %></p>
+        <div class="published-mini-player">
+          <% if (latestEpisode.audioUrl) { %>
+            <audio controls preload="none" src="<%= latestEpisode.audioUrl %>"></audio>
+          <% } else { %>
+            <span class="mini-note">Audio is being prepared.</span>
+          <% } %>
+        </div>
+        <a class="btn btn-secondary" href="<%= latestEpisode.episodeUrl %>">Open episode</a>
+      <% } else { %>
+        <strong>No public episodes yet</strong>
+        <p>The show page is ready. New published episodes will appear here automatically.</p>
+      <% } %>
+    </aside>
+  </section>
+
+  <section class="published-show-episodes">
+    <div class="section-head published-section-head">
+      <div>
+        <span class="mini-label">Episode library</span>
+        <h3>Listen to the show</h3>
+      </div>
+      <span class="published-count-pill"><%= showEpisodes.length %> live</span>
     </div>
-    <% if ((publishedShow.supportLinks || []).length) { %>
-      <div class="inline-actions published-support-links">
-        <% publishedShow.supportLinks.forEach((link) => { %>
-          <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+
+    <% if (!showEpisodes.length) { %>
+      <p class="empty-state">No public episodes are live yet.</p>
+    <% } else { %>
+      <div class="published-show-list">
+        <% showEpisodes.forEach((episode, index) => { %>
+          <article class="published-show-episode">
+            <a class="published-episode-number" href="<%= episode.episodeUrl %>" aria-label="Open <%= episode.title %>">
+              <span><%= String(index + 1).padStart(2, '0') %></span>
+            </a>
+
+            <div class="published-show-episode-copy">
+              <div class="published-episode-topline">
+                <span><%= episode.publishedAt ? new Date(episode.publishedAt).toLocaleDateString() : 'Published' %></span>
+                <% if (episode.durationLabel) { %>
+                  <span><%= episode.durationLabel %></span>
+                <% } %>
+                <span><%= episode.explicit ? 'Explicit' : 'Clean' %></span>
+                <% if (episode.visibility !== 'public') { %>
+                  <span>Premium</span>
+                <% } %>
+              </div>
+
+              <h3><a href="<%= episode.episodeUrl %>"><%= episode.title %></a></h3>
+              <p><%= episode.summary %></p>
+
+              <% if ((episode.supportLinks || []).length) { %>
+                <div class="published-link-row">
+                  <% episode.supportLinks.slice(0, 2).forEach((link) => { %>
+                    <a href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="published-episode-listen">
+              <% if (episode.audioUrl) { %>
+                <audio controls preload="none" src="<%= episode.audioUrl %>"></audio>
+              <% } else { %>
+                <span class="mini-note">Audio is being prepared.</span>
+              <% } %>
+              <a class="btn btn-ghost" href="<%= episode.episodeUrl %>">Details</a>
+            </div>
+          </article>
         <% }) %>
       </div>
     <% } %>
-  </div>
-</section>
-
-<section class="published-show-episodes">
-  <div class="section-head">
-    <h3>Episodes</h3>
-    <span class="mini-label"><%= publishedShow.episodes.length %> live</span>
-  </div>
-
-  <% if (!publishedShow.episodes.length) { %>
-    <p class="empty-state">No public episodes are live yet.</p>
-  <% } else { %>
-    <div class="published-show-list">
-      <% publishedShow.episodes.forEach((episode) => { %>
-        <article class="published-show-episode">
-          <div>
-            <span class="mini-label"><%= episode.publishedAt ? new Date(episode.publishedAt).toLocaleDateString() : 'Published' %></span>
-            <h3><a href="<%= episode.episodeUrl %>"><%= episode.title %></a></h3>
-            <p><%= episode.summary %></p>
-            <div class="inline-actions published-episode-meta">
-              <% if (episode.durationLabel) { %>
-                <span class="mini-label"><%= episode.durationLabel %></span>
-              <% } %>
-              <span class="mini-label"><%= episode.explicit ? 'Explicit' : 'Clean' %></span>
-              <% if (episode.visibility !== 'public') { %>
-                <span class="mini-label">Premium</span>
-              <% } %>
-            </div>
-            <% if ((episode.supportLinks || []).length) { %>
-              <div class="inline-actions published-support-links">
-                <% episode.supportLinks.forEach((link) => { %>
-                  <a class="btn btn-ghost" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
-                <% }) %>
-              </div>
-            <% } %>
-          </div>
-          <audio controls preload="none" src="<%= episode.audioUrl %>"></audio>
-        </article>
-      <% }) %>
-    </div>
-  <% } %>
-</section>
+  </section>
+</div>

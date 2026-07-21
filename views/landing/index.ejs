@@ -221,99 +221,140 @@
     </div>
   </section>
 
-  <section class="landing-proof-shell" data-help-reveal>
-    <div class="section-head">
+  <section class="landing-proof-shell landing-proof-studio" data-help-reveal>
+    <div class="landing-proof-studio-head">
       <div>
+        <span class="landing-kicker">After the preview</span>
         <h3>Why podcasters sign up after one useful preview</h3>
-        <p class="mini-note">The first win is clarity before recording.</p>
+        <p>The first win is clarity before recording.</p>
       </div>
       <a href="/examples" class="btn btn-ghost">Open example library</a>
     </div>
-    <%- include('../partials/proof-snippet-grid', { proofSnippets: landingProofSnippets }) %>
+
+    <div class="landing-proof-console">
+      <article class="landing-proof-record">
+        <div class="landing-record-art" aria-hidden="true">
+          <span></span>
+          <strong>REC</strong>
+        </div>
+        <div class="landing-record-copy">
+          <span class="mini-label">Recording brief</span>
+          <h4>Know what the episode is before the mic turns on.</h4>
+          <p>VicPods gives the title, hook, outline, CTA, and launch direction first, so the account decision happens after the creator sees a real episode shape.</p>
+          <div class="landing-proof-cues">
+            <span>Hook</span>
+            <span>Outline</span>
+            <span>CTA</span>
+            <span>Launch angle</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="landing-proof-runbook">
+        <div class="landing-runbook-head">
+          <span class="mini-label">Run of show</span>
+          <strong>Preview becomes prep</strong>
+        </div>
+        <ol>
+          <li><span>00:00</span><strong>Cold open</strong><em>Start with the listener problem, not filler.</em></li>
+          <li><span>02:30</span><strong>Core arc</strong><em>Move through the key beats before recording day.</em></li>
+          <li><span>18:00</span><strong>Launch close</strong><em>End with a usable CTA and show-note direction.</em></li>
+        </ol>
+      </article>
+
+      <article class="landing-proof-folder">
+        <span class="mini-label">Launch folder</span>
+        <h4>Assets that feel like production output, not prompt output.</h4>
+        <div class="landing-folder-stack">
+          <span>Title options</span>
+          <span>Short description</span>
+          <span>Show notes</span>
+          <span>Social captions</span>
+        </div>
+      </article>
+    </div>
   </section>
 
-  <section class="landing-examples-shell" data-help-reveal>
-    <div class="section-head">
+  <section class="landing-examples-shell landing-examples-studio" data-help-reveal>
+    <div class="landing-proof-studio-head">
       <div>
-        <h3>Sample outputs built for real podcast formats</h3>
-        <p class="mini-note">See the shape of the episode and the launch angle before you commit to the workflow.</p>
+        <span class="landing-kicker">Real podcast formats</span>
+        <h3>Sample outputs built around episodes people actually publish</h3>
+        <p>Each example shows the recording angle, the running order, and the launch assets a creator would use after the draft.</p>
       </div>
       <a href="/examples" class="btn btn-ghost">View all examples</a>
     </div>
-    <%- include('../partials/example-preview-grid', { examples: featuredExamples, gridClass: 'example-preview-grid-compact' }) %>
+
+    <div class="landing-format-board">
+      <% (featuredExamples || []).forEach((example, index) => { %>
+        <article class="landing-format-card" id="<%= example.slug %>">
+          <div class="landing-format-cover" aria-hidden="true">
+            <span class="landing-format-disc"></span>
+            <strong><%= String(index + 1).padStart(2, '0') %></strong>
+          </div>
+          <div class="landing-format-main">
+            <div class="landing-format-topline">
+              <span class="mini-label"><%= example.styleLabel %></span>
+              <% if (example.templateKey) { %>
+                <span class="landing-format-template"><%= example.templateKey.replace(/_/g, ' ') %></span>
+              <% } %>
+            </div>
+            <h4><%= example.title %></h4>
+            <p><%= example.hook %></p>
+            <div class="landing-format-rundown">
+              <% (example.outline || []).slice(0, 4).forEach((item, itemIndex) => { %>
+                <span><strong><%= String(itemIndex + 1).padStart(2, '0') %></strong><%= item %></span>
+              <% }) %>
+            </div>
+            <div class="landing-format-launch">
+              <strong>Launch Pack preview</strong>
+              <p><%= example.launchPack?.description %></p>
+              <div>
+                <% (example.launchPack?.titles || []).slice(0, 2).forEach((titleOption) => { %>
+                  <span><%= titleOption %></span>
+                <% }) %>
+              </div>
+            </div>
+            <div class="inline-actions">
+              <a href="/?idea=<%= encodeURIComponent(example.ideaSeed || example.title) %>#idea-to-episode-generator" class="btn btn-primary">Use this angle</a>
+              <a href="/examples#<%= example.slug %>" class="btn btn-ghost">Open example</a>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
   </section>
 
-  <section class="help-story-stack landing-story-stack">
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">01</span>
-        <h3><%= t('page.landing.card.single.title', 'Get the first useful episode fast') %></h3>
+  <section class="landing-workflow-studio" data-help-reveal>
+    <div class="landing-proof-studio-head">
+      <div>
+        <span class="landing-kicker">Creator workflow</span>
+        <h3>From rough idea to recording desk</h3>
+        <p>VicPods is strongest when the creator can see the work they would actually do next.</p>
       </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.single.body', 'Choose the podcast style, add the topic, and let VicPods shape the title, hook, structure, and launch direction in one pass.') %></p>
-        <div class="inline-actions">
-          <% if (currentUser) { %>
-            <a href="/create/single" class="btn btn-ghost"><%= t('page.landing.card.single.cta', 'Open single flow') %></a>
-          <% } else { %>
-            <a href="#idea-to-episode-generator" class="btn btn-ghost"><%= t('page.landing.card.single.cta', 'Generate episode') %></a>
-          <% } %>
-        </div>
-      </div>
-    </article>
-
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">02</span>
-        <h3><%= t('page.landing.card.series.title', 'Keep a stronger weekly publishing rhythm') %></h3>
-      </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.series.body', 'Plan season goals, recurring themes, continuity rules, and episode arcs so each recording starts with a clearer brief instead of last-minute prep.') %></p>
-        <div class="inline-actions">
-          <% if (currentUser) { %>
-            <a href="/create/series" class="btn btn-ghost"><%= t('page.landing.card.series.cta', 'Open series flow') %></a>
-          <% } else { %>
-            <a href="/examples" class="btn btn-ghost"><%= t('page.landing.card.series.cta', 'View sample outputs') %></a>
-          <% } %>
-        </div>
-      </div>
-    </article>
-
-    <article class="card help-story-section" data-help-reveal>
-      <div class="help-story-aside">
-        <span class="help-story-index">03</span>
-        <h3><%= t('page.landing.card.guide.title', 'Turn the draft into launch-ready assets') %></h3>
-      </div>
-      <div class="help-story-content">
-        <p class="help-story-lead"><%= t('page.landing.card.guide.body', 'Use Studio, Workspace, Pantry, and Launch Pack tools together to move from rough idea to publish-ready prep without losing the next step.') %></p>
-        <div class="inline-actions">
-          <a href="/help" class="btn btn-ghost"><%= t('page.landing.card.guide.cta', 'Open Help Center') %></a>
-        </div>
-      </div>
-    </article>
-  </section>
-
-  <section class="card landing-steps landing-steps-shell" data-help-reveal>
-    <div class="section-head">
-      <h3><%= t('page.landing.steps.title', 'From rough idea to publishing momentum') %></h3>
       <a href="/about" class="btn btn-ghost"><%= t('page.landing.steps.link', 'About VicPods') %></a>
     </div>
 
-    <div class="landing-step-row">
+    <div class="landing-workflow-timeline">
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.one.label', 'Idea') %></span>
-        <p><%= t('page.landing.steps.one.body', 'Paste the topic you were already planning to record.') %></p>
+        <span>01</span>
+        <h4>Paste the topic</h4>
+        <p>Use the idea already sitting in notes, voice memos, or the content calendar.</p>
       </article>
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.two.label', 'Preview') %></span>
-        <p><%= t('page.landing.steps.two.body', 'Get the title, hook, outline, and next step before you commit.') %></p>
+        <span>02</span>
+        <h4>Check the episode shape</h4>
+        <p>Review the hook, outline, listener promise, and closing direction before committing.</p>
       </article>
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.three.label', 'Draft') %></span>
-        <p><%= t('page.landing.steps.three.body', 'Unlock the full draft when you want to keep building inside Studio.') %></p>
+        <span>03</span>
+        <h4>Build the recording brief</h4>
+        <p>Turn the preview into structure, host prompts, prep notes, and a clear run of show.</p>
       </article>
       <article>
-        <span class="landing-step-label"><%= t('page.landing.steps.four.label', 'Launch') %></span>
-        <p><%= t('page.landing.steps.four.body', 'Package notes, captions, and launch assets when the episode is ready to move.') %></p>
+        <span>04</span>
+        <h4>Package the launch</h4>
+        <p>Create titles, description, show notes, captions, and a stronger CTA for release day.</p>
       </article>
     </div>
   </section>

@@ -1,60 +1,136 @@
-<section class="card">
-  <div class="section-head">
-    <h3>Series Brief</h3>
-    <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
+<%
+  const nestedEpisodes = isSystemSingleCollection
+    ? flatEpisodes
+    : themesWithEpisodes.flatMap((entry) => entry.episodes || []);
+  const episodeTotal = nestedEpisodes.length;
+  const readyTotal = nestedEpisodes.filter((episode) => String(episode.status || '').toLowerCase() === 'ready').length;
+  const servedTotal = nestedEpisodes.filter((episode) => String(episode.status || '').toLowerCase() === 'served').length;
+  const draftTotal = nestedEpisodes.filter((episode) => String(episode.status || '').toLowerCase() === 'draft').length;
+  const firstThemeEntry = themesWithEpisodes[0];
+  const firstThemeEpisode = firstThemeEntry && firstThemeEntry.episodes ? firstThemeEntry.episodes[0] : null;
+  const seriesInitial = (series.name || 'V').trim().charAt(0).toUpperCase();
+  const architectLabel = formatTemplateOptions.find((option) => option.value === resolvedSeriesStructure.defaultFormatTemplate)?.label || 'Signature Framework';
+  const hookLabel = hookStyleOptions.find((option) => option.value === resolvedSeriesStructure.defaultHookStyle)?.label || 'Problem First';
+  const lengthLabel = targetLengthOptions.find((option) => option.value === resolvedSeriesStructure.defaultTargetLength)?.presetLabel || 'Flexible';
+  const deliveryLabel = deliveryStyleOptions.find((option) => option.value === (series.defaultDeliveryStyle || 'friendly'))?.label || 'Friendly';
+  const focusTitle = firstThemeEntry ? firstThemeEntry.theme.name : (isSystemSingleCollection ? 'Single Episodes' : 'No theme queued yet');
+  const focusBody = firstThemeEpisode
+    ? (firstThemeEpisode.title || 'Untitled episode')
+    : (firstThemeEntry ? (firstThemeEntry.theme.description || 'Theme is ready for its first episode.') : 'Create a theme to begin shaping this series arc.');
+%>
+
+<section class="series-command-shell">
+  <div class="series-command-hero">
+    <div class="series-vinyl-stack" aria-hidden="true">
+      <div class="series-vinyl-art">
+        <span class="series-vinyl-ring"></span>
+        <span class="series-vinyl-mark"><%= seriesInitial %></span>
+      </div>
+      <div class="series-track-strip">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="series-command-copy">
+      <span class="mini-label studio-hero-kicker"><%= isSystemSingleCollection ? 'Single Episode Collection' : 'Series Workspace' %></span>
+      <h3><%= series.name %></h3>
+      <p><%= series.description || (isSystemSingleCollection ? 'System-managed standalone episodes collection.' : 'Shape themes, episodes, continuity, tone, and launch-ready drafts from one nested board.') %></p>
+      <div class="inline-actions studio-hero-actions">
+        <% if (isSystemSingleCollection) { %>
+          <a href="/create/single" class="btn btn-primary">New Single Episode</a>
+        <% } else { %>
+          <a href="#series-create-theme" class="btn btn-primary">Create Theme</a>
+          <% if (firstThemeEntry) { %>
+            <a href="#theme-<%= firstThemeEntry.theme._id %>" class="btn btn-secondary">Open First Theme</a>
+          <% } %>
+        <% } %>
+        <a href="/kitchen" class="btn btn-ghost">Back to Workspace</a>
+      </div>
+    </div>
+
+    <aside class="series-now-panel">
+      <span class="mini-label">Current Focus</span>
+      <h4><%= focusTitle %></h4>
+      <p><%= focusBody %></p>
+      <div class="studio-readiness-meter" aria-label="Series served progress">
+        <span style="width:<%= episodeTotal ? Math.round((servedTotal / episodeTotal) * 100) : 8 %>%"></span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= servedTotal %>/<%= episodeTotal %> served</span>
+        <span><%= readyTotal %> ready</span>
+      </div>
+    </aside>
   </div>
-  <p>
-    <strong>Mode:</strong> <%= isSystemSingleCollection ? 'Single Collection' : 'Series' %>
-    · <strong>Tone:</strong> <%= series.tonePreset || 'Conversational & Casual' %> (<%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5)
-    · <strong>Audience Type:</strong> <%= series.audienceType || 'Mixed' %>
-    · <strong>Intent:</strong> <%= series.intent || 'educate' %>
-    · <strong>Planned Episodes:</strong> <%= series.plannedEpisodeCount || 0 %>
-  </p>
-  <% if (series.goal) { %>
-    <p><strong>Primary Goal:</strong> <%= series.goal %></p>
-  <% } %>
-  <% if (resolvedSeriesBible.seasonGoal) { %>
-    <p><strong>Season Goal:</strong> <%= resolvedSeriesBible.seasonGoal %></p>
-  <% } %>
-  <% if (resolvedSeriesBible.audiencePromise) { %>
-    <p><strong>Audience Promise:</strong> <%= resolvedSeriesBible.audiencePromise %></p>
-  <% } %>
-  <% if (resolvedSeriesBible.recurringThemes.length) { %>
-    <p><strong>Recurring Themes:</strong> <%= resolvedSeriesBible.recurringThemes.join(' · ') %></p>
-  <% } %>
-  <% if (resolvedSeriesBlueprint.audienceProblem) { %>
-    <p><strong>Audience Problem:</strong> <%= resolvedSeriesBlueprint.audienceProblem %></p>
-  <% } %>
-  <% if (resolvedSeriesBlueprint.listenerTransformation) { %>
-    <p><strong>Listener Transformation:</strong> <%= resolvedSeriesBlueprint.listenerTransformation %></p>
-  <% } %>
-  <% if (resolvedSeriesBlueprint.contentPillars.length) { %>
-    <p><strong>Content Pillars:</strong> <%= resolvedSeriesBlueprint.contentPillars.join(' · ') %></p>
-  <% } %>
-  <p>
-    <strong>Episode Architect:</strong>
-    <%= formatTemplateOptions.find((option) => option.value === resolvedSeriesStructure.defaultFormatTemplate)?.label || 'Signature Framework' %>
-    · <%= hookStyleOptions.find((option) => option.value === resolvedSeriesStructure.defaultHookStyle)?.label || 'Problem First' %>
-    · <%= targetLengthOptions.find((option) => option.value === resolvedSeriesStructure.defaultTargetLength)?.presetLabel || 'Flexible' %>
-    · <%= deliveryStyleOptions.find((option) => option.value === (series.defaultDeliveryStyle || 'friendly'))?.label || 'Friendly' %>
-  </p>
-  <% if (resolvedSeriesBlueprint.brandVoiceRules.length) { %>
-    <p><strong>Brand Voice Rules:</strong> <%= resolvedSeriesBlueprint.brandVoiceRules.join(' · ') %></p>
-  <% } %>
-  <% if (resolvedSeriesBlueprint.bannedWords.length) { %>
-    <p><strong>Banned Words:</strong> <%= resolvedSeriesBlueprint.bannedWords.join(', ') %></p>
-  <% } %>
-  <p><%= series.description || (isSystemSingleCollection ? 'System-managed standalone episodes collection.' : 'No series description yet.') %></p>
-  <% if (series.seriesSummary) { %>
-    <p><strong>Series Continuity Summary:</strong> <%= series.seriesSummary %></p>
-  <% } %>
-  <% if (series.voicePersona) { %>
-    <p><strong>Voice Persona:</strong> <%= series.voicePersona %></p>
-  <% } %>
+
+  <div class="series-command-metrics">
+    <a class="studio-metric-pill" href="#series-nested-board">
+      <span>Themes</span>
+      <strong><%= isSystemSingleCollection ? 1 : themesWithEpisodes.length %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#series-nested-board">
+      <span>Episodes</span>
+      <strong><%= episodeTotal %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#series-nested-board">
+      <span>Drafts</span>
+      <strong><%= draftTotal %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#series-nested-board">
+      <span>Ready</span>
+      <strong><%= readyTotal %></strong>
+    </a>
+    <a class="studio-metric-pill" href="#series-planning">
+      <span>Health</span>
+      <strong><%= seriesPlanningSnapshot.continuityHealthScore %></strong>
+    </a>
+  </div>
+</section>
+
+<section class="series-brief-grid">
+  <article class="series-brief-panel">
+    <div class="section-head">
+      <div>
+        <h3>Series Brief</h3>
+        <p class="mini-note">The show promise, audience, and creative constraints for this workspace.</p>
+      </div>
+      <span class="mini-label"><%= isSystemSingleCollection ? 'Single Collection' : 'Series' %></span>
+    </div>
+    <div class="series-brief-list">
+      <span><strong>Tone</strong><%= series.tonePreset || 'Conversational & Casual' %> · <%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5</span>
+      <span><strong>Audience</strong><%= series.audienceType || 'Mixed' %> · <%= series.intent || 'educate' %></span>
+      <span><strong>Architect</strong><%= architectLabel %> · <%= hookLabel %> · <%= lengthLabel %> · <%= deliveryLabel %></span>
+      <span><strong>Planned</strong><%= series.plannedEpisodeCount || 0 %> episodes</span>
+    </div>
+  </article>
+
+  <article class="series-brief-panel series-brief-panel-accent">
+    <div class="section-head">
+      <div>
+        <h3>Continuity Notes</h3>
+        <p class="mini-note">Use this as the creative compass while building nested episodes.</p>
+      </div>
+    </div>
+    <div class="series-note-stack">
+      <% if (series.goal) { %><p><strong>Primary Goal:</strong> <%= series.goal %></p><% } %>
+      <% if (resolvedSeriesBible.seasonGoal) { %><p><strong>Season Goal:</strong> <%= resolvedSeriesBible.seasonGoal %></p><% } %>
+      <% if (resolvedSeriesBible.audiencePromise) { %><p><strong>Audience Promise:</strong> <%= resolvedSeriesBible.audiencePromise %></p><% } %>
+      <% if (resolvedSeriesBible.recurringThemes.length) { %><p><strong>Recurring Themes:</strong> <%= resolvedSeriesBible.recurringThemes.join(' · ') %></p><% } %>
+      <% if (resolvedSeriesBlueprint.audienceProblem) { %><p><strong>Audience Problem:</strong> <%= resolvedSeriesBlueprint.audienceProblem %></p><% } %>
+      <% if (resolvedSeriesBlueprint.listenerTransformation) { %><p><strong>Listener Transformation:</strong> <%= resolvedSeriesBlueprint.listenerTransformation %></p><% } %>
+      <% if (resolvedSeriesBlueprint.contentPillars.length) { %><p><strong>Content Pillars:</strong> <%= resolvedSeriesBlueprint.contentPillars.join(' · ') %></p><% } %>
+      <% if (resolvedSeriesBlueprint.brandVoiceRules.length) { %><p><strong>Brand Voice Rules:</strong> <%= resolvedSeriesBlueprint.brandVoiceRules.join(' · ') %></p><% } %>
+      <% if (resolvedSeriesBlueprint.bannedWords.length) { %><p><strong>Banned Words:</strong> <%= resolvedSeriesBlueprint.bannedWords.join(', ') %></p><% } %>
+      <% if (series.seriesSummary) { %><p><strong>Series Summary:</strong> <%= series.seriesSummary %></p><% } %>
+      <% if (series.voicePersona) { %><p><strong>Voice Persona:</strong> <%= series.voicePersona %></p><% } %>
+      <% if (!series.goal && !resolvedSeriesBible.seasonGoal && !resolvedSeriesBible.audiencePromise && !resolvedSeriesBlueprint.contentPillars.length && !series.seriesSummary) { %>
+        <p class="mini-note">Add goals, recurring themes, and voice rules in Series Settings to give new episodes more continuity.</p>
+      <% } %>
+    </div>
+  </article>
 </section>
 
 <% if (isSystemSingleCollection) { %>
-  <section class="card">
+  <section class="series-nested-panel" id="series-nested-board">
     <div class="section-head">
       <h3>Single Episodes</h3>
       <a href="/create/single" class="btn btn-primary">New Single Episode</a>
@@ -63,9 +139,9 @@
     <% if (!flatEpisodes.length) { %>
       <p class="empty-state">No standalone episodes yet. Start one from Workspace.</p>
     <% } else { %>
-      <div class="episode-divider-stack">
+      <div class="episode-divider-stack series-episode-stack">
         <% flatEpisodes.forEach((episode) => { %>
-          <article class="episode-block">
+          <article class="episode-block series-episode-row">
             <header>
               <h4>
                 Episode <%= episode.episodeNumberWithinTheme %>
@@ -93,8 +169,8 @@
     <% } %>
   </section>
 <% } else { %>
-  <section class="split-grid">
-    <article class="card">
+  <section class="split-grid series-control-grid">
+    <article class="series-settings-panel">
       <div class="section-head">
         <h3>Series Settings</h3>
         <span class="mini-label">Tone Engine v1</span>
@@ -327,7 +403,7 @@
       </form>
     </article>
 
-    <article class="card">
+    <article class="series-create-theme-panel" id="series-create-theme">
       <div class="section-head">
         <h3>Create Theme</h3>
         <span class="mini-label">Series → Themes</span>
@@ -346,7 +422,7 @@
     </article>
   </section>
 
-  <section class="card">
+  <section class="series-planning-panel" id="series-planning">
     <div class="section-head">
       <h3>Series Planning</h3>
       <span class="mini-label">Phase 3</span>
@@ -387,7 +463,7 @@
     <% } %>
   </section>
 
-  <section class="card">
+  <section class="series-nested-panel" id="series-nested-board">
     <div class="section-head">
       <h3>Themes & Episodes</h3>
       <span class="mini-label">Nested workflow</span>
@@ -401,13 +477,17 @@
           <% const theme = entry.theme; %>
           <% const episodes = entry.episodes; %>
           <% const firstEpisode = episodes[0]; %>
-          <details class="theme-card" id="theme-<%= theme._id %>" <%= index === 0 ? 'open' : '' %>>
+          <details class="theme-card series-theme-card" id="theme-<%= theme._id %>" <%= index === 0 ? 'open' : '' %>>
             <summary class="theme-summary">
-              <div>
+              <span class="series-theme-number"><%= String(index + 1).padStart(2, '0') %></span>
+              <div class="series-theme-summary-copy">
                 <h4><%= theme.name %></h4>
                 <p><%= theme.description || 'No theme description yet.' %></p>
+                <div class="series-theme-meter" aria-label="Theme served progress">
+                  <span style="width:<%= entry.progress.totalCount ? Math.round((entry.progress.servedCount / entry.progress.totalCount) * 100) : 6 %>%"></span>
+                </div>
               </div>
-              <div class="inline-actions">
+              <div class="inline-actions series-theme-actions">
                 <span class="mini-label"><%= entry.progress.servedCount %>/<%= entry.progress.totalCount %> served</span>
                 <% if (firstEpisode) { %>
                   <a class="btn btn-ghost" href="/kitchen/<%= series._id %>/themes/<%= theme._id %>/episodes/<%= firstEpisode._id %>">Open</a>
@@ -435,9 +515,9 @@
               <% if (!episodes.length) { %>
                 <p class="empty-state">No episodes in this theme yet.</p>
               <% } else { %>
-                <div class="episode-divider-stack">
+                <div class="episode-divider-stack series-episode-stack">
                   <% episodes.forEach((episode) => { %>
-                    <article class="episode-block">
+                    <article class="episode-block series-episode-row">
                       <header>
                         <h4>
                           Theme Ep <%= episode.episodeNumberWithinTheme %>

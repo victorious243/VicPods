@@ -1,40 +1,153 @@
-<section class="card">
-  <div class="section-head">
-    <h3>Workspace</h3>
-    <div class="inline-actions">
-      <a href="/create/single" class="btn btn-primary">New Episode</a>
-      <a href="/create/series" class="btn btn-secondary">New Series</a>
+<%
+  const seriesTotal = regularSeries.length;
+  const seriesWithGoals = regularSeries.filter((series) => series.goal).length;
+  const publishUnlocked = effectivePlan !== 'free';
+  const featuredSeries = regularSeries[0] || singleCollectionSeries;
+  const featuredInitial = featuredSeries && featuredSeries.name
+    ? featuredSeries.name.trim().charAt(0).toUpperCase()
+    : 'V';
+%>
+
+<section class="workspace-command-shell">
+  <div class="workspace-command-hero">
+    <div class="workspace-album-stack" aria-hidden="true">
+      <div class="workspace-album-art">
+        <span class="workspace-album-ring"></span>
+        <span class="workspace-album-mark"><%= featuredInitial %></span>
+      </div>
+      <div class="workspace-mini-player">
+        <span class="workspace-play-dot"></span>
+        <span class="workspace-player-copy"><i></i><i></i></span>
+        <span class="workspace-eq"><i></i><i></i><i></i><i></i></span>
+      </div>
     </div>
+
+    <div class="workspace-command-copy">
+      <span class="mini-label studio-hero-kicker">Workspace Library</span>
+      <h3>Build the next episode like you are curating a show.</h3>
+      <p>Start a single drop, open a full series workspace, or return to drafts already in motion. This is the production floor under the Studio dashboard.</p>
+      <div class="inline-actions studio-hero-actions">
+        <a href="/create/single" class="btn btn-primary">New Episode</a>
+        <a href="/create/series" class="btn btn-secondary">New Series</a>
+        <a href="/studio" class="btn btn-ghost">Back to Studio</a>
+        <a href="/pantry" class="btn btn-ghost">Open Pantry</a>
+      </div>
+    </div>
+
+    <aside class="workspace-now-panel">
+      <span class="mini-label">Now Playing</span>
+      <h4><%= featuredSeries ? featuredSeries.name : 'No series queued yet' %></h4>
+      <p>
+        <% if (featuredSeries) { %>
+          <%= featuredSeries.tonePreset || 'Conversational & Casual' %> &middot;
+          <%= featuredSeries.audienceType || 'Mixed audience' %> &middot;
+          <%= featuredSeries.intent || 'educate' %>
+        <% } else { %>
+          Create a series or single episode to start filling the production queue.
+        <% } %>
+      </p>
+      <div class="studio-readiness-meter" aria-label="Workspace setup progress">
+        <span style="width:<%= seriesTotal ? Math.min(100, 42 + (seriesWithGoals * 12)) : 16 %>%"></span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= seriesTotal %> series</span>
+        <span><%= publishUnlocked ? 'Publishing open' : 'Pro unlock' %></span>
+      </div>
+    </aside>
   </div>
-  <p>Workspace is where you start new episodes, launch new series, and manage every draft already in progress.</p>
+
+  <div class="workspace-command-metrics">
+    <a class="studio-metric-pill" href="/create/single">
+      <span>Single Drops</span>
+      <strong><%= singleCollectionSeries ? 'Ready' : 'New' %></strong>
+    </a>
+    <a class="studio-metric-pill" href="/create/series">
+      <span>Series</span>
+      <strong><%= seriesTotal %></strong>
+    </a>
+    <a class="studio-metric-pill" href="/pantry">
+      <span>Ingredients</span>
+      <strong>Pantry</strong>
+    </a>
+    <a class="studio-metric-pill" href="/publish/shows">
+      <span>Publishing</span>
+      <strong><%= publishUnlocked ? 'Live' : 'Pro' %></strong>
+    </a>
+  </div>
 </section>
 
-<section class="card">
-  <div class="section-head">
-    <h3>Publish Foundation</h3>
-    <span class="mini-label">Phase 1</span>
-  </div>
+<section class="workspace-operating-grid">
+  <article class="workspace-action-panel">
+    <div class="section-head">
+      <div>
+        <h3>Start a Session</h3>
+        <p class="mini-note">Pick the right recording lane before the idea gets cold.</p>
+      </div>
+    </div>
 
-  <% if (effectivePlan === 'free') { %>
-    <p>Publishing is now the first paid expansion: hosted shows, live episode pages, and RSS feed URLs unlock on Pro.</p>
-    <div class="inline-actions">
-      <a href="/settings?section=billing" class="btn btn-primary">Upgrade to Pro</a>
+    <div class="workspace-session-grid">
+      <a class="workspace-session-card workspace-session-card-primary" href="/create/single">
+        <span class="workspace-session-index">01</span>
+        <span class="workspace-session-art">EP</span>
+        <span class="workspace-session-copy">
+          <strong>Single Episode</strong>
+          <small>Fast structure for one-off drops, solo thoughts, and quick publish prep.</small>
+        </span>
+        <span class="workspace-session-cta">Create</span>
+      </a>
+
+      <a class="workspace-session-card" href="/create/series">
+        <span class="workspace-session-index">02</span>
+        <span class="workspace-session-art workspace-session-art-series">SR</span>
+        <span class="workspace-session-copy">
+          <strong>Series Workspace</strong>
+          <small>Build themes, tone continuity, planned arcs, and repeatable episode defaults.</small>
+        </span>
+        <span class="workspace-session-cta">Plan</span>
+      </a>
+
+      <a class="workspace-session-card" href="/pantry">
+        <span class="workspace-session-index">03</span>
+        <span class="workspace-session-art workspace-session-art-pantry">ID</span>
+        <span class="workspace-session-copy">
+          <strong>Pantry Ideas</strong>
+          <small>Pull hooks and raw angles into the next draft when the show needs fuel.</small>
+        </span>
+        <span class="workspace-session-cta">Browse</span>
+      </a>
     </div>
-  <% } else { %>
-    <p>Create a hosted show, then use the episode editor to attach the final MP3 and publish Ready episodes live.</p>
-    <div class="inline-actions">
-      <a href="/publish/shows" class="btn btn-secondary">Manage Hosted Shows</a>
+  </article>
+
+  <aside class="workspace-publish-panel">
+    <div class="section-head">
+      <div>
+        <h3>Publish Foundation</h3>
+        <p class="mini-note">Hosted shows, live episode pages, and RSS feeds.</p>
+      </div>
+      <span class="mini-label"><%= publishUnlocked ? 'Unlocked' : 'Phase 1' %></span>
     </div>
-  <% } %>
+
+    <% if (effectivePlan === 'free') { %>
+      <p>Publishing is the paid expansion. Pro unlocks hosted shows, live episode pages, and RSS feed URLs while your current drafts stay in place.</p>
+      <div class="inline-actions">
+        <a href="/settings?section=billing" class="btn btn-primary">Upgrade to Pro</a>
+      </div>
+    <% } else { %>
+      <p>Create a hosted show, attach final audio in the episode editor, and move Ready episodes into live release pages.</p>
+      <div class="inline-actions">
+        <a href="/publish/shows" class="btn btn-secondary">Manage Hosted Shows</a>
+      </div>
+    <% } %>
+  </aside>
 </section>
 
 <% if (singleCollectionSeries) { %>
-  <section class="card single-collection-card">
-    <div class="section-head">
-      <h3>Single Episodes</h3>
+  <section class="workspace-collection-panel">
+    <div class="workspace-collection-copy">
       <span class="mini-label">System Collection</span>
+      <h3>Single Episodes</h3>
+      <p>All standalone episodes live here, so quick one-off creations and existing drafts stay in one organized collection.</p>
     </div>
-    <p>All standalone episodes live here, so quick one-off creations and existing drafts stay in one organized place.</p>
     <div class="inline-actions">
       <a href="/create/single" class="btn btn-primary">New Episode</a>
       <a href="/kitchen/<%= singleCollectionSeries._id %>" class="btn btn-ghost">Open Collection</a>
@@ -42,30 +155,36 @@
   </section>
 <% } %>
 
-<section class="card">
+<section class="workspace-series-panel">
   <div class="section-head">
-    <h3>Your Series</h3>
+    <div>
+      <h3>Your Series</h3>
+      <p class="mini-note">A compact library of shows, tones, audiences, goals, and next workspaces.</p>
+    </div>
     <span class="mini-label"><%= regularSeries.length %> total</span>
   </div>
 
   <% if (!regularSeries.length) { %>
     <p class="empty-state">No series yet. Start a new series from Workspace.</p>
   <% } else { %>
-    <div class="list-stack">
-      <% regularSeries.forEach((series) => { %>
-        <a class="list-item" href="/kitchen/<%= series._id %>">
-          <div>
-            <h4><%= series.name %></h4>
-            <p>
-              <%= series.tonePreset || 'Conversational & Casual' %> ·
-              <%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5 ·
-              <%= series.audienceType || 'Mixed' %> ·
+    <div class="workspace-series-list">
+      <% regularSeries.forEach((series, index) => { %>
+        <a class="workspace-series-row" href="/kitchen/<%= series._id %>">
+          <span class="workspace-series-number"><%= String(index + 1).padStart(2, '0') %></span>
+          <span class="workspace-series-art"><%= series.name.trim().charAt(0).toUpperCase() %></span>
+          <span class="workspace-series-main">
+            <strong><%= series.name %></strong>
+            <small>
+              <%= series.tonePreset || 'Conversational & Casual' %> &middot;
+              <%= Math.min(series.toneIntensity || 3, maxToneIntensity || 5) %>/5 &middot;
+              <%= series.audienceType || 'Mixed' %> &middot;
               intent: <%= series.intent || 'educate' %>
-            </p>
+            </small>
             <% if (series.goal) { %>
-              <p><strong>Goal:</strong> <%= series.goal %></p>
+              <em><%= series.goal %></em>
             <% } %>
-          </div>
+          </span>
+          <span class="workspace-series-meta"><%= series.plannedEpisodeCount || 0 %> planned</span>
           <span class="chevron">›</span>
         </a>
       <% }) %>

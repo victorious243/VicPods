@@ -20,11 +20,44 @@
     { title: 'Referrers', items: analyticsData.breakdowns?.referrers || [] },
     { title: 'Devices', items: analyticsData.breakdowns?.devices || [] },
   ];
+  const timeline = analyticsData.timeline || [];
+  const maxTimelineValue = Math.max(
+    1,
+    ...timeline.map((point) => (
+      Number(point.audioDownloads || 0)
+      + Number(point.playerPlays || 0)
+      + Number(point.shareClicks || 0)
+    ))
+  );
+  const totalListens = Number(totals.audioDownloads || 0) + Number(totals.playerPlays || 0);
+  const completionRate = totals.playerPlays
+    ? Math.round((Number(totals.playerCompletions || 0) / Number(totals.playerPlays || 1)) * 100)
+    : 0;
 %>
 
-<section class="studio-command-shell">
-  <div class="studio-command-hero">
-    <div class="studio-command-copy">
+<section class="studio-command-shell analytics-command-shell">
+  <div class="team-command-hero analytics-command-hero">
+    <div class="analytics-visual-panel" aria-hidden="true">
+      <div class="analytics-signal-chart">
+        <% const heroBars = timeline.length ? timeline.slice(-8) : [{ audioDownloads: 1 }, { playerPlays: 2 }, { shareClicks: 1 }, { playerPlays: 3 }, { audioDownloads: 2 }]; %>
+        <% heroBars.forEach((point, index) => {
+          const value = Number(point.audioDownloads || 0) + Number(point.playerPlays || 0) + Number(point.shareClicks || 0);
+          const height = timeline.length ? Math.max(12, Math.round((value / maxTimelineValue) * 100)) : 24 + (index % 4) * 14;
+        %>
+          <span style="height: <%= height %>%"></span>
+        <% }) %>
+      </div>
+      <div class="analytics-signal-meta">
+        <span>Live range</span>
+        <strong><%= totalListens %></strong>
+        <small>downloads + plays</small>
+      </div>
+      <div class="team-waveform analytics-waveform">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+    <div class="studio-command-copy team-command-copy analytics-command-copy">
       <span class="mini-label studio-hero-kicker">Phase 3 Analytics</span>
       <h3>Know what worked after publishing.</h3>
       <p>Track feed requests, downloads, web player events, shares, source breakdowns, and the next growth move for each show.</p>
@@ -56,8 +89,46 @@
   </div>
 </section>
 
-<section class="studio-operating-grid">
-  <div class="studio-pipeline-panel">
+<section class="analytics-chart-panel">
+  <div class="section-head">
+    <div>
+      <span class="mini-label">Live data flow</span>
+      <h3>Performance timeline</h3>
+      <p class="mini-note">Daily activity combines downloads, player starts, and share clicks from the selected range.</p>
+    </div>
+    <span class="mini-label"><%= analyticsData.range?.from || 'range start' %> to <%= analyticsData.range?.to || 'today' %></span>
+  </div>
+
+  <% if (!timeline.length) { %>
+    <p class="empty-state">No timeline data yet. This chart will populate as feed, audio, player, and share events arrive.</p>
+  <% } else { %>
+    <div class="analytics-timeline-chart" role="img" aria-label="Podcast analytics timeline">
+      <% timeline.forEach((point) => {
+        const downloads = Number(point.audioDownloads || 0);
+        const plays = Number(point.playerPlays || 0);
+        const shares = Number(point.shareClicks || 0);
+        const value = downloads + plays + shares;
+        const height = Math.max(8, Math.round((value / maxTimelineValue) * 100));
+      %>
+        <div class="analytics-timeline-column">
+          <div class="analytics-timeline-track" title="<%= point.dateKey %>: <%= value %> total events">
+            <span style="height: <%= height %>%"></span>
+          </div>
+          <strong><%= value %></strong>
+          <small><%= point.dateKey.slice(5) %></small>
+        </div>
+      <% }) %>
+    </div>
+    <div class="analytics-chart-legend">
+      <span><i></i>Combined activity</span>
+      <span><%= totals.feedRequests || 0 %> feed requests</span>
+      <span><%= completionRate %>% completion rate</span>
+    </div>
+  <% } %>
+</section>
+
+<section class="studio-operating-grid analytics-operating-grid">
+  <div class="studio-pipeline-panel analytics-ranking-panel">
     <div class="section-head">
       <div>
         <h3>Top Episodes</h3>
@@ -68,9 +139,9 @@
     <% if (!(analyticsData.topEpisodes || []).length) { %>
       <p class="empty-state">No analytics yet. Published episodes will appear here after feed, audio, player, or share activity.</p>
     <% } else { %>
-      <div class="studio-tab-episode-list">
+      <div class="studio-tab-episode-list analytics-episode-list">
         <% analyticsData.topEpisodes.forEach((episode, index) => { %>
-          <div class="studio-tab-episode">
+          <div class="studio-tab-episode analytics-episode-row">
             <span class="studio-action-number"><%= index + 1 %></span>
             <span class="studio-tab-episode-main">
               <strong><%= episode.title %></strong>
@@ -87,7 +158,7 @@
     <% } %>
   </div>
 
-  <aside class="studio-action-panel">
+  <aside class="studio-action-panel analytics-recommendation-panel">
     <div class="section-head">
       <div>
         <h3>Growth Recommendations</h3>
@@ -97,7 +168,7 @@
 
     <div class="studio-action-stack">
       <% (analyticsData.recommendations || []).forEach((recommendation, index) => { %>
-        <div class="studio-action-row studio-action-primary">
+        <div class="studio-action-row studio-action-primary analytics-recommendation-row">
           <span class="studio-action-number"><%= index + 1 %></span>
           <span class="studio-action-copy">
             <small><%= recommendation.priority %></small>
@@ -112,7 +183,7 @@
 
 <section class="studio-secondary-grid">
   <% breakdownGroups.forEach((group) => { %>
-    <article class="studio-calendar-panel">
+    <article class="studio-calendar-panel analytics-breakdown-panel">
       <div class="section-head">
         <div>
           <h3><%= group.title %></h3>
@@ -122,10 +193,14 @@
       <% if (!group.items.length) { %>
         <p class="empty-state">No data yet.</p>
       <% } else { %>
-        <div class="studio-calendar-list">
+        <% const groupMax = Math.max(1, ...group.items.map((item) => Number(item.count || 0))); %>
+        <div class="studio-calendar-list analytics-breakdown-list">
           <% group.items.forEach((item) => { %>
-            <div class="studio-calendar-item">
-              <span><%= item.label %></span>
+            <div class="studio-calendar-item analytics-breakdown-item">
+              <span>
+                <strong><%= item.label %></strong>
+                <i><em style="width: <%= Math.max(6, Math.round((Number(item.count || 0) / groupMax) * 100)) %>%"></em></i>
+              </span>
               <strong><%= item.count %></strong>
             </div>
           <% }) %>

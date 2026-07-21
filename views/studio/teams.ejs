@@ -12,9 +12,25 @@
   ];
 %>
 
-<section class="studio-command-shell">
-  <div class="studio-command-hero">
-    <div class="studio-command-copy">
+<section class="studio-command-shell team-command-shell">
+  <div class="team-command-hero">
+    <div class="team-visual-panel" aria-hidden="true">
+      <div class="team-record-stack">
+        <span class="team-record-disc"></span>
+        <span class="team-record-core">VP</span>
+      </div>
+      <div class="team-people-strip">
+        <span>P</span>
+        <span>E</span>
+        <span>A</span>
+        <span>G</span>
+      </div>
+      <div class="team-waveform">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+    <div class="studio-command-copy team-command-copy">
       <span class="mini-label studio-hero-kicker">Phase 6 Teams</span>
       <h3>Operate multiple shows with clear people, roles, and approvals.</h3>
       <p>Manage collaborators, keep a reusable brand kit, track comments and tasks, and see approval pressure across every hosted show.</p>
@@ -47,9 +63,10 @@
 </section>
 
 <% if (!workflow.shows.length) { %>
-  <section class="card">
-    <h3>No Hosted Shows Yet</h3>
-    <p class="empty-state">Create a hosted show before adding collaborators, brand rules, and approval workflows.</p>
+  <section class="card team-empty-state">
+    <span class="mini-label">Team setup</span>
+    <h3>No hosted shows yet</h3>
+    <p>Create a hosted show before adding collaborators, brand rules, and approval workflows.</p>
     <a href="/publish/shows" class="btn btn-primary">Create Hosted Show</a>
   </section>
 <% } %>
@@ -59,7 +76,7 @@
   const brandKit = item.brandKit || {};
 %>
   <section class="studio-operating-grid team-show-grid">
-    <article class="studio-pipeline-panel">
+    <article class="studio-pipeline-panel team-workspace-panel">
       <div class="section-head">
         <div>
           <span class="mini-label">Team Workspace</span>
@@ -87,72 +104,95 @@
         </div>
       </div>
 
-      <div class="team-panel-grid">
-        <form method="POST" action="/studio/teams/shows/<%= show._id %>/collaborators" class="recording-panel form-grid">
-          <div class="section-head">
-            <h4>Add Collaborator</h4>
-            <span class="mini-label">Roles</span>
+      <div class="team-panel-grid team-form-grid">
+        <form method="POST" action="/studio/teams/shows/<%= show._id %>/collaborators" class="recording-panel form-grid team-form-panel team-collaborator-form">
+          <div class="team-form-head">
+            <div>
+              <span class="mini-label">People</span>
+              <h4>Add collaborator</h4>
+              <p>Invite the producer, editor, analyst, guest, or owner who needs to help move this show through review.</p>
+            </div>
+            <div class="team-invite-card" aria-hidden="true">
+              <span class="team-invite-avatar">+</span>
+              <span class="team-invite-lines"><i></i><i></i></span>
+            </div>
           </div>
-          <label>
-            Name
-            <input type="text" name="name" maxlength="120" />
-          </label>
-          <label>
-            Email
-            <input type="email" name="email" maxlength="200" required />
-          </label>
-          <div class="two-col">
-            <label>
-              Role
-              <select name="role">
-                <option value="producer">Producer</option>
-                <option value="editor">Editor</option>
-                <option value="analyst">Analyst</option>
-                <option value="guest">Guest</option>
-                <option value="owner">Owner</option>
-              </select>
+
+          <div class="team-invite-console">
+            <label class="team-field team-field-wide team-field-featured">
+              <span>Name</span>
+              <input type="text" name="name" maxlength="120" placeholder="Alex Morgan" />
             </label>
-            <label>
-              Status
-              <select name="status">
-                <option value="invited">Invited</option>
-                <option value="active">Active</option>
-                <option value="disabled">Disabled</option>
-              </select>
+            <label class="team-field team-field-wide team-field-featured">
+              <span>Email</span>
+              <input type="email" name="email" maxlength="200" required placeholder="alex@studio.com" />
             </label>
+            <div class="team-field-row">
+              <label class="team-field">
+                <span>Role</span>
+                <select name="role">
+                  <option value="producer">Producer</option>
+                  <option value="editor">Editor</option>
+                  <option value="analyst">Analyst</option>
+                  <option value="guest">Guest</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </label>
+              <label class="team-field">
+                <span>Status</span>
+                <select name="status">
+                  <option value="invited">Invited</option>
+                  <option value="active">Active</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="team-role-preview" aria-hidden="true">
+            <span>Producer</span>
+            <span>Editor</span>
+            <span>Analyst</span>
+            <span>Guest</span>
+            <span>Owner</span>
           </div>
           <button type="submit" class="btn btn-primary">Save Collaborator</button>
         </form>
 
-        <form method="POST" action="/studio/teams/shows/<%= show._id %>/brand-kit" class="recording-panel form-grid">
-          <div class="section-head">
-            <h4>Brand Kit</h4>
-            <span class="mini-label">Reusable</span>
+        <form method="POST" action="/studio/teams/shows/<%= show._id %>/brand-kit" class="recording-panel form-grid team-form-panel team-brand-form">
+          <div class="team-form-head">
+            <div>
+              <span class="mini-label">Reusable rules</span>
+              <h4>Brand kit</h4>
+              <p>Keep the show voice, approved language, visual notes, and sponsor safety guidance in one operating brief.</p>
+            </div>
+            <span class="team-form-icon team-form-icon-brand" aria-hidden="true">B</span>
           </div>
-          <label>
-            Positioning
+
+          <label class="team-field team-field-wide">
+            <span>Positioning</span>
             <textarea name="positioning" rows="3" maxlength="1000"><%= brandKit.positioning || '' %></textarea>
           </label>
-          <label>
-            Voice Rules
+          <label class="team-field team-field-wide">
+            <span>Voice rules</span>
             <textarea name="voiceRules" rows="3"><%= (brandKit.voiceRules || []).join('\n') %></textarea>
           </label>
-          <div class="two-col">
-            <label>
-              Approved Phrases
+          <div class="team-field-row">
+            <label class="team-field">
+              <span>Approved phrases</span>
               <textarea name="approvedPhrases" rows="3"><%= (brandKit.approvedPhrases || []).join('\n') %></textarea>
             </label>
-            <label>
-              Banned Phrases
+            <label class="team-field">
+              <span>Banned phrases</span>
               <textarea name="bannedPhrases" rows="3"><%= (brandKit.bannedPhrases || []).join('\n') %></textarea>
             </label>
           </div>
-          <label>
-            Visual Notes
+          <label class="team-field team-field-wide">
+            <span>Visual notes</span>
             <textarea name="visualNotes" rows="3" maxlength="1000"><%= brandKit.visualNotes || '' %></textarea>
           </label>
-          <label>
-            Sponsor Safety Notes
+          <label class="team-field team-field-wide">
+            <span>Sponsor safety notes</span>
             <textarea name="sponsorSafetyNotes" rows="3" maxlength="1000"><%= brandKit.sponsorSafetyNotes || '' %></textarea>
           </label>
           <button type="submit" class="btn btn-secondary">Save Brand Kit</button>
@@ -160,7 +200,7 @@
       </div>
     </article>
 
-    <aside class="studio-action-panel">
+    <aside class="studio-action-panel team-collaborator-panel">
       <div class="section-head">
         <div>
           <h3>Collaborators</h3>
@@ -172,7 +212,7 @@
       <% } else { %>
         <div class="studio-action-stack">
           <% item.collaborators.forEach((collaborator) => { %>
-            <div class="studio-action-row">
+            <div class="studio-action-row team-collaborator-row">
               <span class="studio-action-number"><%= collaborator.roleLabel.charAt(0) %></span>
               <span class="studio-action-copy">
                 <small><%= collaborator.roleLabel %> · <%= collaborator.status %></small>

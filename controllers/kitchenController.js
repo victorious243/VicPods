@@ -634,7 +634,7 @@ async function showEpisodeEditor(req, res, next) {
     return renderPage(res, {
       title: `${series.name} ${theme.name} Ep ${episode.episodeNumberWithinTheme} - VicPods`,
       pageTitle: `${req.t('nav.kitchen', 'Workspace')}: ${series.name} / ${theme.name} / ${req.t('common.episode', 'Episode')} ${episode.episodeNumberWithinTheme}`,
-      subtitle: req.t('page.kitchen.episode.subtitle', 'Edit structure, continuity, and recording readiness.'),
+      subtitle: req.t('page.kitchen.episode.subtitle', 'Edit structure, launch assets, and recording readiness.'),
       view: 'kitchen/episode',
       data: {
         series,
