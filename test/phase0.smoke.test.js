@@ -15,6 +15,7 @@ const {
 } = require('../services/publish/publishService');
 const { buildPodcastFeedXml } = require('../services/publish/rssFeedService');
 const { MAX_AUDIO_BYTES, buildPublicAudioPath, buildPublicAudioUrl } = require('../services/publish/audioStorageService');
+const { getWhatsNewEntries } = require('../services/marketing/whatsNewService');
 
 test('environment validation catches missing production requirements', () => {
   const originalEnv = { ...process.env };
@@ -130,6 +131,15 @@ test('publish-critical schemas expose expected indexes', () => {
     ))
   );
   assert.ok(audioIndexes.some((fields) => fields.userId === 1 && fields.episodeId === 1 && fields.createdAt === -1));
+});
+
+test("what's new entries are sorted newest first", () => {
+  const entries = getWhatsNewEntries();
+
+  assert.ok(entries.length > 1);
+  assert.equal(entries[0].slug, 'studio-workflow-and-collaboration');
+  assert.equal(entries[0].dateLabel, '22 July 2026');
+  assert.ok(entries[0].dateValue.getTime() >= entries[1].dateValue.getTime());
 });
 
 test.after(async () => {

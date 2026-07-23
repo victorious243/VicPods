@@ -73,13 +73,18 @@ const {
   normalizeApprovalInput,
   normalizeWorkItemInput,
 } = require('../services/team/teamWorkflowService');
+const { getShowAccessForUser } = require('../services/team/showAccessService');
 const {
   buildCaptionDraft,
   buildClipSuggestions,
   buildDescriptExportPack,
   buildRiversideExportPack,
+  queueWebhookDeliveries,
   requestMediaJob,
 } = require('../services/integrations/advancedMediaIntegrationService');
+const { buildQuoteCardAssets } = require('../services/promotion/socialAssetService');
+const { kickWebhookDeliveryWorker } = require('../services/integrations/webhookDeliveryWorkerService');
+const { importTranscriptToEpisode } = require('../services/transcript/transcriptImportService');
 const { ensureEpisodeShareUrl } = require('../services/sharing/episodeShareService');
 const { EpisodeWorkItem } = require('../models/EpisodeWorkItem');
 const { AppError } = require('../utils/errors');
@@ -624,6 +629,7 @@ async function showEpisodeEditor(req, res, next) {
     const advancedMediaPanel = {
       clipSuggestions: episode.advancedMedia?.clipSuggestions || [],
       captions: episode.advancedMedia?.captions || {},
+      quoteCards: episode.advancedMedia?.quoteCards || [],
       cleanupRequest: episode.advancedMedia?.cleanupRequest || {},
       externalProject: episode.advancedMedia?.externalProject || {},
       recorderSession: episode.advancedMedia?.recorderSession || {},
@@ -726,17 +732,37 @@ async function addEpisodeWorkItem(req, res, next) {
 async function updateEpisodeApproval(req, res, next) {
   try {
     const userId = req.currentUser._id;
-    const series = await getOwnedSeries({ userId, seriesId: req.params.seriesId });
-    const theme = await getOwnedTheme({ userId, seriesId: series._id, themeId: req.params.themeId });
     const episode = await Episode.findOne({
       _id: req.params.episodeId,
-      userId,
-      seriesId: series._id,
-      themeId: theme._id,
+      seriesId: req.params.seriesId,
+      themeId: req.params.themeId,
     });
 
     if (!episode) {
       throw new AppError('Episode not found.', 404);
+    }
+
+    const series = await Series.findById(req.params.seriesId);
+    const theme = await Theme.findOne({ _id: req.params.themeId, seriesId: req.params.seriesId });
+
+    if (!series || !theme) {
+      throw new AppError('Episode workspace not found.', 404);
+    }
+
+    const isOwner = String(episode.userId) === String(userId);
+    if (!isOwner) {
+      if (!episode.showId) {
+        throw new AppError('You do not have access to update this approval status.', 403);
+      }
+
+      const { access } = await getShowAccessForUser({
+        userId,
+        showId: episode.showId,
+      });
+
+      if (!access?.permissions?.canApproveEpisodes) {
+        throw new AppError('You do not have permission to approve this episode.', 403);
+      }
     }
 
     const previousStatus = episode.approvalWorkflow?.status || 'not_started';
@@ -754,6 +780,24 @@ async function updateEpisodeApproval(req, res, next) {
     };
 
     await episode.save();
+
+    if (input.status === 'in_review' && previousStatus !== 'in_review' && episode.showId) {
+      const show = await PodcastShow.findById(episode.showId).select('_id name slug userId');
+      if (show) {
+        await queueWebhookDeliveries({
+          userId: show.userId,
+          eventType: 'team.approval_requested',
+          episode,
+          show,
+          baseUrl: buildRequestBaseUrl(req),
+          metadata: {
+            requestedAt: now.toISOString(),
+            approvalNotes: input.notes,
+          },
+        });
+        kickWebhookDeliveryWorker(console);
+      }
+    }
 
     req.flash('success', 'Approval status saved.');
     return res.redirect(episodeEditorPath({ seriesId: series._id, themeId: theme._id, episodeId: episode._id }) + '#episode-team');
@@ -808,6 +852,35 @@ async function updateAdvancedMedia(req, res, next) {
       };
       await requestMediaJob({ userId, episode, jobType: 'captions', provider: 'vicpods-ai' });
       req.flash('success', 'Caption draft generated.');
+    } else if (action === 'quote-cards') {
+      const show = episode.showId ? await PodcastShow.findById(episode.showId).select('_id name slug userId') : null;
+      episode.advancedMedia.quoteCards = buildQuoteCardAssets(episode, { show });
+      await requestMediaJob({
+        userId,
+        episode,
+        jobType: 'quote_cards',
+        provider: 'vicpods-ai',
+        metadata: {
+          cardCount: String(episode.advancedMedia.quoteCards.length),
+        },
+      });
+
+      if (show) {
+        await queueWebhookDeliveries({
+          userId: show.userId,
+          eventType: 'media.clip_ready',
+          episode,
+          show,
+          baseUrl: buildRequestBaseUrl(req),
+          metadata: {
+            assetType: 'quote_cards',
+            cardCount: String(episode.advancedMedia.quoteCards.length),
+          },
+        });
+        kickWebhookDeliveryWorker(console);
+      }
+
+      req.flash('success', 'Quote card set generated.');
     } else if (action === 'cleanup') {
       episode.advancedMedia.cleanupRequest = {
         status: 'requested',
@@ -959,10 +1032,9 @@ async function updateRecordingWorkflow(req, res, next) {
     };
 
     if (normalized.importedTranscript) {
-      episode.transcript = normalized.importedTranscript;
-      episode.transcriptUpdatedAt = new Date();
-      episode.recordingWorkflow.status = 'transcript_imported';
-      episode.recordingWorkflow.postRecordStatus = 'transcript_imported';
+      importTranscriptToEpisode(episode, {
+        transcriptText: normalized.importedTranscript,
+      });
     }
 
     await episode.save();

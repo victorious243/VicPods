@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const MEDIA_JOB_TYPES = ['clip_suggestions', 'captions', 'audio_cleanup', 'descript_export', 'riverside_export', 'recorder_session'];
+const MEDIA_JOB_TYPES = ['audio_metadata', 'clip_suggestions', 'captions', 'quote_cards', 'audio_cleanup', 'descript_export', 'riverside_export', 'recorder_session'];
 
 const mediaProcessingJobSchema = new mongoose.Schema(
   {
@@ -30,7 +30,7 @@ const mediaProcessingJobSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['queued', 'ready', 'sent', 'failed'],
+      enum: ['queued', 'processing', 'ready', 'sent', 'failed'],
       default: 'queued',
       index: true,
     },
@@ -39,6 +39,12 @@ const mediaProcessingJobSchema = new mongoose.Schema(
       default: '',
       trim: true,
       maxlength: 500,
+    },
+    lastError: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 1000,
     },
     metadata: {
       type: Map,

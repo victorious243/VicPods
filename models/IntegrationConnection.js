@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const INTEGRATION_PROVIDERS = [
   'webhook',
@@ -10,6 +11,10 @@ const INTEGRATION_PROVIDERS = [
   'riverside',
   'audio_cleanup',
 ];
+
+function createSigningSecret() {
+  return crypto.randomBytes(24).toString('hex');
+}
 
 const integrationConnectionSchema = new mongoose.Schema(
   {
@@ -52,9 +57,24 @@ const integrationConnectionSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    signingSecret: {
+      type: String,
+      default: createSigningSecret,
+      trim: true,
+      maxlength: 96,
+    },
     lastUsedAt: {
       type: Date,
       default: null,
+    },
+    lastDeliveryAt: {
+      type: Date,
+      default: null,
+    },
+    lastDeliveryStatus: {
+      type: String,
+      enum: ['configured', 'queued', 'delivered', 'failed', 'paused'],
+      default: 'configured',
     },
   },
   {

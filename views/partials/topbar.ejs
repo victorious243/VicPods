@@ -61,12 +61,42 @@
         <nav class="topbar-links-desktop" aria-label="Primary navigation">
           <a href="/podcast-idea-generator" class="topbar-link">Idea Generator</a>
           <a href="/examples" class="topbar-link">Examples</a>
-          <a href="/guides" class="topbar-link">Guides</a>
-          <a href="/about" class="topbar-link"><%= t('page.about.link', 'About VicPods') %></a>
-          <a href="/help" class="topbar-link"><%= t('page.help.link', 'Help Center') %></a>
-          <% if (!currentUser) { %>
-            <a href="/auth/login" class="topbar-link"><%= t('page.about.cta.guest.secondary', 'Sign in') %></a>
-          <% } %>
+          <a href="/whats-new" class="topbar-link">What's New</a>
+          <details class="topbar-link-menu" data-topbar-link-menu>
+            <summary class="topbar-link topbar-link-summary" aria-haspopup="menu">
+              <span>Resources</span>
+              <span class="topbar-link-caret" aria-hidden="true"></span>
+            </summary>
+            <div class="topbar-link-panel" role="menu">
+              <p class="topbar-link-panel-kicker">Explore VicPods</p>
+              <a href="/guides" class="topbar-link-panel-item" role="menuitem">
+                <span class="topbar-link-panel-copy">
+                  <strong>Guides</strong>
+                  <small>Episode frameworks and launch playbooks.</small>
+                </span>
+              </a>
+              <a href="/help" class="topbar-link-panel-item" role="menuitem">
+                <span class="topbar-link-panel-copy">
+                  <strong><%= t('page.help.link', 'Help Center') %></strong>
+                  <small>Get started, learn workflows, and find answers fast.</small>
+                </span>
+              </a>
+              <a href="/about" class="topbar-link-panel-item" role="menuitem">
+                <span class="topbar-link-panel-copy">
+                  <strong><%= t('page.about.link', 'About VicPods') %></strong>
+                  <small>See what the product is built to help podcast teams do.</small>
+                </span>
+              </a>
+              <% if (!currentUser) { %>
+                <a href="/auth/login" class="topbar-link-panel-item" role="menuitem">
+                  <span class="topbar-link-panel-copy">
+                    <strong><%= t('page.about.cta.guest.secondary', 'Sign in') %></strong>
+                    <small>Open your studio and pick up where you left off.</small>
+                  </span>
+                </a>
+              <% } %>
+            </div>
+          </details>
         </nav>
       <% } else if (currentUser) { %>
         <span class="plan-chip topbar-plan-chip"><%= topbarPlanLabel %> <%= t('topbar.plan', 'plan') %></span>
@@ -227,6 +257,7 @@
       <nav class="topbar-panel-links" aria-label="Mobile navigation">
         <a href="/podcast-idea-generator" class="topbar-panel-link" data-topbar-close>Idea Generator</a>
         <a href="/examples" class="topbar-panel-link" data-topbar-close>Examples</a>
+        <a href="/whats-new" class="topbar-panel-link" data-topbar-close>What's New</a>
         <a href="/guides" class="topbar-panel-link" data-topbar-close>Guides</a>
         <a href="/about" class="topbar-panel-link" data-topbar-close><%= t('page.about.link', 'About VicPods') %></a>
         <a href="/help" class="topbar-panel-link" data-topbar-close><%= t('page.help.link', 'Help Center') %></a>

@@ -9,6 +9,7 @@ const { sendTxtExport } = require('../services/export/txtExport');
 const { buildEpisodeLightExport } = require('../services/export/watermarkedPreviewExportService');
 const { consumeAiCredit } = require('../services/limitService');
 const { ensureTranscript, refreshTranscript } = require('../services/transcript/transcriptService');
+const { importTranscriptToEpisode } = require('../services/transcript/transcriptImportService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath } = require('../utils/paths');
 
@@ -202,8 +203,44 @@ async function downloadLightPreview(req, res, next) {
   }
 }
 
+async function importTranscript(req, res, next) {
+  try {
+    const context = await getOwnedEpisodeContext(req);
+    const result = importTranscriptToEpisode(context.episode, {
+      transcriptText: req.body.transcriptText || req.body.importedTranscript,
+      transcriptDataUrl: req.body.transcriptDataUrl,
+    });
+
+    await context.episode.save();
+
+    if (wantsJson(req)) {
+      return res.status(201).json({
+        episodeId: context.episode._id,
+        transcriptUpdatedAt: context.episode.transcriptUpdatedAt,
+        sourceFormat: result.sourceFormat,
+        chapterCount: result.chapters.length,
+      });
+    }
+
+    req.flash('success', `Transcript imported with ${result.chapters.length} chapter ${result.chapters.length === 1 ? 'marker' : 'markers'}.`);
+    return res.redirect(getEditorPath(context) + '#episode-brief-export');
+  } catch (error) {
+    if (error.statusCode) {
+      if (wantsJson(req)) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+
+      req.flash('error', error.message);
+      return res.redirect('/kitchen');
+    }
+
+    return next(error);
+  }
+}
+
 module.exports = {
   generateTranscript,
   downloadTranscript,
   downloadLightPreview,
+  importTranscript,
 };

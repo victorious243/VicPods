@@ -8,7 +8,7 @@
   ].filter(Boolean);
 %>
 
-<div class="published-podcast-page published-show-page">
+<div class="published-podcast-page published-show-page published-theme-<%= publishedShow.themeVariant || 'studio' %>">
   <section class="published-show-stage">
     <div class="published-show-art-panel">
       <div class="published-cover-frame">
@@ -25,8 +25,11 @@
     </div>
 
     <div class="published-show-copy">
-      <span class="mini-label published-live-label">Live podcast channel</span>
+      <span class="mini-label published-live-label"><%= publishedShow.heroLabel || 'Live podcast channel' %></span>
       <h1><%= publishedShow.name %></h1>
+      <% if (publishedShow.heroTagline) { %>
+        <p class="published-show-description"><%= publishedShow.heroTagline %></p>
+      <% } %>
       <p class="published-show-description"><%= publishedShow.description %></p>
 
       <div class="published-meta-strip">
@@ -39,7 +42,24 @@
         <a class="btn btn-primary" href="<%= publishedShow.feedUrl %>">RSS Feed</a>
         <a class="btn btn-secondary" href="<%= publishedShow.websiteUrl %>" target="_blank" rel="noopener noreferrer">Website</a>
         <a class="btn btn-ghost" href="<%= publishedShow.embedUrl %>" target="_blank" rel="noopener noreferrer">Embed</a>
+        <% if (publishedShow.primaryCtaLabel && publishedShow.primaryCtaUrl) { %>
+          <a class="btn btn-secondary" href="<%= publishedShow.primaryCtaUrl %>" target="_blank" rel="noopener noreferrer"><%= publishedShow.primaryCtaLabel %></a>
+        <% } %>
       </div>
+
+      <% if (publishedShow.featuredLabel || publishedShow.featuredText || publishedShow.hostIntro) { %>
+        <div class="published-support-panel">
+          <% if (publishedShow.featuredLabel) { %>
+            <span class="mini-label"><%= publishedShow.featuredLabel %></span>
+          <% } %>
+          <% if (publishedShow.featuredText) { %>
+            <p><%= publishedShow.featuredText %></p>
+          <% } %>
+          <% if (publishedShow.hostIntro) { %>
+            <p class="mini-note"><%= publishedShow.hostIntro %></p>
+          <% } %>
+        </div>
+      <% } %>
 
       <% if ((publishedShow.supportLinks || []).length) { %>
         <div class="published-support-panel">
@@ -49,6 +69,44 @@
               <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
             <% }) %>
           </div>
+        </div>
+      <% } %>
+
+      <% if (publishedShow.privateFeedAccess) { %>
+        <div class="published-support-panel">
+          <span class="mini-label">Private feed unlocked</span>
+          <p>Your premium feed is ready. Paste the private RSS URL into your podcast player.</p>
+          <label class="share-link-field">
+            <span class="landing-preview-label"><%= publishedShow.privateFeedAccess.label %></span>
+            <input type="text" value="<%= publishedShow.privateFeedAccess.accessUrl %>" readonly />
+          </label>
+          <% if (publishedShow.privateFeedAccess.expiresAt) { %>
+            <p class="mini-note">Access remains available through <%= new Date(publishedShow.privateFeedAccess.expiresAt).toLocaleDateString() %>.</p>
+          <% } %>
+        </div>
+      <% } %>
+
+      <% if (publishedShow.privateFeedOffer && publishedShow.privateFeedOffer.enabled && publishedShow.privateFeedOffer.priceId) { %>
+        <div class="published-support-panel">
+          <span class="mini-label"><%= publishedShow.privateFeedOffer.title %></span>
+          <p><%= publishedShow.privateFeedOffer.description %></p>
+          <form method="POST" action="/podcasts/<%= publishedShow.slug %>/private/subscribe" class="form-grid">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <div class="team-field-row">
+              <label class="team-field">
+                <span>Email</span>
+                <input type="email" name="listenerEmail" maxlength="200" placeholder="listener@example.com" required />
+              </label>
+              <label class="team-field">
+                <span>Name</span>
+                <input type="text" name="listenerName" maxlength="120" placeholder="Listener name" />
+              </label>
+            </div>
+            <div class="inline-actions published-action-row">
+              <button class="btn btn-primary" type="submit"><%= publishedShow.privateFeedOffer.ctaLabel %></button>
+              <span class="mini-note">Secure Stripe checkout for the private feed.</span>
+            </div>
+          </form>
         </div>
       <% } %>
     </div>
@@ -72,6 +130,13 @@
       <% } %>
     </aside>
   </section>
+
+  <% if (publishedShow.footerNote) { %>
+    <section class="published-support-panel published-support-panel-wide">
+      <span class="mini-label">From the show</span>
+      <p><%= publishedShow.footerNote %></p>
+    </section>
+  <% } %>
 
   <section class="published-show-episodes">
     <div class="section-head published-section-head">

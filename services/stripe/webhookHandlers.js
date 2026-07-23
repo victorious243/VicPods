@@ -1,4 +1,10 @@
 const User = require('../../models/User');
+const {
+  isPrivateFeedCheckoutSession,
+  isPrivateFeedSubscription,
+  syncPrivateFeedEntitlementFromCheckoutSession,
+  syncPrivateFeedEntitlementFromSubscription,
+} = require('../monetization/privateFeedEntitlementService');
 const { sendPaymentFailedEmailIfNeeded, sendPaymentSuccessEmailIfNeeded } = require('../billing/paymentEmailService');
 const { mapPriceIdToPlan } = require('./planMapping');
 const { getStripeClient } = require('./stripeClient');
@@ -173,6 +179,11 @@ async function handleCheckoutSessionCompleted(session) {
     return;
   }
 
+  if (isPrivateFeedCheckoutSession(session)) {
+    await syncPrivateFeedEntitlementFromCheckoutSession(session);
+    return;
+  }
+
   const user = await findUserForCheckoutSession(session);
 
   if (!user) {
@@ -183,6 +194,11 @@ async function handleCheckoutSessionCompleted(session) {
 }
 
 async function handleSubscriptionCreatedOrUpdated(subscription) {
+  if (isPrivateFeedSubscription(subscription)) {
+    await syncPrivateFeedEntitlementFromSubscription(subscription);
+    return;
+  }
+
   const user = await findUserForSubscription(subscription);
 
   if (!user) {
@@ -193,6 +209,13 @@ async function handleSubscriptionCreatedOrUpdated(subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription) {
+  if (isPrivateFeedSubscription(subscription)) {
+    await syncPrivateFeedEntitlementFromSubscription(subscription, {
+      entitlementStatus: 'canceled',
+    });
+    return;
+  }
+
   const user = await findUserForSubscription(subscription);
 
   if (!user) {
@@ -222,6 +245,12 @@ async function handleInvoicePaid(invoice) {
 
   const stripe = getStripeClient();
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+
+  if (isPrivateFeedSubscription(subscription)) {
+    await syncPrivateFeedEntitlementFromSubscription(subscription);
+    return;
+  }
+
   const user = await findUserForSubscription(subscription);
 
   if (!user) {
@@ -258,6 +287,12 @@ async function handleInvoicePaymentFailed(invoice) {
     try {
       const stripe = getStripeClient();
       subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+      if (isPrivateFeedSubscription(subscription)) {
+        await syncPrivateFeedEntitlementFromSubscription(subscription, {
+          entitlementStatus: 'past_due',
+        });
+        return;
+      }
     } catch (_error) {
       subscription = null;
     }

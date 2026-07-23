@@ -63,6 +63,7 @@ async function ensurePrivateFeedToken({ userId, showId, label = 'Premium listene
   const existingToken = await PrivateFeedToken.findOne({
     userId,
     showId,
+    accessType: 'creator_managed',
     status: 'active',
   }).sort({ createdAt: -1 });
 
@@ -74,6 +75,7 @@ async function ensurePrivateFeedToken({ userId, showId, label = 'Premium listene
     userId,
     showId,
     label: compactText(label, 120) || 'Premium listeners',
+    accessType: 'creator_managed',
   });
 }
 
@@ -193,10 +195,21 @@ async function buildCreatorMonetizationDashboard({ userId, baseUrl, analytics = 
     showId: { $in: shows.map((show) => show._id) },
     status: 'active',
   });
-  const tokenByShowId = new Map(tokens.map((token) => [String(token.showId), token]));
+  const creatorTokenByShowId = new Map(
+    tokens
+      .filter((token) => token.accessType !== 'subscriber_entitlement')
+      .map((token) => [String(token.showId), token])
+  );
+  const subscriberCountsByShowId = tokens
+    .filter((token) => token.accessType === 'subscriber_entitlement' && ['active', 'trialing'].includes(token.entitlementStatus))
+    .reduce((map, token) => {
+      const key = String(token.showId);
+      map.set(key, (map.get(key) || 0) + 1);
+      return map;
+    }, new Map());
 
   const showDashboards = await Promise.all(shows.map(async (show) => {
-    let privateToken = tokenByShowId.get(String(show._id));
+    let privateToken = creatorTokenByShowId.get(String(show._id));
     if (show.monetization?.privateFeedsEnabled && !privateToken) {
       privateToken = await ensurePrivateFeedToken({ userId, showId: show._id });
     }
@@ -212,6 +225,7 @@ async function buildCreatorMonetizationDashboard({ userId, baseUrl, analytics = 
       adSlotPlanner: buildAdSlotPlanner(showEpisodes),
       privateFeedUrl: privateToken ? buildPrivateFeedUrl({ show, token: privateToken, baseUrl }) : '',
       privateToken,
+      privateSubscriberCount: subscriberCountsByShowId.get(String(show._id)) || 0,
     };
   }));
 

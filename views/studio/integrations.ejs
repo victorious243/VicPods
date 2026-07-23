@@ -12,7 +12,9 @@
     { label: 'Connections', value: integrationData.metrics.connections, note: 'Configured providers' },
     { label: 'Active', value: integrationData.metrics.activeConnections, note: 'Ready to receive events' },
     { label: 'Media Jobs', value: integrationData.metrics.queuedJobs, note: 'Queued processing requests' },
+    { label: 'Failures', value: integrationData.metrics.failedJobs || 0, note: 'Jobs that need attention' },
     { label: 'Webhook Queue', value: integrationData.metrics.webhookQueue, note: 'Pending outbound events' },
+    { label: 'Webhook Failures', value: integrationData.metrics.failedDeliveries || 0, note: 'Retryable delivery errors' },
   ];
 %>
 
@@ -143,10 +145,13 @@
           <div class="studio-action-row">
             <span class="studio-action-number"><%= connection.provider.charAt(0).toUpperCase() %></span>
             <span class="studio-action-copy">
-              <small><%= connection.provider %> · <%= connection.status %></small>
+              <small><%= connection.provider %> · <%= connection.status %> · <%= connection.lastDeliveryStatus || 'configured' %></small>
               <strong><%= connection.label || connection.provider %></strong>
               <em><%= connection.events.join(', ') || 'No events selected' %></em>
             </span>
+            <form method="POST" action="/studio/integrations/connections/<%= connection._id %>/test">
+              <button type="submit" class="btn btn-ghost">Send test</button>
+            </form>
           </div>
         <% }) %>
       </div>
@@ -195,6 +200,17 @@
         <div class="recording-panel">
           <span class="mini-label"><%= item.jobType || item.eventType %> · <%= item.status %></span>
           <p><%= item.provider || item.targetUrl || 'VicPods integration record' %></p>
+          <% if (item.attemptCount) { %>
+            <small><%= item.attemptCount %> attempt<%= item.attemptCount === 1 ? '' : 's' %><% if (item.responseCode) { %> · HTTP <%= item.responseCode %><% } %></small>
+          <% } %>
+          <% if (item.errorMessage || item.lastError) { %>
+            <small><%= item.errorMessage || item.lastError %></small>
+          <% } %>
+          <% if (item.status === 'failed') { %>
+            <form method="POST" action="/studio/integrations/deliveries/<%= item._id %>/retry" class="inline-actions">
+              <button type="submit" class="btn btn-ghost">Retry delivery</button>
+            </form>
+          <% } %>
         </div>
       <% }) %>
       <% if (!integrationData.jobs.length && !integrationData.deliveries.length) { %>

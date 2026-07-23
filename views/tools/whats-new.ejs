@@ -1,0 +1,95 @@
+<div class="help-page-shell landing-page-shell whats-new-shell">
+  <section class="card tool-hero whats-new-hero" data-help-reveal>
+    <div class="tool-hero-copy">
+      <span class="landing-kicker">Product updates</span>
+      <h1>What's new in VicPods</h1>
+      <p class="landing-lead">
+        Every major VicPods product update lives here with a clear ship date. New releases are always added at the top so creators can see what shipped without guessing.
+      </p>
+      <div class="inline-actions">
+        <a href="/auth/register" class="btn btn-primary">Create account</a>
+        <a href="/examples" class="btn btn-secondary">See example library</a>
+      </div>
+    </div>
+  </section>
+
+  <% if (featuredEntry) { %>
+    <section class="whats-new-feature" data-help-reveal>
+      <article class="card whats-new-feature-card">
+        <div class="whats-new-feature-head">
+          <div>
+            <span class="landing-kicker">Latest release</span>
+            <h2><%= featuredEntry.title %></h2>
+          </div>
+          <div class="whats-new-feature-meta">
+            <span class="mini-label"><%= featuredEntry.dateLabel %></span>
+            <span class="mini-label"><%= featuredEntry.label %></span>
+          </div>
+        </div>
+        <p><%= featuredEntry.summary %></p>
+        <div class="whats-new-highlight-grid">
+          <% featuredEntry.highlights.forEach((item) => { %>
+            <div class="whats-new-highlight">
+              <span class="whats-new-highlight-mark" aria-hidden="true"></span>
+              <p><%= item %></p>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+    </section>
+  <% } %>
+
+  <section class="whats-new-stream" data-help-reveal>
+    <div class="section-head whats-new-stream-head">
+      <div>
+        <span class="landing-kicker">Update feed</span>
+        <h2>Latest updates first</h2>
+        <p class="mini-note">Each entry includes the release date so customers can track shipped product capabilities and when they landed.</p>
+      </div>
+    </div>
+
+    <div class="whats-new-stream-grid">
+      <div class="whats-new-entry-list">
+        <% entries.forEach((entry) => { %>
+          <article class="card whats-new-entry" id="<%= entry.slug %>">
+            <div class="whats-new-entry-head">
+              <div class="whats-new-entry-title">
+                <span class="mini-label"><%= entry.label %></span>
+                <h3><%= entry.title %></h3>
+              </div>
+              <div class="whats-new-entry-meta">
+                <strong><%= entry.dateLabel %></strong>
+                <span><%= String(entry.position).padStart(2, '0') %></span>
+              </div>
+            </div>
+            <p class="whats-new-entry-summary"><%= entry.summary %></p>
+            <div class="whats-new-highlight-grid">
+              <% entry.highlights.forEach((item) => { %>
+                <div class="whats-new-highlight">
+                  <span class="whats-new-highlight-mark" aria-hidden="true"></span>
+                  <p><%= item %></p>
+                </div>
+              <% }) %>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+
+      <aside class="whats-new-side">
+        <article class="card whats-new-side-card">
+          <span class="mini-label">How this page works</span>
+          <h3>New releases stay on top</h3>
+          <p>When VicPods ships a product feature, add a dated update entry and it will automatically rise to the top of this page.</p>
+        </article>
+
+        <article class="card whats-new-side-card">
+          <span class="mini-label">Why it matters</span>
+          <h3>Customers can see progress clearly</h3>
+          <p>This keeps product communication simple, visible, and easy to trust without mixing product releases with smaller internal design or content changes.</p>
+        </article>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<script src="/javascripts/help-center.js" defer></script>

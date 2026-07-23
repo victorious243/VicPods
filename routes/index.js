@@ -9,6 +9,7 @@ const publicPodcastController = require('../controllers/publicPodcastController'
 const seoController = require('../controllers/seoController');
 const shareController = require('../controllers/shareController');
 const settingsController = require('../controllers/settingsController');
+const whatsNewController = require('../controllers/whatsNewController');
 const { requireGuest } = require('../middleware/auth');
 
 const router = express.Router();
@@ -20,10 +21,16 @@ router.get('/lab', landingController.showLanding);
 router.get('/generate-episode', landingController.showLanding);
 router.get('/podcast-idea-generator', landingController.showPodcastIdeaGenerator);
 router.get('/examples', landingController.showExampleLibrary);
+router.get('/whats-new', whatsNewController.showWhatsNew);
 router.get('/guides', guideController.showGuidesIndex);
 router.get('/guides/:slug', guideController.showGuide);
 router.get('/share/:token', shareController.showSharedEpisode);
+router.get('/feed.xml', publicPodcastController.showCustomDomainFeed);
+router.get('/embed', publicPodcastController.showCustomDomainEmbed);
+router.get('/:episodeSlug/embed', publicPodcastController.showCustomDomainEpisodeEmbed);
 router.get('/podcasts/:showSlug/feed.xml', publicPodcastController.showPodcastFeed);
+router.post('/podcasts/:showSlug/private/subscribe', publicPodcastController.startPrivateFeedCheckout);
+router.get('/podcasts/:showSlug/private/success', publicPodcastController.showPrivateFeedSubscribeSuccess);
 router.get('/podcasts/:showSlug/private/:feedToken/feed.xml', publicPodcastController.showPrivatePodcastFeed);
 router.get('/podcasts/:showSlug/embed', publicPodcastController.showPodcastEmbed);
 router.get('/podcasts/:showSlug/:episodeSlug/embed', publicPodcastController.showEpisodeEmbed);
@@ -35,6 +42,7 @@ router.get('/terms', legalController.showTerms);
 router.get('/privacy-policy', legalController.showPrivacyPolicy);
 router.get('/cookie-policy', legalController.showCookiePolicy);
 router.get('/data-rights', legalController.showDataRights);
-router.get('/', landingController.showLanding);
+router.get('/:episodeSlug', publicPodcastController.showCustomDomainEpisode);
+router.get('/', publicPodcastController.showCustomDomainShow, landingController.showLanding);
 
 module.exports = router;

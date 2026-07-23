@@ -25,6 +25,9 @@ function normalizeStorageKey(storageKey) {
 
 function buildPublicAudioPath(storageKey) {
   const normalized = normalizeStorageKey(storageKey);
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
   return normalized ? `/${normalized}` : '';
 }
 
@@ -33,7 +36,24 @@ function buildPublicAudioUrl(assetOrStorageKey, baseUrl) {
     ? assetOrStorageKey
     : assetOrStorageKey?.storageKey;
   const publicPath = buildPublicAudioPath(storageKey);
+  if (/^https?:\/\//i.test(publicPath)) {
+    return publicPath;
+  }
   return publicPath ? buildAbsoluteUrl(publicPath, baseUrl) : '';
+}
+
+function buildStoredAudioAbsolutePath(storageKey) {
+  const normalized = normalizeStorageKey(storageKey);
+
+  if (/^https?:\/\//i.test(normalized)) {
+    throw new AppError('Remote audio assets do not have a local filesystem path.', 400);
+  }
+
+  if (!normalized.startsWith('uploads/audio/')) {
+    throw new AppError('Audio storage key must stay inside uploads/audio.', 400);
+  }
+
+  return path.join(process.cwd(), 'public', normalized);
 }
 
 function parseAudioDataUrl(audioDataUrl) {
@@ -99,7 +119,7 @@ async function removeStoredAudioFile(storageKey) {
     return;
   }
 
-  const absolutePath = path.join(process.cwd(), 'public', normalized);
+  const absolutePath = buildStoredAudioAbsolutePath(normalized);
 
   try {
     await fs.unlink(absolutePath);
@@ -112,6 +132,7 @@ async function removeStoredAudioFile(storageKey) {
 
 module.exports = {
   MAX_AUDIO_BYTES,
+  buildStoredAudioAbsolutePath,
   buildPublicAudioPath,
   buildPublicAudioUrl,
   removeStoredAudioFile,

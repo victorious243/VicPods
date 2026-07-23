@@ -1,6 +1,6 @@
 (function initTopbarShell() {
   var MOBILE_BREAKPOINT = 860;
-  var PUBLIC_BREAKPOINT = 1120;
+  var PUBLIC_BREAKPOINT = 1200;
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function setAriaState(target, isOpen) {
@@ -105,6 +105,70 @@
 
     setAriaState(trigger, false);
     panel.hidden = true;
+  }
+
+  function setupDesktopLinkMenus(topbar) {
+    var menus = Array.prototype.slice.call(topbar.querySelectorAll('[data-topbar-link-menu]'));
+
+    if (!menus.length) {
+      return;
+    }
+
+    function syncMenuState(menu) {
+      var summary = menu.querySelector('.topbar-link-summary');
+      if (!summary) {
+        return;
+      }
+
+      summary.setAttribute('aria-expanded', menu.hasAttribute('open') ? 'true' : 'false');
+    }
+
+    function closeMenus(options) {
+      var shouldFocus = options && options.focusSummary;
+
+      menus.forEach(function closeMenu(menu) {
+        if (!menu.hasAttribute('open')) {
+          return;
+        }
+
+        menu.removeAttribute('open');
+        syncMenuState(menu);
+
+        if (shouldFocus) {
+          var summary = menu.querySelector('.topbar-link-summary');
+          if (summary) {
+            summary.focus();
+          }
+        }
+      });
+    }
+
+    menus.forEach(function bindMenu(menu) {
+      syncMenuState(menu);
+      menu.addEventListener('toggle', function onMenuToggle() {
+        syncMenuState(menu);
+      });
+    });
+
+    document.addEventListener('click', function onDesktopMenuOutsideClick(event) {
+      if (!menus.some(function hasOpenMenu(menu) { return menu.hasAttribute('open'); })) {
+        return;
+      }
+
+      if (!topbar.contains(event.target)) {
+        closeMenus();
+      }
+    });
+
+    document.addEventListener('keydown', function onDesktopMenuEscape(event) {
+      if (event.key === 'Escape') {
+        closeMenus({ focusSummary: true });
+      }
+    });
+
+    window.addEventListener('resize', function onDesktopMenuResize() {
+      closeMenus();
+    });
   }
 
   function setupPublicTopbar(topbar) {
@@ -421,6 +485,7 @@
       setupLanguageSwitcher(topbar);
       var mode = topbar.getAttribute('data-topbar-mode') || 'app';
       if (mode === 'public') {
+        setupDesktopLinkMenus(topbar);
         setupPublicTopbar(topbar);
         return;
       }

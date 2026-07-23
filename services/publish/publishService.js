@@ -80,6 +80,27 @@ function buildPodcastShowPath(showOrSlug) {
   return `/podcasts/${slug}`;
 }
 
+function normalizeDomainHostname(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+    .replace(/:\d+$/, '')
+    .replace(/\.+$/, '');
+}
+
+function resolveShowBaseUrl(show, fallbackBaseUrl) {
+  const customDomain = normalizeDomainHostname(show?.customDomain?.hostname);
+  if (customDomain && show?.customDomain?.status === 'active') {
+    const fallback = normalizeAppUrl(fallbackBaseUrl);
+    const protocolMatch = fallback.match(/^(https?):\/\//i);
+    const protocol = protocolMatch ? protocolMatch[1].toLowerCase() : 'https';
+    return `${protocol}://${customDomain}`;
+  }
+
+  return normalizeAppUrl(fallbackBaseUrl);
+}
+
 function buildPodcastFeedPath(showOrSlug) {
   return `${buildPodcastShowPath(showOrSlug)}/feed.xml`;
 }
@@ -91,11 +112,24 @@ function buildPublishedEpisodePath(showOrSlug, episodeOrSlug) {
 }
 
 function buildPodcastFeedUrl(showOrSlug, baseUrl) {
-  return buildAbsoluteUrl(buildPodcastFeedPath(showOrSlug), baseUrl);
+  const resolvedBaseUrl = typeof showOrSlug === 'string'
+    ? baseUrl
+    : resolveShowBaseUrl(showOrSlug, baseUrl);
+  return buildAbsoluteUrl(buildPodcastFeedPath(showOrSlug), resolvedBaseUrl);
 }
 
 function buildPublishedEpisodeUrl(showOrSlug, episodeOrSlug, baseUrl) {
-  return buildAbsoluteUrl(buildPublishedEpisodePath(showOrSlug, episodeOrSlug), baseUrl);
+  const resolvedBaseUrl = typeof showOrSlug === 'string'
+    ? baseUrl
+    : resolveShowBaseUrl(showOrSlug, baseUrl);
+  return buildAbsoluteUrl(buildPublishedEpisodePath(showOrSlug, episodeOrSlug), resolvedBaseUrl);
+}
+
+function buildPodcastShowUrl(showOrSlug, baseUrl) {
+  const resolvedBaseUrl = typeof showOrSlug === 'string'
+    ? baseUrl
+    : resolveShowBaseUrl(showOrSlug, baseUrl);
+  return buildAbsoluteUrl(buildPodcastShowPath(showOrSlug), resolvedBaseUrl);
 }
 
 function buildEpisodeSummary(episode) {
@@ -112,7 +146,7 @@ function resolveShowCoverImageUrl(show, baseUrl) {
 }
 
 function resolveShowWebsiteUrl(show, baseUrl) {
-  return normalizeText(show?.websiteUrl) || normalizeAppUrl(baseUrl);
+  return normalizeText(show?.websiteUrl) || buildPodcastShowUrl(show, baseUrl);
 }
 
 function resolveEpisodeExplicit(episode, show) {
@@ -193,14 +227,17 @@ module.exports = {
   buildEpisodeSummary,
   buildPodcastFeedPath,
   buildPodcastFeedUrl,
+  buildPodcastShowUrl,
   buildPodcastShowPath,
   buildPublishedEpisodePath,
   buildPublishedEpisodeUrl,
   generateUniqueEpisodeSlug,
   generateUniqueShowSlug,
   normalizeText,
+  normalizeDomainHostname,
   publishDueEpisodesForShow,
   resolveEpisodeExplicit,
+  resolveShowBaseUrl,
   resolveShowCoverImageUrl,
   resolveShowWebsiteUrl,
   slugifySegment,

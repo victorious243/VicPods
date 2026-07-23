@@ -43,7 +43,7 @@ function normalizeConnectionInput(body) {
   };
 }
 
-function buildWebhookPayload({ eventType, episode, show, baseUrl }) {
+function buildWebhookPayload({ eventType, episode, show, baseUrl, metadata = {} }) {
   const episodeUrl = show && episode?.publicSlug
     ? buildPublishedEpisodeUrl(show, episode, baseUrl)
     : '';
@@ -67,26 +67,52 @@ function buildWebhookPayload({ eventType, episode, show, baseUrl }) {
           slug: show.slug,
         }
       : null,
+    metadata,
   };
 }
 
-async function queueWebhookDeliveries({ userId, eventType, episode = null, show = null, baseUrl = '' }) {
+async function queueWebhookDeliveries({ userId, eventType, episode = null, show = null, baseUrl = '', metadata = {} }) {
   const connections = await IntegrationConnection.find({
     userId,
     provider: { $in: ['webhook', 'zapier'] },
     status: 'configured',
     events: eventType,
   });
-  const payload = buildWebhookPayload({ eventType, episode, show, baseUrl });
+  const payload = buildWebhookPayload({ eventType, episode, show, baseUrl, metadata });
 
   return Promise.all(connections.map((connection) => WebhookDelivery.create({
     userId,
     integrationId: connection._id,
     eventType,
     targetUrl: connection.endpointUrl,
+    payload,
     payloadPreview: JSON.stringify(payload).slice(0, 4000),
     status: connection.endpointUrl ? 'queued' : 'skipped',
+    nextAttemptAt: new Date(),
   })));
+}
+
+async function queueConnectionTestDelivery({ connection, userId, baseUrl = '' }) {
+  const payload = buildWebhookPayload({
+    eventType: 'integration.test',
+    baseUrl,
+    metadata: {
+      provider: connection.provider,
+      label: connection.label || connection.provider,
+      generatedAt: new Date().toISOString(),
+    },
+  });
+
+  return WebhookDelivery.create({
+    userId,
+    integrationId: connection._id,
+    eventType: 'integration.test',
+    targetUrl: connection.endpointUrl,
+    payload,
+    payloadPreview: JSON.stringify(payload).slice(0, 4000),
+    status: connection.endpointUrl ? 'queued' : 'skipped',
+    nextAttemptAt: new Date(),
+  });
 }
 
 function splitTranscriptWords(transcript) {
@@ -208,8 +234,10 @@ async function buildAdvancedMediaDashboard({ userId }) {
     metrics: {
       connections: connections.length,
       activeConnections: connections.filter((connection) => connection.status === 'configured').length,
-      queuedJobs: jobs.filter((job) => job.status === 'queued').length,
-      webhookQueue: deliveries.filter((delivery) => delivery.status === 'queued').length,
+      queuedJobs: jobs.filter((job) => ['queued', 'processing'].includes(job.status)).length,
+      failedJobs: jobs.filter((job) => job.status === 'failed').length,
+      webhookQueue: deliveries.filter((delivery) => ['queued', 'retrying', 'processing'].includes(delivery.status)).length,
+      failedDeliveries: deliveries.filter((delivery) => delivery.status === 'failed').length,
     },
   };
 }
@@ -223,6 +251,7 @@ module.exports = {
   buildRiversideExportPack,
   buildWebhookPayload,
   normalizeConnectionInput,
+  queueConnectionTestDelivery,
   queueWebhookDeliveries,
   requestMediaJob,
 };

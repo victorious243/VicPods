@@ -27,6 +27,12 @@ const privateFeedTokenSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    accessType: {
+      type: String,
+      enum: ['creator_managed', 'subscriber_entitlement'],
+      default: 'creator_managed',
+      index: true,
+    },
     token: {
       type: String,
       required: true,
@@ -42,6 +48,54 @@ const privateFeedTokenSchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
+    subscriberEmail: {
+      type: String,
+      default: '',
+      trim: true,
+      lowercase: true,
+      maxlength: 200,
+      index: true,
+    },
+    subscriberName: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+    },
+    stripeCustomerId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+      index: true,
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+      index: true,
+    },
+    checkoutSessionId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+    },
+    entitlementStatus: {
+      type: String,
+      enum: ['active', 'trialing', 'past_due', 'canceled', 'revoked'],
+      default: 'active',
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+    lastValidatedAt: {
+      type: Date,
+      default: null,
+    },
     lastAccessedAt: {
       type: Date,
       default: null,
@@ -53,5 +107,6 @@ const privateFeedTokenSchema = new mongoose.Schema(
 );
 
 privateFeedTokenSchema.index({ showId: 1, status: 1 });
+privateFeedTokenSchema.index({ showId: 1, accessType: 1, subscriberEmail: 1 });
 
 module.exports = mongoose.model('PrivateFeedToken', privateFeedTokenSchema);

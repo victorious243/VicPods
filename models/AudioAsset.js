@@ -16,7 +16,7 @@ const audioAssetSchema = new mongoose.Schema(
     },
     storageProvider: {
       type: String,
-      enum: ['local_public'],
+      enum: ['local_public', 'remote_url'],
       default: 'local_public',
     },
     storageKey: {
@@ -41,6 +41,12 @@ const audioAssetSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+    metadataStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'ready', 'failed'],
+      default: 'pending',
+      index: true,
     },
     durationSeconds: {
       type: Number,

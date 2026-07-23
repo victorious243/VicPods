@@ -7,18 +7,34 @@ const {
   removeStoredAudioFile,
   storeEpisodeAudioFile,
 } = require('../services/publish/audioStorageService');
+const {
+  queueWebhookDeliveries,
+} = require('../services/integrations/advancedMediaIntegrationService');
+const {
+  kickWebhookDeliveryWorker,
+} = require('../services/integrations/webhookDeliveryWorkerService');
+const {
+  enqueueAudioMetadataJob,
+  kickMediaJobWorker,
+} = require('../services/media/mediaJobWorkerService');
 const { storeShowCoverFile } = require('../services/publish/coverStorageService');
-const { buildDirectoryChecklist } = require('../services/publish/directoryChecklistService');
+const {
+  DIRECTORY_PLATFORM_KEYS,
+  buildDirectoryChecklist,
+} = require('../services/publish/directoryChecklistService');
 const { buildFeedValidation } = require('../services/publish/feedValidationService');
 const {
   buildEpisodeSummary,
   buildPodcastFeedUrl,
+  buildPodcastShowUrl,
   buildPublishedEpisodeUrl,
   generateUniqueEpisodeSlug,
   generateUniqueShowSlug,
+  normalizeDomainHostname,
   normalizeText,
   syncPodcastShowStats,
 } = require('../services/publish/publishService');
+const { importPodcastFeed } = require('../services/publish/podcastImportService');
 const { AppError } = require('../utils/errors');
 const { episodeEditorPath, podcastShowsPath } = require('../utils/paths');
 const { buildRequestBaseUrl } = require('../utils/requestUrl');
@@ -51,6 +67,56 @@ function parseDateTimeInput(value) {
 
   const parsed = new Date(String(value).trim());
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function parseDateInput(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = new Date(`${normalized}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isHttpUrl(value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch (_error) {
+    return false;
+  }
+}
+
+function cleanOptionalUrl(value, maxLength = 500) {
+  const normalized = clampText(value, maxLength);
+  return normalized && isHttpUrl(normalized) ? normalized : '';
+}
+
+function normalizeThemeVariant(value) {
+  const variant = String(value || '').trim();
+  return ['studio', 'signal', 'sunrise', 'forest'].includes(variant) ? variant : 'studio';
+}
+
+function normalizeCustomDomainStatus(value, hostname) {
+  if (!hostname) {
+    return 'not_configured';
+  }
+
+  const status = String(value || '').trim();
+  return ['pending_verification', 'active'].includes(status) ? status : 'pending_verification';
+}
+
+function normalizeDirectorySubmissionStatus(value) {
+  const status = String(value || '').trim();
+  return ['not_started', 'submitted', 'listed', 'needs_attention'].includes(status)
+    ? status
+    : 'not_started';
 }
 
 function parseExplicitSetting(value) {
@@ -97,6 +163,50 @@ function buildShowDefaults(req) {
   };
 }
 
+function buildShowWebsiteSettingsInput(body = {}, currentShow = null) {
+  const hostname = normalizeDomainHostname(body.customDomainHostname);
+  const currentHostname = normalizeDomainHostname(currentShow?.customDomain?.hostname);
+  const hostnameChanged = hostname !== currentHostname;
+  const customDomainStatus = hostnameChanged
+    ? normalizeCustomDomainStatus('pending_verification', hostname)
+    : normalizeCustomDomainStatus(body.customDomainStatus, hostname);
+  const currentStatus = currentShow?.customDomain?.status || 'not_configured';
+  const statusChanged = customDomainStatus !== currentStatus;
+
+  return {
+    description: clampText(body.description, 4000),
+    authorName: clampText(body.authorName, 120),
+    ownerEmail: clampText(body.ownerEmail, 200).toLowerCase(),
+    language: clampText(body.language, 20).toLowerCase(),
+    categoryPrimary: clampText(body.categoryPrimary, 120),
+    categorySecondary: clampText(body.categorySecondary, 120),
+    websiteUrl: cleanOptionalUrl(body.websiteUrl, 500),
+    copyright: clampText(body.copyright, 240),
+    explicit: body.explicit === 'yes',
+    siteSettings: {
+      heroLabel: clampText(body.heroLabel, 80),
+      heroTagline: clampText(body.heroTagline, 240),
+      featuredLabel: clampText(body.featuredLabel, 80),
+      featuredText: clampText(body.featuredText, 320),
+      primaryCtaLabel: clampText(body.primaryCtaLabel, 80),
+      primaryCtaUrl: cleanOptionalUrl(body.primaryCtaUrl, 500),
+      hostIntro: clampText(body.hostIntro, 500),
+      footerNote: clampText(body.footerNote, 240),
+      themeVariant: normalizeThemeVariant(body.themeVariant),
+    },
+    customDomain: {
+      hostname,
+      status: customDomainStatus,
+      dnsTarget: 'connect.vicpods.app',
+      verifiedAt: customDomainStatus === 'active'
+        ? (statusChanged ? new Date() : currentShow?.customDomain?.verifiedAt || new Date())
+        : null,
+      lastCheckedAt: hostname ? new Date() : null,
+      verificationToken: currentShow?.customDomain?.verificationToken || undefined,
+    },
+  };
+}
+
 function redirectToEpisodeEditor(res, episode) {
   return res.redirect(episodeEditorPath({
     seriesId: episode.seriesId,
@@ -118,6 +228,43 @@ async function getOwnedEpisode(userId, episodeId) {
   return episode;
 }
 
+async function ensureCustomDomainAvailable({ showId, hostname }) {
+  const normalizedHostname = normalizeDomainHostname(hostname);
+  if (!normalizedHostname) {
+    return;
+  }
+
+  const existingShow = await PodcastShow.findOne({
+    _id: { $ne: showId },
+    'customDomain.hostname': normalizedHostname,
+  }).select('_id name');
+
+  if (existingShow) {
+    throw new AppError(`The custom domain ${normalizedHostname} is already attached to another hosted show.`, 400);
+  }
+}
+
+function upsertDirectorySubmission(show, platformKey, nextEntry) {
+  const currentEntries = Array.isArray(show.directorySubmissions)
+    ? show.directorySubmissions.map((entry) => (typeof entry.toObject === 'function' ? entry.toObject() : { ...entry }))
+    : [];
+  const existingIndex = currentEntries.findIndex((entry) => entry.platformKey === platformKey);
+
+  if (existingIndex >= 0) {
+    currentEntries[existingIndex] = {
+      ...currentEntries[existingIndex],
+      ...nextEntry,
+    };
+  } else {
+    currentEntries.push({
+      platformKey,
+      ...nextEntry,
+    });
+  }
+
+  show.directorySubmissions = currentEntries;
+}
+
 async function listShows(req, res, next) {
   try {
     const podcastShows = await PodcastShow.find({ userId: req.currentUser._id }).sort({ updatedAt: -1 });
@@ -134,13 +281,13 @@ async function listShows(req, res, next) {
         .limit(12);
       const feedValidation = buildFeedValidation({ show, episodes, baseUrl: requestBaseUrl });
       const feedUrl = buildPodcastFeedUrl(show, requestBaseUrl);
-      const showUrl = requestBaseUrl.replace(/\/$/, '') + '/podcasts/' + show.slug;
+      const showUrl = buildPodcastShowUrl(show, requestBaseUrl);
 
       return {
         show,
         episodes,
         feedValidation,
-        directoryChecklist: buildDirectoryChecklist({ feedValidation, feedUrl }),
+        directoryChecklist: buildDirectoryChecklist({ feedValidation, feedUrl, show }),
         feedUrl,
         showUrl,
         embedUrl: showUrl + '/embed',
@@ -220,12 +367,213 @@ async function createShow(req, res, next) {
       categoryPrimary: clampText(req.body.categoryPrimary, 120),
       categorySecondary: clampText(req.body.categorySecondary, 120),
       coverImageUrl: clampText(req.body.coverImageUrl, 500),
-      websiteUrl: clampText(req.body.websiteUrl, 500),
+      websiteUrl: cleanOptionalUrl(req.body.websiteUrl, 500),
       copyright: clampText(req.body.copyright, 240),
       explicit: req.body.explicit === 'yes',
+      siteSettings: {
+        heroLabel: 'Live podcast channel',
+        heroTagline: '',
+        featuredLabel: '',
+        featuredText: '',
+        primaryCtaLabel: '',
+        primaryCtaUrl: '',
+        hostIntro: '',
+        footerNote: '',
+        themeVariant: 'studio',
+      },
     });
 
     req.flash('success', 'Hosted show created.');
+    return res.redirect(podcastShowsPath());
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(podcastShowsPath());
+    }
+
+    return next(error);
+  }
+}
+
+async function updateShowSettings(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      throw new AppError('Hosted show not found.', 404);
+    }
+
+    const input = buildShowWebsiteSettingsInput({
+      ...req.body,
+      authorName: req.body.authorName || show.authorName || req.currentUser?.name,
+      ownerEmail: req.body.ownerEmail || show.ownerEmail || req.currentUser?.email,
+      language: req.body.language || show.language || buildShowDefaults(req).language,
+    }, show);
+
+    await ensureCustomDomainAvailable({
+      showId: show._id,
+      hostname: input.customDomain.hostname,
+    });
+
+    show.description = input.description;
+    show.authorName = input.authorName;
+    show.ownerEmail = input.ownerEmail;
+    show.language = input.language;
+    show.categoryPrimary = input.categoryPrimary;
+    show.categorySecondary = input.categorySecondary;
+    show.websiteUrl = input.websiteUrl;
+    show.copyright = input.copyright;
+    show.explicit = input.explicit;
+    show.siteSettings = {
+      ...(show.siteSettings?.toObject ? show.siteSettings.toObject() : show.siteSettings || {}),
+      ...input.siteSettings,
+    };
+    show.customDomain = {
+      ...(show.customDomain?.toObject ? show.customDomain.toObject() : show.customDomain || {}),
+      ...input.customDomain,
+      verificationError: input.customDomain.hostname
+        ? (
+            input.customDomain.status === 'active'
+              ? ''
+              : `Point ${input.customDomain.hostname} to ${input.customDomain.dnsTarget}, then verify from that domain.`
+          )
+        : '',
+    };
+
+    await show.save();
+
+    req.flash('success', 'Hosted show settings saved.');
+    return res.redirect(podcastShowsPath());
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(podcastShowsPath());
+    }
+
+    return next(error);
+  }
+}
+
+async function importShowFromFeed(req, res, next) {
+  try {
+    const result = await importPodcastFeed({
+      userId: req.currentUser._id,
+      rssXml: req.body.rssXml,
+      rssDataUrl: req.body.rssDataUrl,
+      sourceUrl: req.body.sourceUrl,
+    });
+
+    req.flash(
+      'success',
+      `${result.createdShow ? 'Imported' : 'Updated'} ${result.show.name}: ${result.createdEpisodes} created, ${result.updatedEpisodes} updated, ${result.importedPublishedCount} published.`
+    );
+    return res.redirect(podcastShowsPath());
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(podcastShowsPath());
+    }
+
+    return next(error);
+  }
+}
+
+async function verifyShowCustomDomain(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      throw new AppError('Hosted show not found.', 404);
+    }
+
+    const hostname = normalizeDomainHostname(show.customDomain?.hostname);
+    if (!hostname) {
+      throw new AppError('Add a custom domain before verifying it.', 400);
+    }
+
+    await ensureCustomDomainAvailable({
+      showId: show._id,
+      hostname,
+    });
+
+    const requestHost = normalizeDomainHostname(req.get('x-forwarded-host') || req.get('host') || '');
+    show.customDomain.lastCheckedAt = new Date();
+
+    if (requestHost === hostname) {
+      show.customDomain.status = 'active';
+      show.customDomain.verifiedAt = new Date();
+      show.customDomain.verificationError = '';
+      await show.save();
+      req.flash('success', `Custom domain ${hostname} is now active.`);
+      return res.redirect(podcastShowsPath());
+    }
+
+    show.customDomain.status = 'pending_verification';
+    show.customDomain.verificationError = `Waiting for requests on ${hostname}. Point the domain to ${show.customDomain.dnsTarget} and open the site from that hostname before verifying again.`;
+    await show.save();
+
+    req.flash('error', `Custom domain is still pending. Open the show from ${hostname} after DNS points to ${show.customDomain.dnsTarget}.`);
+    return res.redirect(podcastShowsPath());
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect(podcastShowsPath());
+    }
+
+    return next(error);
+  }
+}
+
+async function updateShowDirectorySubmission(req, res, next) {
+  try {
+    const show = await PodcastShow.findOne({
+      _id: req.params.showId,
+      userId: req.currentUser._id,
+    });
+
+    if (!show) {
+      throw new AppError('Hosted show not found.', 404);
+    }
+
+    const platformKey = String(req.params.platformKey || '').trim();
+    if (!DIRECTORY_PLATFORM_KEYS.has(platformKey)) {
+      throw new AppError('Directory platform not supported.', 400);
+    }
+
+    const status = normalizeDirectorySubmissionStatus(req.body.status);
+    const submittedAt = parseDateInput(req.body.submittedAt);
+    const listedAt = parseDateInput(req.body.listedAt);
+    const nextEntry = {
+      platformKey,
+      status,
+      submittedAt: status === 'submitted' || status === 'listed'
+        ? (submittedAt || new Date())
+        : null,
+      listedAt: status === 'listed'
+        ? (listedAt || new Date())
+        : null,
+      listingUrl: cleanOptionalUrl(req.body.listingUrl, 500),
+      notes: clampText(req.body.notes, 500),
+      lastCheckedAt: new Date(),
+    };
+
+    if (status === 'not_started') {
+      nextEntry.submittedAt = null;
+      nextEntry.listedAt = null;
+      nextEntry.listingUrl = '';
+      nextEntry.notes = '';
+    }
+
+    upsertDirectorySubmission(show, platformKey, nextEntry);
+    await show.save();
+
+    req.flash('success', 'Directory tracking updated.');
     return res.redirect(podcastShowsPath());
   } catch (error) {
     if (error.statusCode) {
@@ -264,6 +612,7 @@ async function uploadEpisodeAudio(req, res) {
       originalFilename: storedAudio.originalFilename,
       mimeType: storedAudio.mimeType,
       byteSize: storedAudio.byteSize,
+      metadataStatus: durationSeconds && bitrateKbps ? 'ready' : 'pending',
       durationSeconds,
       bitrateKbps,
       status: 'ready',
@@ -273,6 +622,21 @@ async function uploadEpisodeAudio(req, res) {
     episode.audioAssetId = createdAsset._id;
     episode.durationSeconds = durationSeconds || episode.durationSeconds;
     await episode.save();
+
+    let metadataJob = null;
+    try {
+      metadataJob = await enqueueAudioMetadataJob({
+        userId: req.currentUser._id,
+        episodeId: episode._id,
+        audioAsset: createdAsset,
+      });
+      kickMediaJobWorker(console);
+    } catch (error) {
+      createdAsset.metadataStatus = 'failed';
+      await createdAsset.save();
+      // eslint-disable-next-line no-console
+      console.error(`Audio metadata queue failed for ${createdAsset._id}: ${error.message}`);
+    }
 
     if (previousAsset) {
       previousAsset.status = 'replaced';
@@ -293,11 +657,19 @@ async function uploadEpisodeAudio(req, res) {
         originalFilename: createdAsset.originalFilename,
         mimeType: createdAsset.mimeType,
         byteSize: createdAsset.byteSize,
+        metadataStatus: createdAsset.metadataStatus,
         durationSeconds: createdAsset.durationSeconds,
         bitrateKbps: createdAsset.bitrateKbps,
         publicUrl: buildPublicAudioUrl(createdAsset, requestBaseUrl),
         publicPath: buildPublicAudioPath(createdAsset.storageKey),
       },
+      job: metadataJob
+        ? {
+            id: metadataJob._id,
+            jobType: metadataJob.jobType,
+            status: metadataJob.status,
+          }
+        : null,
     });
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -419,6 +791,18 @@ async function updateEpisodePublication(req, res, next) {
       showIdsToSync.add(String(show._id));
       await Promise.all(Array.from(showIdsToSync).map((showId) => syncPodcastShowStats(showId)));
 
+      await queueWebhookDeliveries({
+        userId: req.currentUser._id,
+        eventType: 'episode.scheduled',
+        episode,
+        show,
+        baseUrl: buildRequestBaseUrl(req),
+        metadata: {
+          scheduledFor: requestedPublishAt.toISOString(),
+        },
+      });
+      kickWebhookDeliveryWorker(console);
+
       req.flash('success', `Episode scheduled for ${requestedPublishAt.toLocaleString()}.`);
       return redirectToEpisodeEditor(res, episode);
     }
@@ -433,6 +817,18 @@ async function updateEpisodePublication(req, res, next) {
     }
     showIdsToSync.add(String(show._id));
     await Promise.all(Array.from(showIdsToSync).map((showId) => syncPodcastShowStats(showId)));
+
+    await queueWebhookDeliveries({
+      userId: req.currentUser._id,
+      eventType: 'episode.published',
+      episode,
+      show,
+      baseUrl: buildRequestBaseUrl(req),
+      metadata: {
+        publishedAt: (episode.publishedAt || new Date()).toISOString(),
+      },
+    });
+    kickWebhookDeliveryWorker(console);
 
     req.flash('success', 'Episode is live and included in the podcast feed.');
     return redirectToEpisodeEditor(res, episode);
@@ -454,8 +850,12 @@ async function updateEpisodePublication(req, res, next) {
 
 module.exports = {
   createShow,
+  importShowFromFeed,
   listShows,
   updateEpisodePublication,
+  updateShowDirectorySubmission,
+  updateShowSettings,
   uploadShowCover,
   uploadEpisodeAudio,
+  verifyShowCustomDomain,
 };

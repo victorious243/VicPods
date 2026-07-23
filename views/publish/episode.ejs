@@ -5,9 +5,22 @@
     publishedEpisode.explicit ? 'Explicit' : 'Clean',
     publishedEpisode.visibility !== 'public' ? 'Premium' : '',
   ].filter(Boolean);
+  const formatChapterTime = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return '';
+    }
+    const total = Math.round(seconds);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const remainingSeconds = total % 60;
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+  };
 %>
 
-<div class="published-podcast-page published-episode-page">
+<div class="published-podcast-page published-episode-page published-theme-<%= publishedEpisode.themeVariant || 'studio' %>">
   <section class="published-episode-stage">
     <div class="published-episode-art-panel">
       <div class="published-cover-frame">
@@ -17,8 +30,11 @@
     </div>
 
     <article class="published-episode-copy">
-      <span class="mini-label published-live-label">Published with VicPods</span>
+      <span class="mini-label published-live-label"><%= publishedEpisode.heroLabel || 'Published with VicPods' %></span>
       <h1><%= publishedEpisode.title %></h1>
+      <% if (publishedEpisode.heroTagline) { %>
+        <p class="published-episode-summary"><%= publishedEpisode.heroTagline %></p>
+      <% } %>
       <p class="published-episode-show">
         <a href="<%= publishedEpisode.showUrl %>"><%= publishedEpisode.showName %></a>
         <span>Hosted by <%= publishedEpisode.showAuthor %></span>
@@ -37,7 +53,24 @@
         <% if (publishedEpisode.showWebsiteUrl) { %>
           <a class="btn btn-ghost" href="<%= publishedEpisode.showWebsiteUrl %>" target="_blank" rel="noopener noreferrer">Website</a>
         <% } %>
+        <% if (publishedEpisode.primaryCtaLabel && publishedEpisode.primaryCtaUrl) { %>
+          <a class="btn btn-secondary" href="<%= publishedEpisode.primaryCtaUrl %>" target="_blank" rel="noopener noreferrer"><%= publishedEpisode.primaryCtaLabel %></a>
+        <% } %>
       </div>
+
+      <% if (publishedEpisode.featuredLabel || publishedEpisode.featuredText || publishedEpisode.hostIntro) { %>
+        <div class="published-support-panel">
+          <% if (publishedEpisode.featuredLabel) { %>
+            <span class="mini-label"><%= publishedEpisode.featuredLabel %></span>
+          <% } %>
+          <% if (publishedEpisode.featuredText) { %>
+            <p><%= publishedEpisode.featuredText %></p>
+          <% } %>
+          <% if (publishedEpisode.hostIntro) { %>
+            <p class="mini-note"><%= publishedEpisode.hostIntro %></p>
+          <% } %>
+        </div>
+      <% } %>
     </article>
   </section>
 
@@ -110,6 +143,28 @@
     </section>
   <% } %>
 
+  <% if (publishedEpisode.chapters && publishedEpisode.chapters.length) { %>
+    <section class="published-episode-section published-rundown-panel">
+      <div class="section-head published-section-head">
+        <div>
+          <span class="mini-label">Chapter markers</span>
+          <h3>Jump through the episode</h3>
+        </div>
+        <span class="published-count-pill"><%= publishedEpisode.chapters.length %> markers</span>
+      </div>
+
+      <div class="published-outline-flow">
+        <% publishedEpisode.chapters.forEach((chapter, index) => { %>
+          <article class="published-outline-beat">
+            <span class="published-outline-index"><%= formatChapterTime(chapter.startSeconds) || String(index + 1).padStart(2, '0') %></span>
+            <span class="published-outline-line" aria-hidden="true"></span>
+            <p><%= chapter.title %></p>
+          </article>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
   <% if ((publishedEpisode.supportLinks || []).length) { %>
     <section class="published-support-panel published-support-panel-wide">
       <span class="mini-label">Support the show</span>
@@ -118,6 +173,13 @@
           <a class="btn btn-secondary" href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
         <% }) %>
       </div>
+    </section>
+  <% } %>
+
+  <% if (publishedEpisode.footerNote) { %>
+    <section class="published-support-panel published-support-panel-wide">
+      <span class="mini-label">From the host</span>
+      <p><%= publishedEpisode.footerNote %></p>
     </section>
   <% } %>
 </div>

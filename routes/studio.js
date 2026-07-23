@@ -12,6 +12,8 @@ router.post('/teams/shows/:showId/collaborators', studioController.addShowCollab
 router.post('/teams/shows/:showId/brand-kit', studioController.updateShowBrandKit);
 router.get('/integrations', studioController.showIntegrations);
 router.post('/integrations/connections', studioController.saveIntegrationConnection);
+router.post('/integrations/connections/:connectionId/test', studioController.sendIntegrationConnectionTest);
+router.post('/integrations/deliveries/:deliveryId/retry', studioController.retryIntegrationDelivery);
 router.get('/calendar', studioController.showStudioCalendar);
 
 module.exports = router;

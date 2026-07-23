@@ -81,6 +81,28 @@
         <button class="btn btn-primary" type="submit">Create Hosted Show</button>
       </div>
     </form>
+
+    <div class="section-head" style="margin-top:24px;">
+      <h3>Import Existing Feed</h3>
+      <span class="mini-label">Migration</span>
+    </div>
+
+    <form method="POST" action="/publish/shows/import" class="form-grid">
+      <label>
+        Source Feed URL
+        <input type="url" name="sourceUrl" maxlength="500" placeholder="https://yourshow.com/feed.xml" />
+      </label>
+
+      <label>
+        RSS XML
+        <textarea name="rssXml" rows="10" maxlength="400000" placeholder="Paste exported RSS XML to migrate your show and episodes into VicPods."></textarea>
+      </label>
+
+      <div class="inline-actions">
+        <button class="btn btn-secondary" type="submit">Import Podcast Feed</button>
+      </div>
+      <p class="mini-note">You can paste RSS XML, upload a feed export, or enter a live feed URL. Re-importing the same source updates the existing imported show instead of duplicating it.</p>
+    </form>
   </article>
 
   <article class="card">
@@ -141,12 +163,56 @@
                   </div>
                   <div class="publish-directory-list">
                     <% detail.directoryChecklist.forEach((platform) => { %>
-                      <article>
-                        <div>
-                          <strong><%= platform.name %></strong>
-                          <p><%= platform.status === 'ready' ? platform.note : platform.blocker %></p>
+                      <% const trackerStatus = ['submitted', 'listed', 'needs_attention'].includes(platform.status) ? platform.status : 'not_started'; %>
+                      <article class="publish-directory-card">
+                        <div class="section-head">
+                          <div>
+                            <strong><%= platform.name %></strong>
+                            <p><%= platform.detail %></p>
+                          </div>
+                          <span class="mini-label <%= platform.status === 'listed' ? 'is-success' : (platform.status === 'needs_attention' || platform.status === 'blocked' ? 'is-error' : '') %>">
+                            <%= platform.statusLabel %>
+                          </span>
                         </div>
-                        <a class="btn btn-ghost" href="<%= platform.submissionUrl %>" target="_blank" rel="noopener noreferrer"><%= platform.status === 'ready' ? 'Submit' : 'Open' %></a>
+
+                        <form method="POST" action="/publish/shows/<%= show._id %>/directories/<%= platform.key %>" class="form-grid">
+                          <div class="two-col">
+                            <label>
+                              Tracking Status
+                              <select name="status">
+                                <option value="not_started" <%= trackerStatus === 'not_started' ? 'selected' : '' %>>Not started</option>
+                                <option value="submitted" <%= trackerStatus === 'submitted' ? 'selected' : '' %>>Submitted</option>
+                                <option value="listed" <%= trackerStatus === 'listed' ? 'selected' : '' %>>Listed</option>
+                                <option value="needs_attention" <%= trackerStatus === 'needs_attention' ? 'selected' : '' %>>Needs attention</option>
+                              </select>
+                            </label>
+                            <label>
+                              Listing URL
+                              <input type="url" name="listingUrl" maxlength="500" value="<%= platform.listingUrl || '' %>" placeholder="https://..." />
+                            </label>
+                          </div>
+                          <div class="two-col">
+                            <label>
+                              Submitted On
+                              <input type="date" name="submittedAt" value="<%= platform.submittedAt ? new Date(platform.submittedAt).toISOString().slice(0, 10) : '' %>" />
+                            </label>
+                            <label>
+                              Listed On
+                              <input type="date" name="listedAt" value="<%= platform.listedAt ? new Date(platform.listedAt).toISOString().slice(0, 10) : '' %>" />
+                            </label>
+                          </div>
+                          <label>
+                            Team Notes
+                            <input type="text" name="notes" maxlength="500" value="<%= platform.notes || '' %>" placeholder="Reviewer note, claim URL, or follow-up detail" />
+                          </label>
+                          <div class="inline-actions">
+                            <a class="btn btn-ghost" href="<%= platform.submissionUrl %>" target="_blank" rel="noopener noreferrer"><%= platform.actionLabel %></a>
+                            <% if (platform.listingUrl) { %>
+                              <a class="btn btn-secondary" href="<%= platform.listingUrl %>" target="_blank" rel="noopener noreferrer">Open Listing</a>
+                            <% } %>
+                            <button class="btn btn-secondary" type="submit">Save Tracker</button>
+                          </div>
+                        </form>
                       </article>
                     <% }) %>
                   </div>
@@ -189,6 +255,156 @@
                   </div>
                 </section>
               </div>
+
+              <section class="publish-health-panel">
+                <div class="section-head">
+                  <h5>Website Settings</h5>
+                  <span class="mini-label"><%= show.siteSettings?.themeVariant || 'studio' %></span>
+                </div>
+
+                <form method="POST" action="/publish/shows/<%= show._id %>/settings" class="form-grid">
+                  <div class="two-col">
+                    <label>
+                      Hero Label
+                      <input type="text" name="heroLabel" maxlength="80" value="<%= show.siteSettings?.heroLabel || '' %>" placeholder="Live podcast channel" />
+                    </label>
+                    <label>
+                      Theme Variant
+                      <select name="themeVariant">
+                        <% ['studio', 'signal', 'sunrise', 'forest'].forEach((variant) => { %>
+                          <option value="<%= variant %>" <%= (show.siteSettings?.themeVariant || 'studio') === variant ? 'selected' : '' %>><%= variant %></option>
+                        <% }) %>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label>
+                    Hero Tagline
+                    <input type="text" name="heroTagline" maxlength="240" value="<%= show.siteSettings?.heroTagline || '' %>" placeholder="A stronger public front door for the show." />
+                  </label>
+
+                  <div class="two-col">
+                    <label>
+                      Featured Label
+                      <input type="text" name="featuredLabel" maxlength="80" value="<%= show.siteSettings?.featuredLabel || '' %>" placeholder="Why listeners stay" />
+                    </label>
+                    <label>
+                      CTA Label
+                      <input type="text" name="primaryCtaLabel" maxlength="80" value="<%= show.siteSettings?.primaryCtaLabel || '' %>" placeholder="Join newsletter" />
+                    </label>
+                  </div>
+
+                  <div class="two-col">
+                    <label>
+                      CTA URL
+                      <input type="url" name="primaryCtaUrl" maxlength="500" value="<%= show.siteSettings?.primaryCtaUrl || '' %>" placeholder="https://..." />
+                    </label>
+                    <label>
+                      Website URL
+                      <input type="url" name="websiteUrl" maxlength="500" value="<%= show.websiteUrl || '' %>" placeholder="https://..." />
+                    </label>
+                  </div>
+
+                  <label>
+                    Featured Message
+                    <textarea name="featuredText" rows="3" maxlength="320"><%= show.siteSettings?.featuredText || '' %></textarea>
+                  </label>
+
+                  <label>
+                    Host Intro
+                    <textarea name="hostIntro" rows="3" maxlength="500"><%= show.siteSettings?.hostIntro || '' %></textarea>
+                  </label>
+
+                  <label>
+                    Footer Note
+                    <input type="text" name="footerNote" maxlength="240" value="<%= show.siteSettings?.footerNote || '' %>" placeholder="Thanks for listening every week." />
+                  </label>
+
+                  <div class="two-col">
+                    <label>
+                      Custom Domain
+                      <input type="text" name="customDomainHostname" maxlength="200" value="<%= show.customDomain?.hostname || '' %>" placeholder="podcast.yourdomain.com" />
+                    </label>
+                    <label>
+                      Domain Status
+                      <select name="customDomainStatus">
+                        <% ['not_configured', 'pending_verification', 'active'].forEach((status) => { %>
+                          <option value="<%= status %>" <%= (show.customDomain?.status || 'not_configured') === status ? 'selected' : '' %>><%= status %></option>
+                        <% }) %>
+                        </select>
+                    </label>
+                  </div>
+
+                  <div class="two-col">
+                    <label>
+                      Author Name
+                      <input type="text" name="authorName" maxlength="120" value="<%= show.authorName || '' %>" />
+                    </label>
+                    <label>
+                      Owner Email
+                      <input type="email" name="ownerEmail" maxlength="200" value="<%= show.ownerEmail || '' %>" />
+                    </label>
+                  </div>
+
+                  <div class="two-col">
+                    <label>
+                      Podcast Language
+                      <input type="text" name="language" maxlength="20" value="<%= show.language || '' %>" />
+                    </label>
+                    <label>
+                      Explicit Default
+                      <select name="explicit">
+                        <option value="no" <%= show.explicit ? '' : 'selected' %>>Clean</option>
+                        <option value="yes" <%= show.explicit ? 'selected' : '' %>>Explicit</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="two-col">
+                    <label>
+                      Primary Category
+                      <input type="text" name="categoryPrimary" maxlength="120" value="<%= show.categoryPrimary || '' %>" />
+                    </label>
+                    <label>
+                      Secondary Category
+                      <input type="text" name="categorySecondary" maxlength="120" value="<%= show.categorySecondary || '' %>" />
+                    </label>
+                  </div>
+
+                  <label>
+                    Description
+                    <textarea name="description" rows="4" maxlength="4000"><%= show.description || '' %></textarea>
+                  </label>
+
+                  <label>
+                    Copyright
+                    <input type="text" name="copyright" maxlength="240" value="<%= show.copyright || '' %>" />
+                  </label>
+
+                  <div class="inline-actions">
+                    <button class="btn btn-primary" type="submit">Save Website Settings</button>
+                  </div>
+                  <p class="mini-note">DNS target: <strong><%= show.customDomain?.dnsTarget || 'connect.vicpods.app' %></strong><%= show.importSource?.sourceUrl ? ` · Imported from ${show.importSource.sourceUrl}` : '' %></p>
+                </form>
+
+                <% if (show.customDomain?.hostname) { %>
+                  <div class="publish-domain-status">
+                    <span class="mini-label"><%= show.customDomain?.status || 'not_configured' %></span>
+                    <p>
+                      <% if (show.customDomain?.verificationError) { %>
+                        <%= show.customDomain.verificationError %>
+                      <% } else if (show.customDomain?.status === 'active') { %>
+                        Domain verified and serving from <strong><%= show.customDomain.hostname %></strong>.
+                      <% } else { %>
+                        Open the show from <strong><%= show.customDomain.hostname %></strong> after DNS points to <strong><%= show.customDomain?.dnsTarget || 'connect.vicpods.app' %></strong>, then verify.
+                      <% } %>
+                    </p>
+                    <form method="POST" action="/publish/shows/<%= show._id %>/domain/verify" class="inline-actions">
+                      <button class="btn btn-secondary" type="submit">Verify Domain</button>
+                    </form>
+                  </div>
+                <% } %>
+              </section>
             </div>
           </article>
         <% }) %>

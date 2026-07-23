@@ -327,7 +327,7 @@
         <% if (recordingWorkflow.transcriptImportedAt) { %>
           Last imported: <%= new Date(recordingWorkflow.transcriptImportedAt).toLocaleString() %>.
         <% } else { %>
-          Importing a transcript also updates the Episode Brief source.
+          Importing a transcript also updates the Episode Brief source and can seed chapter markers from timestamps.
         <% } %>
       </small>
     </label>
@@ -641,6 +641,7 @@
       <button class="btn btn-ghost" type="submit" name="mediaAction" value="save">Save Media Setup</button>
       <button class="btn btn-secondary" type="submit" name="mediaAction" value="clips">Generate AI Clips</button>
       <button class="btn btn-secondary" type="submit" name="mediaAction" value="captions">Generate Captions</button>
+      <button class="btn btn-secondary" type="submit" name="mediaAction" value="quote-cards">Generate Quote Cards</button>
       <button class="btn btn-secondary" type="submit" name="mediaAction" value="cleanup">Request Cleanup</button>
       <button class="btn btn-ghost" type="submit" name="mediaAction" value="descript-export">Queue Descript Export</button>
       <button class="btn btn-ghost" type="submit" name="mediaAction" value="riverside-export">Queue Riverside Export</button>
@@ -686,6 +687,32 @@
         <span class="mini-label">Riverside Pack</span>
         <p><%= advancedMediaPanel.riversidePack.questions.length %> prep questions · <%= advancedMediaPanel.riversidePack.guestName || 'No guest set' %></p>
       </div>
+    </article>
+
+    <article class="studio-calendar-panel">
+      <div class="section-head">
+        <h4>Quote Cards</h4>
+        <span class="mini-label"><%= advancedMediaPanel.quoteCards.length %></span>
+      </div>
+      <% if (!advancedMediaPanel.quoteCards.length) { %>
+        <p class="empty-state">No quote cards yet. Generate them after the episode has a hook, summary, or transcript.</p>
+      <% } else { %>
+        <div class="studio-calendar-list">
+          <% advancedMediaPanel.quoteCards.forEach((card) => { %>
+            <div class="recording-panel">
+              <span class="mini-label"><%= card.platform %> · <%= card.accentKey %></span>
+              <strong><%= card.title %></strong>
+              <p><%= card.quoteText %></p>
+              <div class="published-cover-frame">
+                <img src="<%= card.downloadUrl %>" alt="<%= card.title %> quote card preview" />
+              </div>
+              <div class="inline-actions">
+                <a class="btn btn-ghost" href="<%= card.downloadUrl %>" download="<%= (episode.publicSlug || 'vicpods-quote-card') + '-' + card.platform + '.svg' %>">Download SVG</a>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
     </article>
   </div>
 </section>

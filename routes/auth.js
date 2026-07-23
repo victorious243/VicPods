@@ -5,6 +5,7 @@ const { authLimiter } = require('../middleware/authRateLimit');
 
 const router = express.Router();
 
+router.get('/collaborator-invite/:token', authController.openCollaboratorInvite);
 router.get('/register', requireGuest, authController.showRegister);
 router.post('/register', authLimiter, requireGuest, authController.register);
 router.get('/terms', authController.showTerms);

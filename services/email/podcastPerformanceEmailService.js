@@ -15,12 +15,15 @@ function buildPodcastPerformanceEmail({ name, appUrl, analytics }) {
   const totals = analytics?.totals || {};
   const topEpisodes = analytics?.topEpisodes || [];
   const recommendations = analytics?.recommendations || [];
+  const rangeLabel = analytics?.range?.from && analytics?.range?.to
+    ? `${analytics.range.from} to ${analytics.range.to}`
+    : 'the last 7 days';
   const subject = 'Your VicPods podcast performance report';
 
   const text = [
     'Hi ' + safeName + ',',
     '',
-    'Your podcast performance:',
+    'Your podcast performance for ' + rangeLabel + ':',
     '- Downloads: ' + (totals.audioDownloads || 0),
     '- Plays: ' + (totals.playerPlays || 0),
     '- Completions: ' + (totals.playerCompletions || 0),
@@ -56,7 +59,7 @@ function buildPodcastPerformanceEmail({ name, appUrl, analytics }) {
     "<div style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; max-width:640px; margin:0 auto; padding:28px; color:#0f172a;\">",
     '<p style="margin:0 0 10px; color:#64748b; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;">VicPods analytics</p>',
     '<h1 style="margin:0 0 16px; font-size:30px; line-height:1.15;">Your podcast performance report</h1>',
-    '<p style="margin:0 0 24px; color:#334155; line-height:1.6;">Hi ' + escapeHtml(safeName) + ', here is what happened after publishing.</p>',
+    '<p style="margin:0 0 24px; color:#334155; line-height:1.6;">Hi ' + escapeHtml(safeName) + ', here is what happened after publishing from <strong>' + escapeHtml(rangeLabel) + '</strong>.</p>',
     '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:0 0 24px;">' + metricCards + '</div>',
     '<h2 style="font-size:18px;">Top episodes</h2>',
     '<ul>' + episodeItems + '</ul>',

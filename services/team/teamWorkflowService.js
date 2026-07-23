@@ -2,6 +2,10 @@ const Episode = require('../../models/Episode');
 const { EpisodeWorkItem } = require('../../models/EpisodeWorkItem');
 const PodcastShow = require('../../models/PodcastShow');
 const { COLLABORATOR_ROLES, ShowCollaborator } = require('../../models/ShowCollaborator');
+const {
+  getCollaboratorAccessForShowMap,
+  listAccessibleShowsForUser,
+} = require('./showAccessService');
 
 const ROLE_PERMISSIONS = {
   owner: {
@@ -108,7 +112,7 @@ function formatRoleLabel(role) {
     .join(' ');
 }
 
-function buildShowTeamSummary({ show, collaborators, episodes, workItems }) {
+function buildShowTeamSummary({ show, collaborators, episodes, workItems, access = null }) {
   const showId = String(show._id);
   const showEpisodes = episodes.filter((episode) => String(episode.showId?._id || episode.showId || '') === showId);
   const showCollaborators = collaborators.filter((collaborator) => String(collaborator.showId) === showId);
@@ -121,6 +125,12 @@ function buildShowTeamSummary({ show, collaborators, episodes, workItems }) {
 
   return {
     show,
+    access: access || {
+      isOwner: true,
+      role: 'owner',
+      status: 'active',
+      permissions: ROLE_PERMISSIONS.owner,
+    },
     collaborators: showCollaborators.map((collaborator) => ({
       id: String(collaborator._id),
       name: collaborator.name || collaborator.email,
@@ -129,6 +139,7 @@ function buildShowTeamSummary({ show, collaborators, episodes, workItems }) {
       roleLabel: formatRoleLabel(collaborator.role),
       status: collaborator.status,
       permissions: collaborator.permissions,
+      acceptedAt: collaborator.acceptedAt || null,
     })),
     brandKit: show.brandKit || {},
     metrics: {
@@ -161,12 +172,13 @@ function buildShowTeamSummary({ show, collaborators, episodes, workItems }) {
 }
 
 async function buildTeamWorkflowDashboard({ userId }) {
-  const shows = await PodcastShow.find({ userId }).sort({ updatedAt: -1 });
+  const { shows, collaboratorLinks } = await listAccessibleShowsForUser(userId);
   const showIds = shows.map((show) => show._id);
-  const [collaborators, episodes, workItems] = await Promise.all([
-    ShowCollaborator.find({ userId, showId: { $in: showIds } }).sort({ updatedAt: -1 }),
-    Episode.find({ userId, showId: { $in: showIds } }).sort({ updatedAt: -1 }).populate('showId'),
-    EpisodeWorkItem.find({ userId, showId: { $in: showIds } }).sort({ updatedAt: -1 }).limit(100),
+  const [collaborators, episodes, workItems, collaboratorAccessByShowId] = await Promise.all([
+    ShowCollaborator.find({ showId: { $in: showIds } }).sort({ updatedAt: -1 }),
+    Episode.find({ showId: { $in: showIds } }).sort({ updatedAt: -1 }).populate('showId'),
+    EpisodeWorkItem.find({ showId: { $in: showIds } }).sort({ updatedAt: -1 }).limit(100),
+    getCollaboratorAccessForShowMap(userId, showIds),
   ]);
 
   const showSummaries = shows.map((show) => buildShowTeamSummary({
@@ -174,17 +186,26 @@ async function buildTeamWorkflowDashboard({ userId }) {
     collaborators,
     episodes,
     workItems,
+    access: String(show.userId) === String(userId)
+      ? {
+          isOwner: true,
+          role: 'owner',
+          status: 'active',
+          permissions: ROLE_PERMISSIONS.owner,
+        }
+      : collaboratorAccessByShowId.get(String(show._id)),
   }));
 
   return {
     shows: showSummaries,
     metrics: {
       shows: shows.length,
-      collaborators: collaborators.length,
+      collaborators: collaborators.filter((item) => item.status !== 'disabled').length,
       openTasks: workItems.filter((item) => item.type === 'task' && item.status === 'open').length,
       approvalsInReview: episodes.filter((episode) => episode.approvalWorkflow?.status === 'in_review').length,
       changesRequested: episodes.filter((episode) => episode.approvalWorkflow?.status === 'changes_requested').length,
     },
+    invitedShows: collaboratorLinks.length,
   };
 }
 

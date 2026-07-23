@@ -6236,6 +6236,7 @@ html[data-theme='light'] .topbar {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  max-width: min(100%, 320px);
   text-decoration: none;
   color: inherit;
 }
@@ -6297,6 +6298,10 @@ html[data-theme='light'] .topbar {
   min-width: 0;
 }
 
+.topbar-link-menu {
+  position: relative;
+}
+
 .topbar-link {
   min-height: 38px;
   padding: 0 12px;
@@ -6317,12 +6322,115 @@ html[data-theme='light'] .topbar {
     box-shadow 160ms ease;
 }
 
+.topbar-link-summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.topbar-link-summary::-webkit-details-marker {
+  display: none;
+}
+
 .topbar-link:hover {
   color: var(--text);
   border-color: color-mix(in srgb, rgba(104, 140, 255, 0.18) 46%, var(--border));
   background: color-mix(in srgb, var(--surface) 76%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transform: translateY(-1px);
+}
+
+.topbar-link-menu[open] .topbar-link-summary {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--primary-2) 24%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, var(--bg-2) 18%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 24px rgba(9, 14, 27, 0.18);
+}
+
+.topbar-link-caret {
+  width: 7px;
+  height: 7px;
+  margin-left: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  opacity: 0.72;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.topbar-link-menu[open] .topbar-link-caret {
+  transform: rotate(-135deg) translateY(-1px);
+  opacity: 1;
+}
+
+.topbar-link-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 18;
+  width: min(320px, calc(100vw - 48px));
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, rgba(104, 140, 255, 0.2) 44%, var(--border));
+  background:
+    linear-gradient(180deg, rgba(14, 22, 38, 0.98), rgba(8, 13, 24, 0.99));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 50px rgba(0, 0, 0, 0.34);
+}
+
+.topbar-link-panel-kicker {
+  margin: 0;
+  padding: 2px 4px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 84%, var(--text) 16%);
+}
+
+.topbar-link-panel-item {
+  min-height: 58px;
+  padding: 12px 13px;
+  display: grid;
+  gap: 4px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, rgba(104, 140, 255, 0.12) 36%, var(--border));
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--text);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.topbar-link-panel-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--surface) 84%, var(--bg-2) 16%);
+  box-shadow: 0 14px 22px rgba(15, 23, 42, 0.12);
+}
+
+.topbar-link-panel-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.topbar-link-panel-copy strong {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.topbar-link-panel-copy small {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--muted) 86%, var(--text) 14%);
 }
 
 .topbar-quick-actions {
@@ -6768,7 +6876,28 @@ html[data-theme='light'] .topbar {
   }
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1360px) {
+  .topbar--public .topbar-brand {
+    max-width: 280px;
+  }
+
+  .topbar--public .topbar-links-desktop {
+    gap: 6px;
+  }
+
+  .topbar--public .topbar-link {
+    padding-inline: 10px;
+    font-size: 0.89rem;
+  }
+}
+
+@media (max-width: 1260px) {
+  .topbar--public .topbar-brand-copy small {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
   .topbar {
     top: 10px;
     margin: 12px 16px 0;
@@ -15441,6 +15570,7 @@ html[data-theme="light"] .landing-format-launch div span {
 /* Public podcast page refresh */
 .example-library-shell,
 .idea-tool-shell,
+.whats-new-shell,
 .guides-shell,
 .legal-page-shell {
   gap: 18px;
@@ -15449,6 +15579,10 @@ html[data-theme="light"] .landing-format-launch div span {
 .tool-hero,
 .example-library-shell .example-library-proof,
 .example-library-shell .example-library-section,
+.whats-new-feature-card,
+.whats-new-stream,
+.whats-new-entry,
+.whats-new-side-card,
 .legal-hero,
 .legal-surface-card,
 .legal-policy-card,
@@ -15513,6 +15647,133 @@ html[data-theme="light"] .landing-format-launch div span {
   display: grid;
   gap: 16px;
   padding: clamp(16px, 2vw, 24px);
+}
+
+.whats-new-feature,
+.whats-new-stream,
+.whats-new-entry-list,
+.whats-new-side {
+  display: grid;
+  gap: 16px;
+}
+
+.whats-new-feature-card,
+.whats-new-stream {
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.whats-new-feature-head,
+.whats-new-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.whats-new-feature-head h2,
+.whats-new-entry-title h3,
+.whats-new-side-card h3 {
+  margin: 0;
+}
+
+.whats-new-feature-head h2 {
+  font-size: clamp(1.6rem, 2.8vw, 2.7rem);
+  line-height: 1.02;
+}
+
+.whats-new-feature-card > p,
+.whats-new-entry-summary,
+.whats-new-side-card p {
+  margin: 0;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  line-height: 1.58;
+}
+
+.whats-new-feature-meta,
+.whats-new-entry-meta {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  text-align: right;
+}
+
+.whats-new-entry-meta strong {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.whats-new-entry-meta span {
+  color: color-mix(in srgb, var(--studio-cyan) 80%, var(--text));
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.whats-new-stream-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.72fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.whats-new-entry {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.034), rgba(255, 255, 255, 0.01)),
+    color-mix(in srgb, var(--surface-2) 72%, transparent);
+  box-shadow: none;
+}
+
+.whats-new-entry-title {
+  display: grid;
+  gap: 8px;
+}
+
+.whats-new-entry-title h3 {
+  font-size: clamp(1.18rem, 2vw, 1.7rem);
+  line-height: 1.08;
+}
+
+.whats-new-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.whats-new-highlight {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  padding: 10px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+}
+
+.whats-new-highlight-mark {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary), var(--studio-cyan), var(--studio-yellow));
+}
+
+.whats-new-highlight p {
+  margin: 0;
+  color: color-mix(in srgb, var(--muted) 90%, var(--text));
+  line-height: 1.45;
+}
+
+.whats-new-side-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
 }
 
 .example-library-shell .proof-snippet-grid {
@@ -15622,7 +15883,7 @@ html[data-theme="light"] .landing-format-launch div span {
 
 .example-studio-episode {
   display: grid;
-  grid-template-columns: clamp(150px, 18vw, 220px) minmax(0, 1fr) minmax(260px, 0.38fr);
+  grid-template-columns: clamp(152px, 15vw, 196px) minmax(0, 1fr) minmax(280px, 332px);
   gap: 16px;
   align-items: stretch;
   padding: 14px;
@@ -15635,9 +15896,13 @@ html[data-theme="light"] .landing-format-launch div span {
 
 .example-studio-cover {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 220px;
   aspect-ratio: 4 / 5;
-  align-self: stretch;
+  align-self: start;
+  justify-self: stretch;
   overflow: hidden;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
@@ -15675,7 +15940,7 @@ html[data-theme="light"] .landing-format-launch div span {
   position: absolute;
   left: 50%;
   top: 52%;
-  width: min(68%, 150px);
+  width: min(60%, 132px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
@@ -15709,6 +15974,7 @@ html[data-theme="light"] .landing-format-launch div span {
 .example-studio-main {
   align-content: start;
   padding: 4px 0;
+  overflow: hidden;
 }
 
 .example-studio-topline,
@@ -15812,6 +16078,7 @@ html[data-theme="light"] .landing-format-launch div span {
 .example-studio-launch {
   align-content: start;
   padding: 14px;
+  min-width: 0;
   border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--border));
   border-radius: 8px;
   background:
@@ -16232,6 +16499,10 @@ html[data-theme="light"] .landing-format-launch div span {
 html[data-theme="light"] .tool-hero,
 html[data-theme="light"] .example-library-shell .example-library-proof,
 html[data-theme="light"] .example-library-shell .example-library-section,
+html[data-theme="light"] .whats-new-feature-card,
+html[data-theme="light"] .whats-new-stream,
+html[data-theme="light"] .whats-new-entry,
+html[data-theme="light"] .whats-new-side-card,
 html[data-theme="light"] .legal-hero,
 html[data-theme="light"] .legal-surface-card,
 html[data-theme="light"] .legal-policy-card,
@@ -17022,12 +17293,14 @@ html[data-theme="light"] select {
 
   .example-library-shell .proof-snippet-grid,
   .example-library-shell .template-proof-grid,
+  .whats-new-highlight-grid,
   .legal-summary-grid,
   .cookie-consent-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .tool-hero,
+  .whats-new-stream-grid,
   .legal-hero {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -17173,6 +17446,7 @@ html[data-theme="light"] select {
   .example-library-shell .example-preview-grid,
   .example-library-shell .proof-snippet-grid,
   .example-library-shell .template-proof-grid,
+  .whats-new-highlight-grid,
   .idea-tool-results-grid,
   .idea-tool-support-grid,
   .guides-grid,
@@ -17355,8 +17629,20 @@ html[data-theme="light"] select {
   .example-style-tile,
   .example-style-tile:nth-child(1),
   .example-style-tile:nth-child(3),
-  .example-style-tile:nth-child(4) {
+  .example-style-tile:nth-child(4),
+  .whats-new-highlight-grid {
     grid-template-columns: 1fr;
+  }
+
+  .whats-new-feature-head,
+  .whats-new-entry-head {
+    flex-direction: column;
+  }
+
+  .whats-new-feature-meta,
+  .whats-new-entry-meta {
+    justify-items: start;
+    text-align: left;
   }
 
   .team-command-copy h3 {

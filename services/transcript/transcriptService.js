@@ -1,5 +1,6 @@
 const { AppError } = require('../../utils/errors');
 const { buildTranscript } = require('./buildTranscript');
+const { deriveEpisodeChapters } = require('./transcriptImportService');
 
 function assertEpisodeBriefEligible(episode) {
   if (!['Ready', 'Served'].includes(String(episode.status || ''))) {
@@ -12,6 +13,9 @@ async function refreshTranscript({ series, theme, episode }) {
 
   episode.transcript = buildTranscript({ series, theme, episode });
   episode.transcriptUpdatedAt = new Date();
+  if (!Array.isArray(episode.chapters) || !episode.chapters.length) {
+    episode.chapters = deriveEpisodeChapters({ episode, cues: [] });
+  }
   await episode.save();
 
   return episode.transcript;

@@ -133,7 +133,7 @@ async function recordPodcastAnalyticsEvent({
   }
 
   const requestContext = req ? buildEventContext(req) : {};
-  return PodcastAnalyticsEvent.create({
+  const createdEvent = await PodcastAnalyticsEvent.create({
     userId,
     showId,
     episodeId,
@@ -144,6 +144,15 @@ async function recordPodcastAnalyticsEvent({
     ...requestContext,
     metadata,
   });
+
+  try {
+    const { kickPodcastPerformanceAggregation } = require('./podcastPerformanceWorkerService');
+    kickPodcastPerformanceAggregation(console);
+  } catch (_error) {
+    // Ignore worker boot issues during event capture.
+  }
+
+  return createdEvent;
 }
 
 function summarizeDailyAnalytics({ dailyRows = [], episodes = [], shows = [], today = new Date() } = {}) {
@@ -364,12 +373,27 @@ async function buildPodcastAnalyticsDashboard({ userId, from, to = new Date() })
       .lean(),
   ]);
   const summary = summarizeDailyAnalytics({ dailyRows, episodes, shows });
+  const lastAggregatedAt = dailyRows.reduce((latest, row) => {
+    const candidate = row?.updatedAt ? new Date(row.updatedAt) : null;
+    if (!candidate || Number.isNaN(candidate.getTime())) {
+      return latest;
+    }
+    if (!latest || candidate.getTime() > latest.getTime()) {
+      return candidate;
+    }
+    return latest;
+  }, null);
 
   return {
     ...summary,
     range: {
       from: fromDateKey,
       to: toDateKey,
+    },
+    freshness: {
+      lastAggregatedAt,
+      timelineDays: summary.timeline.length,
+      hasData: Boolean(summary.timeline.length || summary.topEpisodes.length),
     },
     recommendations: buildGrowthRecommendations(summary),
   };

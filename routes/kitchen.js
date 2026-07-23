@@ -21,6 +21,10 @@ router.post(
   '/:seriesId/themes/:themeId/episodes/:episodeId/transcript/generate',
   transcriptController.generateTranscript
 );
+router.post(
+  '/:seriesId/themes/:themeId/episodes/:episodeId/transcript/import',
+  transcriptController.importTranscript
+);
 router.get(
   '/:seriesId/themes/:themeId/episodes/:episodeId/transcript/download',
   transcriptController.downloadTranscript

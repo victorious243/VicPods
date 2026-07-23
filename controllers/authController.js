@@ -21,6 +21,11 @@ const {
   resendMfaPin,
   maskEmail,
 } = require('../services/auth/mfaService');
+const {
+  acceptPendingCollaboratorInvitesForUser,
+  getCollaboratorInviteByToken,
+  normalizeInviteToken,
+} = require('../services/team/collaboratorInviteService');
 const { AppError } = require('../utils/errors');
 const { renderPage } = require('../utils/render');
 
@@ -42,19 +47,33 @@ function getProviderErrorMessage(error, fallbackMessage) {
 
 async function establishUserSession(req, user) {
   const userId = user._id.toString();
+  const pendingCollaboratorInviteToken = normalizeInviteToken(req.session?.pendingCollaboratorInviteToken || '');
   user.lastActiveAt = new Date();
   await user.save();
 
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     req.session.regenerate((error) => {
       if (error) {
         return reject(error);
       }
 
       req.session.userId = userId;
+      if (pendingCollaboratorInviteToken) {
+        req.session.pendingCollaboratorInviteToken = pendingCollaboratorInviteToken;
+      }
       return resolve();
     });
   });
+
+  const inviteResult = await acceptPendingCollaboratorInvitesForUser(user, {
+    inviteToken: pendingCollaboratorInviteToken,
+  });
+
+  if (req.session && (inviteResult.acceptedCount > 0 || inviteResult.mismatch)) {
+    delete req.session.pendingCollaboratorInviteToken;
+  }
+
+  return inviteResult;
 }
 
 function establishPendingMfaSession(req, userId, email) {
@@ -98,10 +117,16 @@ async function finalizeLoginWithMfa(req, user, welcomeMessage) {
     };
   }
 
-  await establishUserSession(req, user);
-  req.flash('success', welcomeMessage);
+  const inviteResult = await establishUserSession(req, user);
+  req.flash('success', inviteResult.acceptedCount > 0
+    ? `${welcomeMessage} ${inviteResult.acceptedCount} collaborator invite${inviteResult.acceptedCount === 1 ? '' : 's'} accepted.`
+    : welcomeMessage);
+  if (inviteResult.mismatch) {
+    req.flash('error', `This collaborator invite is for ${inviteResult.expectedEmail}. Sign in with that email to join ${inviteResult.showName || 'the show'}.`);
+  }
   return {
     mfaRequired: false,
+    inviteResult,
   };
 }
 
@@ -206,6 +231,41 @@ function showMfa(req, res) {
       ...AUTH_PAGE_SEO,
     },
   });
+}
+
+async function openCollaboratorInvite(req, res, next) {
+  try {
+    const inviteToken = normalizeInviteToken(req.params.token);
+    const collaboratorInvite = await getCollaboratorInviteByToken(inviteToken);
+
+    if (!collaboratorInvite || !collaboratorInvite.showId) {
+      req.flash('error', 'This collaborator invite is invalid or has expired.');
+      return res.redirect('/auth/login');
+    }
+
+    req.session.pendingCollaboratorInviteToken = inviteToken;
+
+    if (req.currentUser) {
+      const inviteResult = await establishUserSession(req, req.currentUser);
+      if (inviteResult.acceptedCount > 0) {
+        req.flash('success', `You joined ${collaboratorInvite.showId.name}. Your collaborator access is active now.`);
+        return res.redirect('/studio/teams');
+      }
+
+      if (inviteResult.mismatch) {
+        req.flash('error', `This invite is for ${inviteResult.expectedEmail}. Sign in with that email to join ${inviteResult.showName || collaboratorInvite.showId.name}.`);
+        return res.redirect('/settings');
+      }
+
+      req.flash('success', `Invite loaded for ${collaboratorInvite.email}. Complete sign-in with that email to join ${collaboratorInvite.showId.name}.`);
+      return res.redirect('/auth/login');
+    }
+
+    req.flash('success', `Invite loaded for ${collaboratorInvite.email}. Sign in or create an account with that email to join ${collaboratorInvite.showId.name}.`);
+    return res.redirect('/auth/login');
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function register(req, res, next) {
@@ -325,7 +385,7 @@ async function verify(req, res, next) {
       pin: req.body.pin,
     });
 
-    await establishUserSession(req, user);
+    const inviteResult = await establishUserSession(req, user);
     await recordActivityEvent(req, {
       eventType: 'signup_completed',
       user,
@@ -345,7 +405,9 @@ async function verify(req, res, next) {
       'success',
       hasNoCardTrial
         ? `Email verified. Your no-card ${String(user.plan || 'premium').toUpperCase()} trial is live until ${new Date(user.currentPeriodEnd).toLocaleDateString()}.`
-        : 'Email verified. Welcome to your Studio.'
+        : (inviteResult.acceptedCount > 0
+          ? `Email verified. Welcome to your Studio. ${inviteResult.acceptedCount} collaborator invite${inviteResult.acceptedCount === 1 ? '' : 's'} accepted.`
+          : 'Email verified. Welcome to your Studio.')
     );
     return res.redirect('/studio');
   } catch (error) {
@@ -467,14 +529,16 @@ async function verifyMfa(req, res, next) {
       pin: req.body.pin,
     });
 
-    await establishUserSession(req, user);
+    const inviteResult = await establishUserSession(req, user);
     await recordActivityEvent(req, {
       eventType: 'login_success',
       user,
       authProvider: user.authProvider,
       metadata: { channel: 'web', via: 'mfa' },
     });
-    req.flash('success', `Welcome, ${user.name}.`);
+    req.flash('success', inviteResult.acceptedCount > 0
+      ? `Welcome, ${user.name}. ${inviteResult.acceptedCount} collaborator invite${inviteResult.acceptedCount === 1 ? '' : 's'} accepted.`
+      : `Welcome, ${user.name}.`);
     return res.redirect('/studio');
   } catch (error) {
     if (error.statusCode) {
@@ -544,6 +608,7 @@ module.exports = {
   showVerify,
   showResetPassword,
   showMfa,
+  openCollaboratorInvite,
   register,
   forgotPassword,
   login,

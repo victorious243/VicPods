@@ -33,21 +33,81 @@ const webhookDeliverySchema = new mongoose.Schema(
       trim: true,
       maxlength: 4000,
     },
+    payload: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     status: {
       type: String,
-      enum: ['queued', 'delivered', 'failed', 'skipped'],
+      enum: ['queued', 'processing', 'retrying', 'delivered', 'failed', 'skipped'],
       default: 'queued',
       index: true,
+    },
+    attemptCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    maxAttempts: {
+      type: Number,
+      default: 5,
+      min: 1,
+    },
+    nextAttemptAt: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
+    lastAttemptAt: {
+      type: Date,
+      default: null,
+    },
+    deliveredAt: {
+      type: Date,
+      default: null,
     },
     responseCode: {
       type: Number,
       default: null,
+    },
+    responseBodyPreview: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 2000,
     },
     errorMessage: {
       type: String,
       default: '',
       trim: true,
       maxlength: 1000,
+    },
+    attemptLog: {
+      type: [
+        {
+          attemptedAt: {
+            type: Date,
+            default: Date.now,
+          },
+          status: {
+            type: String,
+            default: '',
+            trim: true,
+            maxlength: 40,
+          },
+          responseCode: {
+            type: Number,
+            default: null,
+          },
+          detail: {
+            type: String,
+            default: '',
+            trim: true,
+            maxlength: 1000,
+          },
+        },
+      ],
+      default: [],
     },
   },
   {
@@ -56,5 +116,6 @@ const webhookDeliverySchema = new mongoose.Schema(
 );
 
 webhookDeliverySchema.index({ userId: 1, status: 1, createdAt: -1 });
+webhookDeliverySchema.index({ status: 1, nextAttemptAt: 1 });
 
 module.exports = mongoose.model('WebhookDelivery', webhookDeliverySchema);

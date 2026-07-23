@@ -21,6 +21,7 @@ const {
   buildPodcastAnalyticsDashboard,
   recordPodcastAnalyticsEvent,
 } = require('../services/analytics/podcastAnalyticsService');
+const { acceptPendingCollaboratorInvitesForUser } = require('../services/team/collaboratorInviteService');
 const { getReferralBonusCredits } = require('../services/marketing/referralService');
 const Episode = require('../models/Episode');
 const PodcastShow = require('../models/PodcastShow');
@@ -141,10 +142,11 @@ function buildSessionPayload(req, user, effectivePlan) {
 }
 
 async function establishUserSession(req, user) {
+  const pendingCollaboratorInviteToken = String(req.session?.pendingCollaboratorInviteToken || '').trim().toLowerCase();
   user.lastActiveAt = new Date();
   await user.save();
 
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     req.session.regenerate((error) => {
       if (error) {
         return reject(error);
@@ -152,9 +154,22 @@ async function establishUserSession(req, user) {
 
       req.session.userId = user._id.toString();
       req.session.apiAccessToken = crypto.randomBytes(24).toString('hex');
+      if (pendingCollaboratorInviteToken) {
+        req.session.pendingCollaboratorInviteToken = pendingCollaboratorInviteToken;
+      }
       return resolve();
     });
   });
+
+  const inviteResult = await acceptPendingCollaboratorInvitesForUser(user, {
+    inviteToken: pendingCollaboratorInviteToken,
+  });
+
+  if (req.session && (inviteResult.acceptedCount > 0 || inviteResult.mismatch)) {
+    delete req.session.pendingCollaboratorInviteToken;
+  }
+
+  return inviteResult;
 }
 
 function requireApiUser(req, res) {

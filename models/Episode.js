@@ -264,6 +264,33 @@ const episodeSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    chapters: {
+      type: [
+        {
+          title: {
+            type: String,
+            trim: true,
+            maxlength: 180,
+          },
+          startSeconds: {
+            type: Number,
+            default: null,
+            min: 0,
+          },
+          endSeconds: {
+            type: Number,
+            default: null,
+            min: 0,
+          },
+          source: {
+            type: String,
+            enum: ['manual', 'outline', 'transcript'],
+            default: 'manual',
+          },
+        },
+      ],
+      default: [],
+    },
     recordingWorkflow: {
       status: {
         type: String,
@@ -651,6 +678,47 @@ const episodeSchema = new mongoose.Schema(
           type: Date,
           default: null,
         },
+      },
+      quoteCards: {
+        type: [
+          {
+            title: {
+              type: String,
+              trim: true,
+              maxlength: 160,
+            },
+            quoteText: {
+              type: String,
+              trim: true,
+              maxlength: 320,
+            },
+            platform: {
+              type: String,
+              enum: ['instagram', 'linkedin', 'x'],
+              default: 'instagram',
+            },
+            accentKey: {
+              type: String,
+              enum: ['sunrise', 'lagoon', 'midnight'],
+              default: 'sunrise',
+            },
+            svgMarkup: {
+              type: String,
+              default: '',
+              maxlength: 24000,
+            },
+            downloadUrl: {
+              type: String,
+              default: '',
+              maxlength: 32000,
+            },
+            updatedAt: {
+              type: Date,
+              default: null,
+            },
+          },
+        ],
+        default: [],
       },
       cleanupRequest: {
         status: {

@@ -164,6 +164,35 @@
           </label>
         </div>
 
+        <div class="recording-panel">
+          <div class="section-head">
+            <div>
+              <span class="mini-label">Paid private feed</span>
+              <h4>Subscriber offer</h4>
+            </div>
+            <span class="mini-label"><%= item.privateSubscriberCount || 0 %> active</span>
+          </div>
+          <label class="team-field">
+            <span>Offer title</span>
+            <input type="text" name="privateFeedTitle" maxlength="120" value="<%= monetizationSettings.privateFeedTitle || '' %>" placeholder="Members-only audio feed" />
+          </label>
+          <label class="team-field">
+            <span>Offer description</span>
+            <textarea name="privateFeedDescription" rows="3" maxlength="600" placeholder="Private episodes, bonus drops, and premium access for loyal listeners."><%= monetizationSettings.privateFeedDescription || '' %></textarea>
+          </label>
+          <div class="team-field-row">
+            <label class="team-field">
+              <span>Stripe price ID</span>
+              <input type="text" name="privateFeedPriceId" maxlength="120" value="<%= monetizationSettings.privateFeedPriceId || '' %>" placeholder="price_..." />
+            </label>
+            <label class="team-field">
+              <span>CTA label</span>
+              <input type="text" name="privateFeedCtaLabel" maxlength="80" value="<%= monetizationSettings.privateFeedCtaLabel || '' %>" placeholder="Unlock private feed" />
+            </label>
+          </div>
+          <p class="mini-note">Use a recurring Stripe price so listeners can subscribe and receive entitlement-based feed access automatically.</p>
+        </div>
+
         <div class="inline-actions">
           <button class="btn btn-primary" type="submit">Save Monetization</button>
           <% if (item.privateFeedUrl) { %>
@@ -207,6 +236,12 @@
             </div>
           <% }) %>
         </div>
+        <% if (monetizationSettings.privateFeedsEnabled) { %>
+          <div class="studio-calendar-item">
+            <span>Paid subscribers</span>
+            <strong><%= item.privateSubscriberCount || 0 %></strong>
+          </div>
+        <% } %>
       </div>
     </aside>
   </section>

@@ -21,7 +21,10 @@ const { ensureCsrfToken, verifyCsrfToken } = require('./middleware/csrfProtectio
 const { flashMiddleware } = require('./middleware/flash');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const { trackAudioDownload } = require('./middleware/podcastAnalyticsTracking');
+const { startPodcastPerformanceWorker } = require('./services/analytics/podcastPerformanceWorkerService');
+const { startWebhookDeliveryWorker } = require('./services/integrations/webhookDeliveryWorkerService');
 const { startPublishScheduler } = require('./services/publish/publishSchedulerService');
+const { startMediaJobWorker } = require('./services/media/mediaJobWorkerService');
 
 const webhooksRouter = require('./routes/webhooks');
 const indexRouter = require('./routes/index');
@@ -75,6 +78,9 @@ connectDatabase(process.env.MONGO_URI)
     // eslint-disable-next-line no-console
     console.log('Connected to MongoDB');
     startPublishScheduler();
+    startMediaJobWorker();
+    startPodcastPerformanceWorker();
+    startWebhookDeliveryWorker();
   })
   .catch((error) => {
     // eslint-disable-next-line no-console

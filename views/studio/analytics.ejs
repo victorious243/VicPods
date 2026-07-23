@@ -7,6 +7,7 @@
     recommendations: [],
     range: { from: '', to: '' },
   };
+  const digestStatus = performanceDigest || { lastSentAt: null, lastWeekKey: '' };
   const totals = analyticsData.totals || {};
   const metricCards = [
     { label: 'Downloads', value: totals.audioDownloads || 0, note: 'Audio file requests' },
@@ -74,6 +75,10 @@
       <div class="studio-now-meta">
         <span><%= totals.feedRequests || 0 %> feed requests</span>
         <span><%= (analyticsData.topEpisodes || []).length %> ranked episodes</span>
+      </div>
+      <div class="studio-now-meta">
+        <span><%= analyticsData.freshness?.lastAggregatedAt ? `rollup ${new Date(analyticsData.freshness.lastAggregatedAt).toLocaleString()}` : 'waiting for first rollup' %></span>
+        <span><%= digestStatus.lastSentAt ? `weekly digest ${new Date(digestStatus.lastSentAt).toLocaleDateString()}` : 'weekly digest pending' %></span>
       </div>
     </aside>
   </div>

@@ -265,6 +265,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 24,
     },
+    lastPodcastPerformanceEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    lastPodcastPerformanceEmailWeekKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 24,
+    },
     lastAiSuggestionsEmailSentAt: {
       type: Date,
       default: null,

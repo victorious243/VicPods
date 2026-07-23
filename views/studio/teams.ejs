@@ -83,7 +83,10 @@
           <h3><%= show.name %></h3>
           <p class="mini-note"><%= item.metrics.episodes %> episodes · <%= item.metrics.collaborators %> collaborators · <%= item.metrics.openTasks %> open tasks</p>
         </div>
-        <a href="/podcasts/<%= show.slug %>" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Public Page</a>
+        <div class="inline-actions">
+          <span class="mini-label"><%= item.access?.isOwner ? 'Owner access' : ((item.access?.roleLabel || item.access?.role || 'collaborator')) %></span>
+          <a href="/podcasts/<%= show.slug %>" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Public Page</a>
+        </div>
       </div>
 
       <div class="studio-command-metrics">
@@ -104,100 +107,111 @@
         </div>
       </div>
 
-      <div class="team-panel-grid team-form-grid">
-        <form method="POST" action="/studio/teams/shows/<%= show._id %>/collaborators" class="recording-panel form-grid team-form-panel team-collaborator-form">
-          <div class="team-form-head">
-            <div>
-              <span class="mini-label">People</span>
-              <h4>Add collaborator</h4>
-              <p>Invite the producer, editor, analyst, guest, or owner who needs to help move this show through review.</p>
+      <% if (item.access?.isOwner) { %>
+        <div class="team-panel-grid team-form-grid">
+          <form method="POST" action="/studio/teams/shows/<%= show._id %>/collaborators" class="recording-panel form-grid team-form-panel team-collaborator-form">
+            <div class="team-form-head">
+              <div>
+                <span class="mini-label">People</span>
+                <h4>Add collaborator</h4>
+                <p>Invite the producer, editor, analyst, guest, or owner who needs to help move this show through review.</p>
+              </div>
+              <div class="team-invite-card" aria-hidden="true">
+                <span class="team-invite-avatar">+</span>
+                <span class="team-invite-lines"><i></i><i></i></span>
+              </div>
             </div>
-            <div class="team-invite-card" aria-hidden="true">
-              <span class="team-invite-avatar">+</span>
-              <span class="team-invite-lines"><i></i><i></i></span>
-            </div>
-          </div>
 
-          <div class="team-invite-console">
-            <label class="team-field team-field-wide team-field-featured">
-              <span>Name</span>
-              <input type="text" name="name" maxlength="120" placeholder="Alex Morgan" />
+            <div class="team-invite-console">
+              <label class="team-field team-field-wide team-field-featured">
+                <span>Name</span>
+                <input type="text" name="name" maxlength="120" placeholder="Alex Morgan" />
+              </label>
+              <label class="team-field team-field-wide team-field-featured">
+                <span>Email</span>
+                <input type="email" name="email" maxlength="200" required placeholder="alex@studio.com" />
+              </label>
+              <div class="team-field-row">
+                <label class="team-field">
+                  <span>Role</span>
+                  <select name="role">
+                    <option value="producer">Producer</option>
+                    <option value="editor">Editor</option>
+                    <option value="analyst">Analyst</option>
+                    <option value="guest">Guest</option>
+                    <option value="owner">Owner</option>
+                  </select>
+                </label>
+                <label class="team-field">
+                  <span>Status</span>
+                  <select name="status">
+                    <option value="invited">Invited</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </label>
+              </div>
+              <label class="team-field team-field-wide">
+                <span>Invite message</span>
+                <textarea name="inviteMessage" rows="3" maxlength="500" placeholder="Add a quick note about what you want this person to help with."></textarea>
+              </label>
+            </div>
+
+            <div class="team-role-preview" aria-hidden="true">
+              <span>Producer</span>
+              <span>Editor</span>
+              <span>Analyst</span>
+              <span>Guest</span>
+              <span>Owner</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Invite</button>
+          </form>
+
+          <form method="POST" action="/studio/teams/shows/<%= show._id %>/brand-kit" class="recording-panel form-grid team-form-panel team-brand-form">
+            <div class="team-form-head">
+              <div>
+                <span class="mini-label">Reusable rules</span>
+                <h4>Brand kit</h4>
+                <p>Keep the show voice, approved language, visual notes, and sponsor safety guidance in one operating brief.</p>
+              </div>
+              <span class="team-form-icon team-form-icon-brand" aria-hidden="true">B</span>
+            </div>
+
+            <label class="team-field team-field-wide">
+              <span>Positioning</span>
+              <textarea name="positioning" rows="3" maxlength="1000"><%= brandKit.positioning || '' %></textarea>
             </label>
-            <label class="team-field team-field-wide team-field-featured">
-              <span>Email</span>
-              <input type="email" name="email" maxlength="200" required placeholder="alex@studio.com" />
+            <label class="team-field team-field-wide">
+              <span>Voice rules</span>
+              <textarea name="voiceRules" rows="3"><%= (brandKit.voiceRules || []).join('\n') %></textarea>
             </label>
             <div class="team-field-row">
               <label class="team-field">
-                <span>Role</span>
-                <select name="role">
-                  <option value="producer">Producer</option>
-                  <option value="editor">Editor</option>
-                  <option value="analyst">Analyst</option>
-                  <option value="guest">Guest</option>
-                  <option value="owner">Owner</option>
-                </select>
+                <span>Approved phrases</span>
+                <textarea name="approvedPhrases" rows="3"><%= (brandKit.approvedPhrases || []).join('\n') %></textarea>
               </label>
               <label class="team-field">
-                <span>Status</span>
-                <select name="status">
-                  <option value="invited">Invited</option>
-                  <option value="active">Active</option>
-                  <option value="disabled">Disabled</option>
-                </select>
+                <span>Banned phrases</span>
+                <textarea name="bannedPhrases" rows="3"><%= (brandKit.bannedPhrases || []).join('\n') %></textarea>
               </label>
             </div>
-          </div>
-
-          <div class="team-role-preview" aria-hidden="true">
-            <span>Producer</span>
-            <span>Editor</span>
-            <span>Analyst</span>
-            <span>Guest</span>
-            <span>Owner</span>
-          </div>
-          <button type="submit" class="btn btn-primary">Save Collaborator</button>
-        </form>
-
-        <form method="POST" action="/studio/teams/shows/<%= show._id %>/brand-kit" class="recording-panel form-grid team-form-panel team-brand-form">
-          <div class="team-form-head">
-            <div>
-              <span class="mini-label">Reusable rules</span>
-              <h4>Brand kit</h4>
-              <p>Keep the show voice, approved language, visual notes, and sponsor safety guidance in one operating brief.</p>
-            </div>
-            <span class="team-form-icon team-form-icon-brand" aria-hidden="true">B</span>
-          </div>
-
-          <label class="team-field team-field-wide">
-            <span>Positioning</span>
-            <textarea name="positioning" rows="3" maxlength="1000"><%= brandKit.positioning || '' %></textarea>
-          </label>
-          <label class="team-field team-field-wide">
-            <span>Voice rules</span>
-            <textarea name="voiceRules" rows="3"><%= (brandKit.voiceRules || []).join('\n') %></textarea>
-          </label>
-          <div class="team-field-row">
-            <label class="team-field">
-              <span>Approved phrases</span>
-              <textarea name="approvedPhrases" rows="3"><%= (brandKit.approvedPhrases || []).join('\n') %></textarea>
+            <label class="team-field team-field-wide">
+              <span>Visual notes</span>
+              <textarea name="visualNotes" rows="3" maxlength="1000"><%= brandKit.visualNotes || '' %></textarea>
             </label>
-            <label class="team-field">
-              <span>Banned phrases</span>
-              <textarea name="bannedPhrases" rows="3"><%= (brandKit.bannedPhrases || []).join('\n') %></textarea>
+            <label class="team-field team-field-wide">
+              <span>Sponsor safety notes</span>
+              <textarea name="sponsorSafetyNotes" rows="3" maxlength="1000"><%= brandKit.sponsorSafetyNotes || '' %></textarea>
             </label>
-          </div>
-          <label class="team-field team-field-wide">
-            <span>Visual notes</span>
-            <textarea name="visualNotes" rows="3" maxlength="1000"><%= brandKit.visualNotes || '' %></textarea>
-          </label>
-          <label class="team-field team-field-wide">
-            <span>Sponsor safety notes</span>
-            <textarea name="sponsorSafetyNotes" rows="3" maxlength="1000"><%= brandKit.sponsorSafetyNotes || '' %></textarea>
-          </label>
-          <button type="submit" class="btn btn-secondary">Save Brand Kit</button>
-        </form>
-      </div>
+            <button type="submit" class="btn btn-secondary">Save Brand Kit</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="recording-panel">
+          <span class="mini-label">Collaborator access</span>
+          <h4>You are inside this show as <%= item.access?.role || 'collaborator' %>.</h4>
+          <p class="mini-note">Owner-only controls like invites and brand rules stay locked, but the show state, approval queue, and production activity remain visible here.</p>
+        </div>
+      <% } %>
     </article>
 
     <aside class="studio-action-panel team-collaborator-panel">
@@ -218,6 +232,9 @@
                 <small><%= collaborator.roleLabel %> · <%= collaborator.status %></small>
                 <strong><%= collaborator.name %></strong>
                 <em><%= collaborator.email %></em>
+                <% if (collaborator.acceptedAt) { %>
+                  <em>Joined <%= new Date(collaborator.acceptedAt).toLocaleDateString() %></em>
+                <% } %>
               </span>
             </div>
           <% }) %>

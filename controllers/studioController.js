@@ -20,12 +20,15 @@ const {
   normalizeBrandKitInput,
   normalizeCollaboratorInput,
 } = require('../services/team/teamWorkflowService');
+const { inviteShowCollaborator } = require('../services/team/collaboratorInviteService');
 const { ShowCollaborator } = require('../models/ShowCollaborator');
 const {
   buildAdvancedMediaDashboard,
   normalizeConnectionInput,
+  queueConnectionTestDelivery,
 } = require('../services/integrations/advancedMediaIntegrationService');
 const { IntegrationConnection } = require('../models/IntegrationConnection');
+const { retryWebhookDelivery, kickWebhookDeliveryWorker } = require('../services/integrations/webhookDeliveryWorkerService');
 const { buildRequestBaseUrl } = require('../utils/requestUrl');
 const { renderPage } = require('../utils/render');
 
@@ -229,6 +232,10 @@ async function showAnalytics(req, res, next) {
       view: 'studio/analytics',
       data: {
         analytics,
+        performanceDigest: {
+          lastSentAt: req.currentUser.lastPodcastPerformanceEmailSentAt || null,
+          lastWeekKey: req.currentUser.lastPodcastPerformanceEmailWeekKey || '',
+        },
       },
     });
   } catch (error) {
@@ -284,6 +291,12 @@ async function showMonetization(req, res, next) {
 
 async function updateShowMonetization(req, res, next) {
   try {
+    const privateFeedPriceId = String(req.body.privateFeedPriceId || '').trim().slice(0, 120);
+    if (req.body.privateFeedsEnabled === 'on' && privateFeedPriceId && !privateFeedPriceId.startsWith('price_')) {
+      req.flash('error', 'Stripe private feed price IDs should start with price_.');
+      return res.redirect('/studio/monetization');
+    }
+
     const show = await PodcastShow.findOne({
       _id: req.params.showId,
       userId: req.currentUser._id,
@@ -299,6 +312,10 @@ async function updateShowMonetization(req, res, next) {
       supportLinks: parseSupportLinks(req.body),
       premiumEnabled: req.body.premiumEnabled === 'on',
       privateFeedsEnabled: req.body.privateFeedsEnabled === 'on',
+      privateFeedTitle: String(req.body.privateFeedTitle || '').trim().slice(0, 120),
+      privateFeedDescription: String(req.body.privateFeedDescription || '').trim().slice(0, 600),
+      privateFeedPriceId,
+      privateFeedCtaLabel: String(req.body.privateFeedCtaLabel || '').trim().slice(0, 80),
       sponsorContactEmail: String(req.body.sponsorContactEmail || '').trim().toLowerCase().slice(0, 200),
       sponsorPitch: String(req.body.sponsorPitch || '').trim().slice(0, 1200),
       audienceSummary: String(req.body.audienceSummary || '').trim().slice(0, 1200),
@@ -363,27 +380,27 @@ async function addShowCollaborator(req, res, next) {
       return res.redirect('/studio/teams');
     }
 
-    await ShowCollaborator.findOneAndUpdate(
-      {
-        userId: req.currentUser._id,
-        showId: show._id,
-        email: input.email,
+    const result = await inviteShowCollaborator({
+      ownerUser: req.currentUser,
+      show,
+      input: {
+        ...input,
+        inviteMessage: req.body.inviteMessage,
       },
-      {
-        $set: input,
-        $setOnInsert: {
-          userId: req.currentUser._id,
-          showId: show._id,
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      }
-    );
+      appUrl: buildRequestBaseUrl(req) || process.env.APP_URL,
+    });
 
-    req.flash('success', 'Collaborator saved.');
+    if (result.acceptedImmediately) {
+      req.flash('success', 'Collaborator linked to your account access immediately.');
+      return res.redirect('/studio/teams');
+    }
+
+    req.flash(
+      'success',
+      result.emailResult?.delivered || result.emailResult?.devFallback
+        ? `Invite sent to ${input.email}.`
+        : `Collaborator saved for ${input.email}.`
+    );
     return res.redirect('/studio/teams');
   } catch (error) {
     return next(error);
@@ -436,6 +453,16 @@ async function saveIntegrationConnection(req, res, next) {
   try {
     const input = normalizeConnectionInput(req.body);
 
+    if (['webhook', 'zapier'].includes(input.provider) && !input.endpointUrl) {
+      req.flash('error', 'Add a valid webhook or Zapier endpoint URL.');
+      return res.redirect('/studio/integrations');
+    }
+
+    if (!input.events.length) {
+      req.flash('error', 'Choose at least one event for this connection.');
+      return res.redirect('/studio/integrations');
+    }
+
     await IntegrationConnection.create({
       userId: req.currentUser._id,
       ...input,
@@ -448,8 +475,56 @@ async function saveIntegrationConnection(req, res, next) {
   }
 }
 
+async function sendIntegrationConnectionTest(req, res, next) {
+  try {
+    const connection = await IntegrationConnection.findOne({
+      _id: req.params.connectionId,
+      userId: req.currentUser._id,
+    });
+
+    if (!connection) {
+      req.flash('error', 'Integration connection not found.');
+      return res.redirect('/studio/integrations');
+    }
+
+    await queueConnectionTestDelivery({
+      connection,
+      userId: req.currentUser._id,
+      baseUrl: buildRequestBaseUrl(req),
+    });
+    kickWebhookDeliveryWorker(console);
+
+    req.flash('success', 'Test delivery queued.');
+    return res.redirect('/studio/integrations');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function retryIntegrationDelivery(req, res, next) {
+  try {
+    const delivery = await retryWebhookDelivery({
+      userId: req.currentUser._id,
+      deliveryId: req.params.deliveryId,
+    });
+
+    if (!delivery) {
+      req.flash('error', 'Webhook delivery not found.');
+      return res.redirect('/studio/integrations');
+    }
+
+    kickWebhookDeliveryWorker(console);
+    req.flash('success', 'Webhook delivery queued for retry.');
+    return res.redirect('/studio/integrations');
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   addShowCollaborator,
+  retryIntegrationDelivery,
+  sendIntegrationConnectionTest,
   showAnalytics,
   showMonetization,
   showStudioCalendar,
