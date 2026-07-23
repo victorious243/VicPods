@@ -5620,6 +5620,407 @@ html[data-theme='light'] .onboarding-backdrop {
   justify-content: center;
 }
 
+.pricing-page-shell,
+.pricing-workspace-section,
+.pricing-compare-section,
+.pricing-hosting-section,
+.pricing-trust-section,
+.pricing-faq-section {
+  width: min(100%, 1360px);
+  margin: 0 auto 22px;
+}
+
+.pricing-page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  gap: 18px;
+  align-items: stretch;
+  min-height: 430px;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, var(--primary));
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(7, 12, 24, 0.86)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 84px);
+}
+
+.pricing-hero-copy {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  max-width: 780px;
+}
+
+.pricing-hero-copy h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(3.4rem, 8vw, 7.4rem);
+  line-height: 0.88;
+  letter-spacing: 0;
+}
+
+.pricing-hero-copy p {
+  max-width: 68ch;
+  color: color-mix(in srgb, var(--muted) 76%, var(--text));
+  font-size: clamp(1rem, 1.7vw, 1.18rem);
+}
+
+.pricing-hero-actions {
+  margin-top: 4px;
+}
+
+.pricing-hero-ledger,
+.pricing-note-panel,
+.pricing-plan-card,
+.pricing-addon-card,
+.pricing-faq-item {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--primary));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.pricing-hero-ledger {
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  padding: 18px;
+}
+
+.pricing-ledger-row {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.pricing-ledger-row small {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pricing-ledger-row strong,
+.pricing-feature-row span:last-child {
+  color: var(--text);
+}
+
+.pricing-ledger-row p,
+.pricing-addon-card p,
+.pricing-faq-item p {
+  margin: 0;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+}
+
+.pricing-explainer-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pricing-explainer-strip > div {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pricing-plan-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pricing-plan-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 18px;
+  min-width: 0;
+}
+
+.pricing-plan-card-featured {
+  border-color: color-mix(in srgb, var(--accent) 54%, var(--border));
+  box-shadow: 0 20px 52px rgba(34, 197, 94, 0.12);
+}
+
+.pricing-plan-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  min-height: 78px;
+}
+
+.pricing-plan-top h3,
+.pricing-addon-card h3,
+.pricing-faq-item h3,
+.pricing-note-panel h3 {
+  margin: 6px 0 0;
+}
+
+.pricing-plan-heading {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pricing-plan-heading span {
+  display: block;
+  max-width: 100%;
+  min-height: 34px;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+  font-size: 0.8rem;
+  font-weight: 820;
+  line-height: 1.28;
+}
+
+.pricing-plan-heading h3 {
+  font-size: 1.42rem;
+  line-height: 1.05;
+}
+
+.pricing-plan-status {
+  flex: 0 0 auto;
+  min-width: 72px;
+  padding: 7px 10px;
+  border: 1px solid rgba(34, 197, 94, 0.34);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+  background: rgba(15, 23, 42, 0.42);
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+}
+
+.pricing-plan-price {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.pricing-plan-summary {
+  min-height: 70px;
+  margin: 0;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+}
+
+.pricing-included-hosting {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.pricing-included-hosting span {
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pricing-plan-limits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pricing-plan-limits span {
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 7px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 780;
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.pricing-feature-stack {
+  display: grid;
+  gap: 9px;
+}
+
+.pricing-feature-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  color: color-mix(in srgb, var(--muted) 72%, var(--text));
+  font-size: 0.92rem;
+}
+
+.pricing-compare-table {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pricing-compare-row {
+  display: grid;
+  grid-template-columns: 1.25fr repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.pricing-compare-row:first-child {
+  border-top: 0;
+}
+
+.pricing-compare-row > * {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-left: 1px solid var(--border);
+}
+
+.pricing-compare-row > *:first-child {
+  border-left: 0;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  font-weight: 800;
+}
+
+.pricing-compare-row-head {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.pricing-hosting-section .section-head,
+.pricing-compare-section .section-head,
+.pricing-workspace-section .section-head,
+.pricing-faq-section .section-head {
+  margin-bottom: 14px;
+}
+
+.pricing-addon-grid,
+.pricing-faq-grid,
+.pricing-trust-section {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pricing-trust-section {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pricing-addon-card,
+.pricing-note-panel,
+.pricing-faq-item {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+}
+
+.pricing-addon-card .pricing-plan-price {
+  font-size: 2.4rem;
+}
+
+@media (max-width: 1100px) {
+  .pricing-page-hero,
+  .pricing-plan-matrix {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pricing-hero-copy {
+    align-content: start;
+  }
+
+  .pricing-hero-copy h1 {
+    max-width: 10ch;
+    font-size: clamp(3rem, 11vw, 5.6rem);
+  }
+
+  .pricing-addon-grid,
+  .pricing-faq-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .pricing-page-shell,
+  .pricing-workspace-section,
+  .pricing-compare-section,
+  .pricing-hosting-section,
+  .pricing-trust-section,
+  .pricing-faq-section {
+    margin-bottom: 16px;
+  }
+
+  .pricing-page-hero,
+  .pricing-explainer-strip,
+  .pricing-plan-matrix,
+  .pricing-addon-grid,
+  .pricing-faq-grid,
+  .pricing-trust-section {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-page-hero {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .pricing-hero-copy h1 {
+    max-width: 9ch;
+    font-size: clamp(2.7rem, 15vw, 4.8rem);
+  }
+
+  .pricing-hero-actions {
+    align-items: stretch;
+  }
+
+  .pricing-hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pricing-plan-summary {
+    min-height: 0;
+  }
+
+  .pricing-compare-table {
+    display: grid;
+    gap: 10px;
+    border: 0;
+    overflow: visible;
+  }
+
+  .pricing-compare-row,
+  .pricing-compare-row-head {
+    grid-template-columns: 1fr;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .pricing-compare-row > * {
+    min-height: 42px;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .pricing-compare-row > *:first-child {
+    border-top: 0;
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
 .landing-preview-shell {
   opacity: 0;
   transform: translateY(26px);

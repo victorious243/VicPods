@@ -529,7 +529,7 @@
             <button class="btn btn-secondary" type="button" data-audio-upload-trigger><%= episodeAudioAsset ? 'Replace MP3' : 'Upload MP3' %></button>
           </div>
 
-          <p class="mini-note" data-audio-status>Upload the final MP3 before going live.</p>
+          <p class="mini-note" data-audio-status>Upload the final MP3 before going live. Current browser uploads are limited to 50 MB.</p>
         </div>
 
         <% if (podcastFeedUrl || publishedEpisodeUrl) { %>
@@ -704,10 +704,32 @@
               <strong><%= card.title %></strong>
               <p><%= card.quoteText %></p>
               <div class="published-cover-frame">
-                <img src="<%= card.downloadUrl %>" alt="<%= card.title %> quote card preview" />
+                <img src="<%= card.downloadUrl %>" alt="<%= card.altText || card.title + ' quote card preview' %>" />
               </div>
+              <% if (card.aspectRatio || card.captionText || card.shareText) { %>
+                <div class="studio-calendar-list">
+                  <% if (card.aspectRatio) { %>
+                    <div class="studio-calendar-item">
+                      <span>Format</span>
+                      <strong><%= card.aspectRatio %></strong>
+                    </div>
+                  <% } %>
+                  <% if (card.shareText) { %>
+                    <div class="recording-panel">
+                      <span class="mini-label">Post Copy</span>
+                      <p><%= card.shareText %></p>
+                    </div>
+                  <% } %>
+                  <% if (card.captionText) { %>
+                    <div class="recording-panel">
+                      <span class="mini-label">Caption</span>
+                      <pre class="recording-prep-sheet"><%= card.captionText %></pre>
+                    </div>
+                  <% } %>
+                </div>
+              <% } %>
               <div class="inline-actions">
-                <a class="btn btn-ghost" href="<%= card.downloadUrl %>" download="<%= (episode.publicSlug || 'vicpods-quote-card') + '-' + card.platform + '.svg' %>">Download SVG</a>
+                <a class="btn btn-ghost" href="<%= card.downloadUrl %>" download="<%= card.filename || ((episode.publicSlug || 'vicpods-quote-card') + '-' + card.platform + '.svg') %>">Download SVG</a>
               </div>
             </div>
           <% }) %>

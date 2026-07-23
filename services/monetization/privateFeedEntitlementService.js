@@ -1,9 +1,12 @@
 const PodcastShow = require('../../models/PodcastShow');
 const PrivateFeedToken = require('../../models/PrivateFeedToken');
 const { getStripeClient } = require('../stripe/stripeClient');
+const { getSubscriptionPeriod } = require('../stripe/stripeObjectCompat');
 
 const PRIVATE_FEED_FLOW_TYPE = 'private_feed_subscription';
 const ACTIVE_ENTITLEMENT_STATUSES = new Set(['active', 'trialing']);
+const PRIVATE_FEED_GRACE_PERIOD_DAYS = 7;
+const DEFAULT_PLATFORM_FEE_BPS = 1000;
 
 function compactText(value, maxLength = 500) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, maxLength);
@@ -11,6 +14,15 @@ function compactText(value, maxLength = 500) {
 
 function normalizeEmail(value) {
   return compactText(value, 200).toLowerCase();
+}
+
+function toInteger(value, fallback) {
+  const parsed = Number.parseInt(String(value || '').trim(), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function isPrivateFeedCheckoutSession(session) {
@@ -21,10 +33,30 @@ function isPrivateFeedSubscription(subscription) {
   return subscription?.metadata?.flowType === PRIVATE_FEED_FLOW_TYPE;
 }
 
+function privateFeedPayoutsReady() {
+  return String(process.env.STRIPE_CONNECT_PRIVATE_FEEDS_ENABLED || '').trim().toLowerCase() === 'true';
+}
+
+function getPrivateFeedPlatformFeeBps() {
+  return clampNumber(
+    toInteger(process.env.PRIVATE_FEED_PLATFORM_FEE_BPS, DEFAULT_PLATFORM_FEE_BPS),
+    0,
+    5000
+  );
+}
+
 function normalizeEntitlementStatus(value) {
   const normalized = compactText(value, 40).toLowerCase();
   if (['active', 'trialing', 'past_due', 'canceled', 'revoked'].includes(normalized)) {
     return normalized;
+  }
+
+  if (['unpaid', 'incomplete', 'paused'].includes(normalized)) {
+    return 'past_due';
+  }
+
+  if (normalized === 'incomplete_expired') {
+    return 'canceled';
   }
 
   return 'active';
@@ -47,11 +79,72 @@ function isPrivateFeedTokenAccessible(token) {
     return true;
   }
 
-  if (ACTIVE_ENTITLEMENT_STATUSES.has(token.entitlementStatus)) {
+  if (ACTIVE_ENTITLEMENT_STATUSES.has(normalizeEntitlementStatus(token.entitlementStatus))) {
     return true;
   }
 
   return Boolean(token.expiresAt && token.expiresAt.getTime() > Date.now());
+}
+
+function addDays(date, days) {
+  return new Date(date.getTime() + (days * 24 * 60 * 60 * 1000));
+}
+
+function getPrivateFeedGraceUntil({ status, currentPeriodEnd, now = new Date() } = {}) {
+  const normalizedStatus = normalizeEntitlementStatus(status);
+  if (ACTIVE_ENTITLEMENT_STATUSES.has(normalizedStatus)) {
+    return null;
+  }
+
+  const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  if (!periodEnd || Number.isNaN(periodEnd.getTime())) {
+    return null;
+  }
+
+  if (periodEnd.getTime() > now.getTime()) {
+    return periodEnd;
+  }
+
+  return normalizedStatus === 'past_due'
+    ? addDays(periodEnd, PRIVATE_FEED_GRACE_PERIOD_DAYS)
+    : periodEnd;
+}
+
+function buildPrivateFeedEntitlementSnapshot(token, { now = new Date() } = {}) {
+  const status = normalizeEntitlementStatus(token?.entitlementStatus);
+  const currentPeriodEnd = token?.currentPeriodEnd || token?.expiresAt || null;
+
+  return {
+    accessible: isPrivateFeedTokenAccessible(token),
+    status,
+    statusLabel: status.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+    subscriberEmail: token?.subscriberEmail || '',
+    currentPeriodEnd,
+    graceUntil: getPrivateFeedGraceUntil({ status, currentPeriodEnd, now }),
+    stripeSubscriptionId: token?.stripeSubscriptionId || '',
+    stripePriceId: token?.stripePriceId || '',
+  };
+}
+
+function estimatePrivateFeedRevenue({
+  subscriberCount = 0,
+  priceAmountCents = 0,
+  platformFeeBps = getPrivateFeedPlatformFeeBps(),
+} = {}) {
+  const subscribers = Math.max(0, toInteger(subscriberCount, 0));
+  const price = Math.max(0, toInteger(priceAmountCents, 0));
+  const feeBps = clampNumber(toInteger(platformFeeBps, DEFAULT_PLATFORM_FEE_BPS), 0, 5000);
+  const grossCents = subscribers * price;
+  const platformFeeCents = Math.round((grossCents * feeBps) / 10000);
+
+  return {
+    subscriberCount: subscribers,
+    priceAmountCents: price,
+    grossCents,
+    platformFeeBps: feeBps,
+    platformFeeCents,
+    creatorNetCents: Math.max(0, grossCents - platformFeeCents),
+  };
 }
 
 function buildPrivateFeedEntitlementLabel({ listenerName, listenerEmail }) {
@@ -120,8 +213,13 @@ async function upsertSubscriberEntitlementToken({
   listenerName = '',
   stripeCustomerId = '',
   stripeSubscriptionId = '',
+  stripePriceId = '',
   checkoutSessionId = '',
   entitlementStatus = 'active',
+  currentPeriodStart = null,
+  currentPeriodEnd = null,
+  canceledAt = null,
+  lastStripeEventType = '',
   expiresAt = null,
 }) {
   const normalizedEmail = normalizeEmail(listenerEmail);
@@ -154,9 +252,14 @@ async function upsertSubscriberEntitlementToken({
   token.subscriberName = compactText(listenerName, 120);
   token.stripeCustomerId = compactText(stripeCustomerId, 120);
   token.stripeSubscriptionId = compactText(stripeSubscriptionId, 120);
+  token.stripePriceId = compactText(stripePriceId, 120);
   token.checkoutSessionId = compactText(checkoutSessionId, 120);
   token.entitlementStatus = nextStatus;
-  token.expiresAt = expiresAt || null;
+  token.currentPeriodStart = currentPeriodStart || token.currentPeriodStart || null;
+  token.currentPeriodEnd = currentPeriodEnd || expiresAt || token.currentPeriodEnd || null;
+  token.canceledAt = canceledAt || null;
+  token.lastStripeEventType = compactText(lastStripeEventType, 120);
+  token.expiresAt = expiresAt || currentPeriodEnd || null;
   token.lastValidatedAt = new Date();
 
   await token.save();
@@ -165,8 +268,12 @@ async function upsertSubscriberEntitlementToken({
 
 function getPrivateFeedOfferConfig(show) {
   const monetization = show?.monetization || {};
+  const payoutsReady = privateFeedPayoutsReady();
   return {
     enabled: Boolean(monetization.privateFeedsEnabled),
+    payoutsReady,
+    payoutMode: payoutsReady ? 'live' : 'setup_only',
+    platformFeeBps: getPrivateFeedPlatformFeeBps(),
     title: compactText(monetization.privateFeedTitle, 120) || 'Private premium feed',
     description: compactText(monetization.privateFeedDescription, 600)
       || 'Unlock the premium feed for private episodes, members-only drops, and subscriber access.',
@@ -182,6 +289,10 @@ async function createPrivateFeedCheckoutSession({ show, listenerEmail, listenerN
 
   if (!offer.enabled) {
     throw new Error('Private feeds are not enabled for this show.');
+  }
+
+  if (!offer.payoutsReady) {
+    throw new Error('Paid private feeds require Stripe Connect payouts before launch.');
   }
 
   if (!offer.priceId || !offer.priceId.startsWith('price_')) {
@@ -253,6 +364,16 @@ async function syncPrivateFeedEntitlementFromSubscription(subscription, options 
     ? subscription.customer
     : subscription.customer?.id;
   const metadata = subscription.metadata || {};
+  const {
+    currentPeriodStart,
+    currentPeriodEnd,
+  } = getSubscriptionPeriod(subscription);
+  const nextStatus = normalizeEntitlementStatus(options.entitlementStatus || subscription.status || 'active');
+  const graceUntil = getPrivateFeedGraceUntil({
+    status: nextStatus,
+    currentPeriodEnd,
+  });
+  const priceId = subscription.items?.data?.[0]?.price?.id || '';
   let show = options.show || null;
 
   if (!show && metadata.showId) {
@@ -286,9 +407,14 @@ async function syncPrivateFeedEntitlementFromSubscription(subscription, options 
     listenerName,
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscription.id,
+    stripePriceId: priceId,
     checkoutSessionId: options.checkoutSessionId,
-    entitlementStatus: subscription.status || options.entitlementStatus || 'active',
-    expiresAt: toDate(subscription.current_period_end),
+    entitlementStatus: nextStatus,
+    currentPeriodStart,
+    currentPeriodEnd,
+    canceledAt: toDate(subscription.canceled_at),
+    lastStripeEventType: options.lastStripeEventType,
+    expiresAt: graceUntil || currentPeriodEnd,
   });
 
   return {
@@ -338,18 +464,24 @@ async function syncPrivateFeedEntitlementFromCheckoutSession(session, options = 
     listenerEmail: customerEmail,
     listenerName: customerName,
     checkoutSessionId: session.id,
+    lastStripeEventType: options.lastStripeEventType || 'checkout.session.completed',
   });
 }
 
 module.exports = {
   ACTIVE_ENTITLEMENT_STATUSES,
   PRIVATE_FEED_FLOW_TYPE,
+  buildPrivateFeedEntitlementSnapshot,
   createPrivateFeedCheckoutSession,
+  estimatePrivateFeedRevenue,
   findSubscriberEntitlementToken,
+  getPrivateFeedGraceUntil,
   getPrivateFeedOfferConfig,
+  getPrivateFeedPlatformFeeBps,
   isPrivateFeedCheckoutSession,
   isPrivateFeedSubscription,
   isPrivateFeedTokenAccessible,
+  privateFeedPayoutsReady,
   syncPrivateFeedEntitlementFromCheckoutSession,
   syncPrivateFeedEntitlementFromSubscription,
   upsertSubscriberEntitlementToken,

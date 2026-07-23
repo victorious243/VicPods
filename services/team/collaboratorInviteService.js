@@ -1,12 +1,32 @@
+const crypto = require('crypto');
 const User = require('../../models/User');
-const { ShowCollaborator } = require('../../models/ShowCollaborator');
+const { ShowCollaborator, createInviteToken } = require('../../models/ShowCollaborator');
 const { sendShowCollaboratorInviteEmail } = require('../email/showCollaboratorInviteEmailService');
+const {
+  getEffectiveHostingPlanForBilling,
+} = require('../billing/usageLimitsService');
+const {
+  getPlanDefinition,
+  getWorkspacePlanForLegacyPlan,
+  normalizeWorkspacePlan,
+} = require('../billing/planCatalog');
 const { normalizeEmail } = require('./showAccessService');
+const { AppError } = require('../../utils/errors');
 
 const INVITE_TTL_DAYS = 7;
+const BILLING_ACTIVE_STATUSES = new Set(['active', 'trialing']);
 
 function normalizeInviteToken(value) {
   return String(value || '').trim().toLowerCase().replace(/[^a-f0-9]/g, '').slice(0, 64);
+}
+
+function hashInviteToken(inviteToken) {
+  const normalizedToken = normalizeInviteToken(inviteToken);
+  if (!normalizedToken) {
+    return '';
+  }
+
+  return crypto.createHash('sha256').update(normalizedToken).digest('hex');
 }
 
 function buildCollaboratorInviteUrl(token, { appUrl } = {}) {
@@ -30,17 +50,127 @@ async function getCollaboratorInviteByToken(inviteToken, { now = new Date() } = 
   if (!normalizedToken) {
     return null;
   }
+  const inviteTokenHash = hashInviteToken(normalizedToken);
 
   const collaborator = await ShowCollaborator.findOne({
-    inviteToken: normalizedToken,
     status: { $ne: 'disabled' },
-    $or: [
-      { inviteExpiresAt: null },
-      { inviteExpiresAt: { $gte: now } },
+    acceptedUserId: null,
+    $and: [
+      {
+        $or: [
+          { inviteTokenHash },
+          { inviteToken: normalizedToken },
+        ],
+      },
+      {
+        $or: [
+          { inviteExpiresAt: null },
+          { inviteExpiresAt: { $gte: now } },
+        ],
+      },
     ],
   }).populate('showId');
 
   return collaborator || null;
+}
+
+function hasActiveBillingStatus(status, periodEnd, now = new Date()) {
+  if (!BILLING_ACTIVE_STATUSES.has(String(status || '').trim().toLowerCase())) {
+    return false;
+  }
+
+  if (!periodEnd) {
+    return false;
+  }
+
+  return new Date(periodEnd).getTime() > now.getTime();
+}
+
+function getEffectiveWorkspacePlanForCollaborators(user, now = new Date()) {
+  const legacyWorkspacePlan = getWorkspacePlanForLegacyPlan(user?.plan);
+  const explicitWorkspacePlan = normalizeWorkspacePlan(user?.workspacePlan);
+  const storedWorkspacePlan = explicitWorkspacePlan === 'free' && legacyWorkspacePlan !== 'free'
+    ? legacyWorkspacePlan
+    : explicitWorkspacePlan;
+
+  if (storedWorkspacePlan === 'free') {
+    return 'free';
+  }
+
+  const workspaceActive = hasActiveBillingStatus(
+    user?.workspacePlanStatus || user?.planStatus,
+    user?.workspaceCurrentPeriodEnd || user?.currentPeriodEnd,
+    now
+  );
+
+  return workspaceActive ? storedWorkspacePlan : 'free';
+}
+
+function getCollaboratorSeatLimitForUser(user, now = new Date()) {
+  const workspacePlan = getEffectiveWorkspacePlanForCollaborators(user, now);
+  const hostingActive = hasActiveBillingStatus(
+    user?.hostingPlanStatus,
+    user?.hostingCurrentPeriodEnd,
+    now
+  );
+  const effectiveHostingPlan = getEffectiveHostingPlanForBilling({
+    workspacePlan,
+    hostingPlan: user?.hostingPlan || 'none',
+    hostingActive,
+  });
+  const hostingLimit = getPlanDefinition('hosting', effectiveHostingPlan).limits.collaborators || 0;
+  const workspaceLimit = getPlanDefinition('workspace', workspacePlan).limits.collaborators || 0;
+
+  return Math.max(hostingLimit, workspaceLimit);
+}
+
+async function assertCollaboratorSeatAvailable({ ownerUser, showId, email, now = new Date() }) {
+  if (ownerUser?.role === 'admin') {
+    return {
+      allowed: true,
+      used: 0,
+      limit: Infinity,
+    };
+  }
+
+  const limit = getCollaboratorSeatLimitForUser(ownerUser, now);
+  if (limit === Infinity) {
+    return {
+      allowed: true,
+      used: 0,
+      limit,
+    };
+  }
+
+  const existingCollaborator = await ShowCollaborator.findOne({
+    userId: ownerUser._id,
+    showId,
+    email,
+    status: { $in: ['invited', 'active'] },
+  }).select('_id');
+
+  if (existingCollaborator) {
+    return {
+      allowed: true,
+      used: null,
+      limit,
+    };
+  }
+
+  const used = await ShowCollaborator.countDocuments({
+    userId: ownerUser._id,
+    status: { $in: ['invited', 'active'] },
+  });
+
+  if (used >= limit) {
+    throw new AppError(`Your current plan includes ${limit} collaborator seat${limit === 1 ? '' : 's'}. Upgrade hosting or workspace seats before inviting another person.`, 403);
+  }
+
+  return {
+    allowed: true,
+    used,
+    limit,
+  };
 }
 
 async function inviteShowCollaborator({
@@ -52,6 +182,14 @@ async function inviteShowCollaborator({
 }) {
   const email = normalizeEmail(input.email);
   const existingUser = email ? await User.findOne({ email }).select('_id email name') : null;
+
+  await assertCollaboratorSeatAvailable({
+    ownerUser,
+    showId: show._id,
+    email,
+    now,
+  });
+
   const collaborator = await ShowCollaborator.findOne({
     userId: ownerUser._id,
     showId: show._id,
@@ -75,6 +213,7 @@ async function inviteShowCollaborator({
     collaborator.acceptedAt = now;
     collaborator.status = 'active';
     collaborator.inviteToken = '';
+    collaborator.inviteTokenHash = '';
     collaborator.inviteExpiresAt = null;
     await collaborator.save();
     return {
@@ -90,6 +229,7 @@ async function inviteShowCollaborator({
 
   if (collaborator.status === 'disabled') {
     collaborator.inviteToken = '';
+    collaborator.inviteTokenHash = '';
     collaborator.inviteExpiresAt = null;
     await collaborator.save();
     return {
@@ -99,7 +239,9 @@ async function inviteShowCollaborator({
     };
   }
 
-  collaborator.inviteToken = normalizeInviteToken(collaborator.inviteToken) || collaborator.schema.path('inviteToken').defaultValue();
+  const rawInviteToken = createInviteToken();
+  collaborator.inviteToken = '';
+  collaborator.inviteTokenHash = hashInviteToken(rawInviteToken);
   collaborator.inviteExpiresAt = addDays(now, INVITE_TTL_DAYS);
   collaborator.lastInviteSentAt = now;
   await collaborator.save();
@@ -110,7 +252,7 @@ async function inviteShowCollaborator({
     inviterName: ownerUser.name,
     showName: show.name,
     roleLabel: formatRoleLabel(collaborator.role),
-    inviteUrl: buildCollaboratorInviteUrl(collaborator.inviteToken, { appUrl }),
+    inviteUrl: buildCollaboratorInviteUrl(rawInviteToken, { appUrl }),
     inviteMessage: collaborator.inviteMessage,
   });
 
@@ -137,7 +279,20 @@ async function acceptPendingCollaboratorInvitesForUser(user, {
   };
 
   if (normalizedToken) {
-    query.inviteToken = normalizedToken;
+    query.$and = [
+      {
+        $or: [
+          { inviteTokenHash: hashInviteToken(normalizedToken) },
+          { inviteToken: normalizedToken },
+        ],
+      },
+      {
+        $or: [
+          { inviteExpiresAt: null },
+          { inviteExpiresAt: { $gte: now } },
+        ],
+      },
+    ];
   }
 
   const pendingInvites = await ShowCollaborator.find(query).populate('showId');
@@ -160,6 +315,7 @@ async function acceptPendingCollaboratorInvitesForUser(user, {
     collaborator.acceptedAt = now;
     collaborator.status = 'active';
     collaborator.inviteToken = '';
+    collaborator.inviteTokenHash = '';
     collaborator.inviteExpiresAt = null;
     await collaborator.save();
     acceptedInvites.push(collaborator);
@@ -174,8 +330,11 @@ async function acceptPendingCollaboratorInvitesForUser(user, {
 
 module.exports = {
   acceptPendingCollaboratorInvitesForUser,
+  assertCollaboratorSeatAvailable,
   buildCollaboratorInviteUrl,
   getCollaboratorInviteByToken,
+  getCollaboratorSeatLimitForUser,
+  hashInviteToken,
   inviteShowCollaborator,
   normalizeInviteToken,
 };

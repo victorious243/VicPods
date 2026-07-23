@@ -180,19 +180,19 @@
       </div>
       <div class="landing-pricing-badges">
         <span class="mini-label">No login needed for the public generator</span>
-        <span class="mini-label">Founding pricing through <%= pricing.foundingDeadlineLabel %></span>
+        <span class="mini-label">Workspace plans include matching hosting capacity</span>
       </div>
     </div>
 
     <div class="card-grid premium-plan-grid landing-plan-grid">
       <% publicPricingPlans.forEach((plan) => { %>
-        <article class="card premium-plan-card landing-plan-card <%= plan.key === 'pro' ? 'premium-plan-card-featured' : '' %>">
+        <article class="card premium-plan-card landing-plan-card <%= plan.key === 'creator' ? 'premium-plan-card-featured' : '' %>">
           <div class="premium-plan-card-top">
             <div>
               <span class="mini-label"><%= plan.eyebrow %></span>
               <h4><%= plan.title %></h4>
             </div>
-            <% if (plan.key === 'pro') { %>
+            <% if (plan.key === 'creator') { %>
               <span class="mini-label">Best unlock</span>
             <% } %>
           </div>

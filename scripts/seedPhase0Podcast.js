@@ -54,7 +54,7 @@ async function ensureSeries(user) {
         seriesSummary: 'This demo series proves the planning, scripting, and publishing baseline.',
       },
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   );
 }
 
@@ -71,7 +71,7 @@ async function ensureTheme(user, series) {
         themeSummary: 'Focuses on practical steps from idea to public release.',
       },
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   );
 }
 
@@ -93,7 +93,7 @@ async function ensureShow(user) {
         explicit: false,
       },
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   );
 }
 
@@ -137,7 +137,7 @@ async function ensureEpisode(user, series, theme, show) {
         themeId: theme._id,
       },
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   );
 }
 

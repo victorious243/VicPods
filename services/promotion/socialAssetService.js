@@ -38,14 +38,14 @@ function pickQuoteCandidates(episode) {
 
 function buildPlatformFrame(platform) {
   if (platform === 'linkedin') {
-    return { width: 1200, height: 1200, label: 'LinkedIn card' };
+    return { width: 1200, height: 1200, label: 'LinkedIn card', aspectRatio: '1:1' };
   }
 
   if (platform === 'x') {
-    return { width: 1600, height: 900, label: 'X card' };
+    return { width: 1600, height: 900, label: 'X card', aspectRatio: '16:9' };
   }
 
-  return { width: 1080, height: 1350, label: 'Instagram card' };
+  return { width: 1080, height: 1350, label: 'Instagram card', aspectRatio: '4:5' };
 }
 
 function buildAccent(accentKey) {
@@ -136,10 +136,43 @@ function wrapSvgText(text, wordsPerLine) {
   return lines.slice(0, 4);
 }
 
+function slugify(value) {
+  return compactText(value, 120)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'vicpods-quote-card';
+}
+
+function buildCaptionText({ quoteText, title, showName, platform }) {
+  const intro = platform === 'linkedin'
+    ? 'A useful moment from the episode:'
+    : 'New episode highlight:';
+  const hashtags = platform === 'x'
+    ? '#podcast #creators'
+    : '#podcast #podcasting #creatorworkflow';
+
+  return [
+    intro,
+    `"${compactText(quoteText, platform === 'x' ? 180 : 240)}"`,
+    `${showName} - ${title}`,
+    hashtags,
+  ].join('\n\n');
+}
+
+function buildShareText({ quoteText, title, showName, platform }) {
+  if (platform === 'x') {
+    return `"${compactText(quoteText, 180)}" ${showName}: ${compactText(title, 80)}`;
+  }
+
+  return `${showName} shared a highlight from "${compactText(title, 120)}": ${compactText(quoteText, 220)}`;
+}
+
 function buildQuoteCardAssets(episode, { show = null } = {}) {
   const quoteCandidates = pickQuoteCandidates(episode);
   const title = compactText(episode.title, 160) || 'Podcast highlight';
   const showName = compactText(show?.name || 'VicPods', 120);
+  const baseSlug = slugify(episode.publicSlug || title);
   const variants = [
     { platform: 'instagram', accentKey: 'sunrise' },
     { platform: 'linkedin', accentKey: 'lagoon' },
@@ -148,6 +181,7 @@ function buildQuoteCardAssets(episode, { show = null } = {}) {
 
   return variants.map((variant, index) => {
     const quoteText = compactText(quoteCandidates[index] || quoteCandidates[0], 320);
+    const frame = buildPlatformFrame(variant.platform);
     const svgMarkup = buildQuoteCardSvg({
       quoteText,
       title,
@@ -162,6 +196,21 @@ function buildQuoteCardAssets(episode, { show = null } = {}) {
       quoteText,
       platform: variant.platform,
       accentKey: variant.accentKey,
+      aspectRatio: frame.aspectRatio,
+      filename: `${baseSlug}-${variant.platform}.svg`,
+      altText: `${showName} quote card for ${title}: ${quoteText}`,
+      captionText: buildCaptionText({
+        quoteText,
+        title,
+        showName,
+        platform: variant.platform,
+      }),
+      shareText: buildShareText({
+        quoteText,
+        title,
+        showName,
+        platform: variant.platform,
+      }),
       svgMarkup,
       downloadUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`,
       updatedAt: new Date(),
@@ -171,4 +220,6 @@ function buildQuoteCardAssets(episode, { show = null } = {}) {
 
 module.exports = {
   buildQuoteCardAssets,
+  buildCaptionText,
+  buildShareText,
 };

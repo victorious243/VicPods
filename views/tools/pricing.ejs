@@ -1,0 +1,207 @@
+<%
+  const page = pricingPage || { workspacePlans: [], hostingAddOns: [], billingNotes: [] };
+  const planAccent = { free: 'blue', creator: 'green', growth: 'pink', studio: 'blue' };
+  const planCta = currentUser ? '/settings?section=billing' : '/auth/register';
+  const planCtaLabel = currentUser ? 'Open billing' : 'Create account';
+  const orderedFeatures = [
+    { key: 'aiActionsPerDay', label: 'AI actions' },
+    { key: 'savedEpisodes', label: 'Saved episodes' },
+    { key: 'hostedShows', label: 'Hosted shows' },
+    { key: 'collaborators', label: 'Collaborators' },
+  ];
+  const displayLimit = (value, suffix = '') => value === Infinity ? 'Unlimited' : `${value}${suffix}`;
+%>
+
+<section class="pricing-page-shell">
+  <div class="pricing-page-hero">
+    <div class="pricing-hero-copy">
+      <span class="landing-kicker">VicPods Pricing</span>
+      <h1>Pay for the podcast workflow you actually use.</h1>
+      <p>
+        Workspace plans include the production tools and a matching hosting tier. Add hosting only when your show network needs more capacity than the workspace already includes.
+      </p>
+      <div class="inline-actions pricing-hero-actions">
+        <a href="<%= planCta %>" class="btn btn-primary"><%= planCtaLabel %></a>
+        <a href="/podcast-idea-generator" class="btn btn-secondary">Try the free generator</a>
+      </div>
+    </div>
+
+    <aside class="pricing-hero-ledger">
+      <span class="mini-label">How billing works</span>
+      <% page.billingNotes.forEach((note) => { %>
+        <div class="pricing-ledger-row">
+          <small><%= note.label %></small>
+          <strong><%= note.title %></strong>
+          <p><%= note.body %></p>
+        </div>
+      <% }) %>
+    </aside>
+  </div>
+
+  <div class="pricing-explainer-strip">
+    <div>
+      <span class="mini-label">Workspace</span>
+      <strong>Planning, drafting, launch assets, analytics, and team workflow.</strong>
+    </div>
+    <div>
+      <span class="mini-label">Included Hosting</span>
+      <strong>RSS, public pages, storage, upload hours, and downloads included with paid plans.</strong>
+    </div>
+    <div>
+      <span class="mini-label">Add-ons</span>
+      <strong>Only needed when you outgrow the hosting capacity already included.</strong>
+    </div>
+  </div>
+</section>
+
+<section class="pricing-workspace-section">
+  <div class="section-head">
+    <div>
+      <span class="mini-label">Workspace plans</span>
+      <h2>Choose the room your podcast works from.</h2>
+      <p class="mini-note">Each paid workspace includes matching hosting capacity, so creators do not pay twice for the same tier.</p>
+    </div>
+  </div>
+
+  <div class="pricing-plan-matrix">
+    <% page.workspacePlans.forEach((plan) => { %>
+      <article class="pricing-plan-card pricing-plan-card-<%= planAccent[plan.key] || 'blue' %> <%= plan.key === 'creator' ? 'pricing-plan-card-featured' : '' %>">
+        <div class="pricing-plan-top">
+          <div class="pricing-plan-heading">
+            <span><%= plan.fit %></span>
+            <h3><%= plan.title %></h3>
+          </div>
+          <% if (plan.key === 'creator') { %>
+            <span class="pricing-plan-status">Best start</span>
+          <% } else if (plan.key === 'growth') { %>
+            <span class="pricing-plan-status">Scale</span>
+          <% } %>
+        </div>
+
+        <p class="pricing-plan-price"><%= plan.price %></p>
+        <p class="pricing-plan-summary"><%= plan.summary %></p>
+
+        <div class="pricing-included-hosting">
+          <span>Included hosting</span>
+          <strong><%= plan.includedHostingTitle %></strong>
+        </div>
+
+        <div class="pricing-plan-limits">
+          <% plan.limitsText.forEach((limit) => { %>
+            <span><%= limit %></span>
+          <% }) %>
+        </div>
+
+        <div class="pricing-feature-stack">
+          <% plan.features.forEach((feature) => { %>
+            <div class="pricing-feature-row">
+              <span class="premium-feature-dot" aria-hidden="true"></span>
+              <span><%= feature %></span>
+            </div>
+          <% }) %>
+        </div>
+
+        <a href="<%= plan.key === 'free' ? '/podcast-idea-generator' : planCta %>" class="btn <%= plan.key === 'free' ? 'btn-secondary' : 'btn-primary' %>">
+          <%= plan.key === 'free' ? 'Start free' : planCtaLabel %>
+        </a>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<section class="pricing-compare-section">
+  <div class="section-head">
+    <div>
+      <span class="mini-label">Compare usage</span>
+      <h2>What each plan lets you use.</h2>
+    </div>
+  </div>
+
+  <div class="pricing-compare-table" role="table" aria-label="VicPods plan comparison">
+    <div class="pricing-compare-row pricing-compare-row-head" role="row">
+      <span role="columnheader">Usage</span>
+      <% page.workspacePlans.forEach((plan) => { %>
+        <strong role="columnheader"><%= plan.title %></strong>
+      <% }) %>
+    </div>
+    <% orderedFeatures.forEach((feature) => { %>
+      <div class="pricing-compare-row" role="row">
+        <span role="rowheader"><%= feature.label %></span>
+        <% page.workspacePlans.forEach((plan) => { %>
+          <strong role="cell"><%= displayLimit(plan.limits[feature.key], feature.key === 'aiActionsPerDay' ? '/day' : '') %></strong>
+        <% }) %>
+      </div>
+    <% }) %>
+    <div class="pricing-compare-row" role="row">
+      <span role="rowheader">Hosting included</span>
+      <% page.workspacePlans.forEach((plan) => { %>
+        <strong role="cell"><%= plan.includedHostingTitle %></strong>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="pricing-hosting-section">
+  <div class="section-head">
+    <div>
+      <span class="mini-label">Hosting add-ons</span>
+      <h2>Only add hosting when included capacity is not enough.</h2>
+      <p class="mini-note">Most creators should choose a workspace plan first. Add-on hosting is for networks that need more shows, storage, upload hours, or downloads.</p>
+    </div>
+  </div>
+
+  <% if (!page.hostingAddOns.length) { %>
+    <div class="pricing-note-panel">
+      <span class="mini-label">Covered</span>
+      <h3>No separate add-on is needed for the workspace capacity shown here.</h3>
+      <p>Creator, Growth, and Studio already include matching hosting tiers.</p>
+    </div>
+  <% } else { %>
+    <div class="pricing-addon-grid">
+      <% page.hostingAddOns.forEach((plan) => { %>
+        <article class="pricing-addon-card">
+          <span class="mini-label">Capacity add-on</span>
+          <h3><%= plan.title %></h3>
+          <p class="pricing-plan-price"><%= plan.price %></p>
+          <p><%= plan.summary %></p>
+          <div class="pricing-plan-limits">
+            <% plan.limitsText.forEach((limit) => { %>
+              <span><%= limit %></span>
+            <% }) %>
+          </div>
+          <a href="<%= planCta %>" class="btn btn-secondary">Review in billing</a>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="pricing-trust-section">
+  <article class="pricing-note-panel">
+    <span class="mini-label">Not charged yet</span>
+    <h3>Paid private feeds are still protected behind Stripe Connect readiness.</h3>
+    <p>VicPods can model premium-feed economics, but real paid private-feed checkout remains disabled until creator payouts are fully connected.</p>
+  </article>
+  <article class="pricing-note-panel">
+    <span class="mini-label">Audio uploads</span>
+    <h3>Current browser uploads support MP3 files up to 50 MB.</h3>
+    <p>Long-form direct multipart upload is a separate hosting upgrade still being built.</p>
+  </article>
+</section>
+
+<section class="pricing-faq-section">
+  <div class="section-head">
+    <div>
+      <span class="mini-label">Questions</span>
+      <h2>Common billing questions.</h2>
+    </div>
+  </div>
+  <div class="pricing-faq-grid">
+    <% faq.forEach((item) => { %>
+      <article class="pricing-faq-item">
+        <h3><%= item.question %></h3>
+        <p><%= item.answer %></p>
+      </article>
+    <% }) %>
+  </div>
+</section>

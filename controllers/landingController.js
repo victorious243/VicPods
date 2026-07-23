@@ -2,6 +2,9 @@ const { renderPage } = require('../utils/render');
 const { normalizeNiche } = require('../services/public/publicPodcastIdeaService');
 const { getPricingDisplay } = require('../services/billing/pricing');
 const {
+  getIncludedHostingPlan,
+} = require('../services/billing/planCatalog');
+const {
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildOrganizationSchema,
@@ -16,12 +19,15 @@ const {
 } = require('../services/marketing/exampleLibraryService');
 
 function buildPublicPricingPlans(pricing) {
+  const workspacePlansByKey = new Map((pricing.workspacePlans || []).map((plan) => [plan.key, plan]));
+  const getPlanPrice = (key, fallback) => workspacePlansByKey.get(key)?.price || fallback;
+
   return [
     {
       key: 'free',
       eyebrow: 'Start here',
       title: 'Free',
-      price: pricing.free,
+      price: getPlanPrice('free', pricing.free),
       summary: 'See whether the workflow fits before you spend anything.',
       note: 'No card required. Generate the preview first, then create an account only when you want to keep building.',
       features: [
@@ -32,31 +38,31 @@ function buildPublicPricingPlans(pricing) {
       ],
     },
     {
-      key: 'pro',
+      key: 'creator',
       eyebrow: 'Best for momentum',
-      title: 'Pro',
-      price: pricing.pro,
-      summary: 'Unlock the full draft and launch workflow for serious weekly publishing.',
-      note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.proStandard}.`,
+      title: 'Creator',
+      price: getPlanPrice('creator', pricing.pro),
+      summary: 'Plan, draft, and publish one serious weekly show.',
+      note: 'Includes Starter Hosting capacity for one hosted show.',
       features: [
         'Full Launch Pack after each draft',
         '50 AI generations each day',
         'Continuity refresh + tone consistency scoring',
-        'TXT + PDF episode brief exports',
+        'One hosted show with RSS and public page',
       ],
     },
     {
-      key: 'premium',
+      key: 'growth',
       eyebrow: 'Maximum control',
-      title: 'Premium',
-      price: pricing.premium,
-      summary: 'Go deeper with unlimited generation, stronger control, and richer exports.',
-      note: `Launch price through ${pricing.foundingDeadlineLabel}. Planned standard price: ${pricing.premiumStandard}.`,
+      title: 'Growth',
+      price: getPlanPrice('growth', pricing.premium),
+      summary: 'Run multiple shows with stronger analytics, promotion, and publishing control.',
+      note: 'Includes Growth Hosting capacity for up to three hosted shows.',
       features: [
-        'Unlimited AI generations',
+        '150 AI generations each day',
         'Tone Fix + Voice Persona controls',
-        'Highest continuity workflow access',
-        'TXT + PDF + DOCX exports',
+        'Advanced analytics recommendations',
+        'Sponsor kit, private-feed setup, and promotion assets',
       ],
     },
   ];
@@ -77,9 +83,79 @@ function buildLandingMomentumCards() {
     {
       eyebrow: 'Upgrade when it clicks',
       title: 'Unlock the full draft and launch pack only when it saves you time',
-      body: 'Free proves the workflow. Pro and Premium turn the preview into publish-ready drafting, launch assets, and higher-volume output.',
+      body: 'Free proves the workflow. Creator and Growth turn the preview into publish-ready drafting, launch assets, hosting, and higher-volume output.',
     },
   ];
+}
+
+function formatLimit(value, suffix = '') {
+  if (value === Infinity) {
+    return 'Unlimited';
+  }
+
+  return `${value}${suffix}`;
+}
+
+function buildPricingPageData(pricing) {
+  const workspacePlans = (pricing.workspacePlans || []).map((plan) => {
+    const includedHostingKey = getIncludedHostingPlan(plan.key);
+    const includedHosting = (pricing.hostingPlans || []).find((hostingPlan) => hostingPlan.key === includedHostingKey);
+
+    return {
+      ...plan,
+      includedHostingKey,
+      includedHostingTitle: includedHosting?.title || 'No Hosting',
+      fit: {
+        free: 'Idea testing and light planning',
+        creator: 'One weekly podcast with hosting included',
+        growth: 'Multiple shows, promotion, analytics, and collaborators',
+        studio: 'Teams, agencies, and podcast networks',
+      }[plan.key] || 'Podcast production',
+      limitsText: [
+        formatLimit(plan.limits.aiActionsPerDay, ' AI actions/day'),
+        formatLimit(plan.limits.savedEpisodes, ' saved episodes'),
+        formatLimit(plan.limits.hostedShows, ' hosted shows'),
+        formatLimit(plan.limits.collaborators, ' seats'),
+      ],
+    };
+  });
+  const hostingAddOns = (pricing.hostingPlans || [])
+    .filter((plan) => plan.key !== 'none')
+    .map((plan) => ({
+      ...plan,
+      includedByWorkspace: workspacePlans
+        .filter((workspacePlan) => workspacePlan.includedHostingKey === plan.key)
+        .map((workspacePlan) => workspacePlan.title)
+        .join(', '),
+      limitsText: [
+        `${plan.limits.hostedShows} hosted shows`,
+        `${plan.limits.storageGb} GB storage`,
+        `${plan.limits.uploadHoursPerMonth} upload hr/mo`,
+        `${plan.limits.monthlyDownloads.toLocaleString()} downloads/mo`,
+      ],
+    }));
+
+  return {
+    workspacePlans,
+    hostingAddOns,
+    billingNotes: [
+      {
+        label: 'Workspace',
+        title: 'Pay for the production room',
+        body: 'Workspace plans unlock planning, drafting, launch packs, analytics, teams, and the included hosting tier listed on the plan.',
+      },
+      {
+        label: 'Included hosting',
+        title: 'Most creators do not need a separate hosting bill',
+        body: 'Creator includes Starter Hosting. Growth includes Growth Hosting. Studio includes Studio Hosting.',
+      },
+      {
+        label: 'Hosting add-ons',
+        title: 'Only buy more when you outgrow included capacity',
+        body: 'Add-on hosting is only for capacity above what your workspace already includes.',
+      },
+    ],
+  };
 }
 
 function showLanding(req, res) {
@@ -122,6 +198,54 @@ function showLanding(req, res) {
       landingMomentumCards: buildLandingMomentumCards(),
       pricing,
       publicPricingPlans: buildPublicPricingPlans(pricing),
+    },
+  });
+}
+
+function showPricing(req, res) {
+  const pricing = getPricingDisplay();
+  const title = 'Pricing - VicPods';
+  const description = 'See VicPods pricing clearly. Compare Free, Creator, Growth, and Studio workspace plans, included podcast hosting capacity, and when hosting add-ons are needed.';
+  const faq = [
+    {
+      question: 'Do Workspace plans include podcast hosting?',
+      answer: 'Yes. Creator includes Starter Hosting, Growth includes Growth Hosting, and Studio includes Studio Hosting. Hosting add-ons are only for capacity above the included tier.',
+    },
+    {
+      question: 'Can I start free?',
+      answer: 'Yes. The Free plan lets you try the public generator and core planning workflow before upgrading.',
+    },
+    {
+      question: 'Are paid private feeds live?',
+      answer: 'Paid private feeds remain in setup mode until Stripe Connect payouts are enabled.',
+    },
+  ];
+  const seo = buildPublicPageSeo({
+    path: '/pricing',
+    title,
+    description,
+    structuredData: [
+      buildBreadcrumbSchema([
+        { name: 'VicPods', path: '/' },
+        { name: 'Pricing', path: '/pricing' },
+      ]),
+      buildSoftwareApplicationSchema(),
+      buildFaqSchema(faq),
+    ],
+  });
+
+  return renderPage(res, {
+    title,
+    pageTitle: 'Pricing',
+    subtitle: 'Understand what you pay for and what you can use.',
+    view: 'tools/pricing',
+    data: {
+      publicShell: true,
+      effectivePlan: req.effectivePlan || req.currentUser?.plan || 'free',
+      ...seo,
+      pricing,
+      pricingPage: buildPricingPageData(pricing),
+      faq,
     },
   });
 }
@@ -202,7 +326,10 @@ function showExampleLibrary(req, res) {
 }
 
 module.exports = {
+  buildPublicPricingPlans,
+  buildPricingPageData,
   showLanding,
+  showPricing,
   showPodcastIdeaGenerator,
   showExampleLibrary,
 };

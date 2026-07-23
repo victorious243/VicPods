@@ -1,10 +1,10 @@
 const express = require('express');
 const publishController = require('../controllers/publishController');
-const { requirePlan } = require('../middleware/requirePlan');
+const { requirePublishingAccess } = require('../middleware/requirePlan');
 
 const router = express.Router();
 
-router.use(requirePlan('pro'));
+router.use(requirePublishingAccess);
 
 router.get('/shows', publishController.listShows);
 router.post('/shows', publishController.createShow);

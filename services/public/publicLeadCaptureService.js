@@ -132,7 +132,7 @@ async function savePublicPreviewLead({ email, source, payload }) {
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       setDefaultsOnInsert: true,
     }
   );

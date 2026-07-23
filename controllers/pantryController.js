@@ -63,7 +63,7 @@ async function updateIdea(req, res, next) {
         tag: String(req.body.tag || 'general').trim() || 'general',
         notes: String(req.body.notes || '').trim(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!idea) {

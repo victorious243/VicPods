@@ -2,8 +2,14 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const { renderPage } = require('../utils/render');
 const { AppError } = require('../utils/errors');
-const { resolveEffectivePlan } = require('../middleware/requirePlan');
+const { resolveEffectivePlan, resolveEffectiveWorkspacePlan } = require('../middleware/requirePlan');
 const { getPricingDisplay } = require('../services/billing/pricing');
+const {
+  getIncludedHostingPlan,
+  normalizeHostingPlan,
+  normalizeWorkspacePlan,
+} = require('../services/billing/planCatalog');
+const { buildBillingUsageSnapshot } = require('../services/billing/usageLimitsService');
 const { normalizeLanguage } = require('../services/i18n/languageService');
 const {
   getBillingProofSnippets,
@@ -59,6 +65,10 @@ function resolveRedirectPath(input) {
   return value;
 }
 
+function getEffectiveWorkspacePlanForView(user) {
+  return resolveEffectiveWorkspacePlan(user);
+}
+
 function normalizeTheme(theme) {
   return theme === 'light' ? 'light' : 'dark';
 }
@@ -76,23 +86,50 @@ function normalizeAvatarUrl(value) {
   throw new AppError('Avatar URL must start with http://, https://, or /.', 400);
 }
 
-function getBillingViewModel(user, effectivePlan) {
+async function getBillingViewModel(user, effectivePlan) {
   const status = user.planStatus || 'canceled';
+  const effectiveWorkspacePlan = resolveEffectiveWorkspacePlan(user);
+  const workspacePlan = normalizeWorkspacePlan(user.workspacePlan || effectiveWorkspacePlan);
+  const hostingPlan = normalizeHostingPlan(user.hostingPlan);
+  const hostingPlanStatus = String(user.hostingPlanStatus || 'canceled').toLowerCase();
+  const hostingActive = ['active', 'trialing'].includes(hostingPlanStatus)
+    && user.hostingCurrentPeriodEnd
+    && new Date(user.hostingCurrentPeriodEnd).getTime() > Date.now();
+  const usage = await buildBillingUsageSnapshot({
+    userId: user._id,
+    workspacePlan: effectiveWorkspacePlan,
+    hostingPlan,
+    hostingActive,
+  });
+
   return {
     effectivePlan,
+    effectiveWorkspacePlan,
+    storedWorkspacePlan: workspacePlan,
+    storedHostingPlan: hostingPlan,
+    includedHostingPlan: getIncludedHostingPlan(effectiveWorkspacePlan),
     storedPlan: user.plan,
     planStatus: status,
+    workspacePlanStatus: user.workspacePlanStatus || status,
+    hostingPlanStatus,
+    hostingPlanStatusLabel: hostingPlanStatus.replace(/_/g, ' '),
     planStatusLabel: status.replace(/_/g, ' '),
     currentPeriodStartLabel: formatDate(user.currentPeriodStart),
     currentPeriodEndLabel: formatDate(user.currentPeriodEnd),
+    workspaceCurrentPeriodEndLabel: formatDate(user.workspaceCurrentPeriodEnd || user.currentPeriodEnd),
+    hostingCurrentPeriodEndLabel: formatDate(user.hostingCurrentPeriodEnd),
     cancelAtPeriodEnd: Boolean(user.cancelAtPeriodEnd),
+    hostingCancelAtPeriodEnd: Boolean(user.hostingCancelAtPeriodEnd),
     hasStripeCustomer: Boolean(user.stripeCustomerId),
     statusBadgeClass: statusBadgeClass(status),
+    isPaidActive: effectivePlan !== 'free' && ['active', 'trialing'].includes(status),
+    usage,
   };
 }
 
-function showSettings(req, res) {
+async function showSettings(req, res, next) {
   const effectivePlan = req.effectivePlan || resolveEffectivePlan(req.currentUser);
+  const effectiveWorkspacePlan = req.effectiveWorkspacePlan || getEffectiveWorkspacePlanForView(req.currentUser);
   const selectedSection = resolveSection(req.query.section);
 
   if (selectedSection === 'billing') {
@@ -106,20 +143,25 @@ function showSettings(req, res) {
     });
   }
 
-  return renderPage(res, {
-    title: req.t('page.settings.title', 'Settings - VicPods'),
-    pageTitle: req.t('page.settings.header', 'Settings'),
-    subtitle: req.t('page.settings.subtitle', 'Profile, appearance, security, and billing controls in one place.'),
-    view: 'settings/index',
-    data: {
-      effectivePlan,
-      selectedSection,
-      billing: getBillingViewModel(req.currentUser, effectivePlan),
-      pricing: getPricingDisplay(),
-      billingProofSnippets: getBillingProofSnippets(),
-      featuredExamples: getFeaturedExamples({ limit: 2 }),
-    },
-  });
+  try {
+    return renderPage(res, {
+      title: req.t('page.settings.title', 'Settings - VicPods'),
+      pageTitle: req.t('page.settings.header', 'Settings'),
+      subtitle: req.t('page.settings.subtitle', 'Profile, appearance, security, and billing controls in one place.'),
+      view: 'settings/index',
+      data: {
+        effectivePlan,
+        effectiveWorkspacePlan,
+        selectedSection,
+        billing: await getBillingViewModel(req.currentUser, effectivePlan),
+        pricing: getPricingDisplay(),
+        billingProofSnippets: getBillingProofSnippets(),
+        featuredExamples: getFeaturedExamples({ limit: 2 }),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function updateProfile(req, res, next) {

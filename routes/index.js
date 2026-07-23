@@ -19,6 +19,7 @@ router.post('/language', settingsController.updateLanguagePreference);
 router.get('/oauth2callback', requireGuest, authController.googleCallback);
 router.get('/lab', landingController.showLanding);
 router.get('/generate-episode', landingController.showLanding);
+router.get('/pricing', landingController.showPricing);
 router.get('/podcast-idea-generator', landingController.showPodcastIdeaGenerator);
 router.get('/examples', landingController.showExampleLibrary);
 router.get('/whats-new', whatsNewController.showWhatsNew);

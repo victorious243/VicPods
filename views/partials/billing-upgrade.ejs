@@ -1,7 +1,7 @@
 <%
   const billingPlanLabels = typeof planLabels !== 'undefined'
     ? planLabels
-    : { free: 'Free', pro: 'Pro', premium: 'Premium' };
+    : { free: 'Free', creator: 'Creator', growth: 'Growth', studio: 'Studio', pro: 'Creator', premium: 'Growth' };
   const billingStatus = String(billing?.planStatus || 'canceled').toLowerCase();
   const billingStatusLabel = billing?.planStatusLabel || billingStatus.replace(/_/g, ' ');
   const billingStatusClass = billing?.statusBadgeClass || (
@@ -9,73 +9,59 @@
       ? 'badge-ready'
       : (billingStatus === 'past_due' || billingStatus === 'unpaid' ? 'badge-draft' : 'badge-served')
   );
-  const paidActive = (billingStatus === 'active' || billingStatus === 'trialing') && billing?.effectivePlan !== 'free';
-  const currentPlanKey = billing?.effectivePlan || 'free';
+  const paidActive = Boolean(billing?.isPaidActive) || ((billingStatus === 'active' || billingStatus === 'trialing') && billing?.effectivePlan !== 'free');
+  const currentPlanKey = billing?.effectiveWorkspacePlan || billing?.effectivePlan || 'free';
   const currentPlanLabel = billingPlanLabels[currentPlanKey] || currentPlanKey;
+  const currentHostingPlanKey = billing?.usage?.effectiveHostingPlan || billing?.includedHostingPlan || 'none';
+  const currentHostingPlanLabel = billingPlanLabels[currentHostingPlanKey] || currentHostingPlanKey;
+  const activeServiceLabel = currentPlanKey !== 'free'
+    ? currentPlanLabel + ' workspace'
+    : currentHostingPlanLabel + ' hosting';
+  const billingHasPaymentIssue = ['payment_failed', 'payment_action_required'].includes(String(billing?.billingAttentionReason || ''));
+  const paymentGraceLabel = billing?.workspacePaymentGraceUntilLabel || billing?.hostingPaymentGraceUntilLabel;
   const billingHeroTitle = paidActive
-    ? currentPlanLabel + ' access is live'
+    ? billingHasPaymentIssue
+      ? 'Update billing to avoid interruption'
+      : activeServiceLabel + ' is live'
     : billingStatus === 'past_due'
       ? 'Get the studio back in rhythm'
       : currentPlanKey === 'free'
-        ? 'Upgrade the whole production room'
+        ? 'Choose how VicPods should work for you'
         : currentPlanLabel + ' access is syncing';
   const billingHeroBody = paidActive
-    ? 'Your current cycle is active. Keep building in Studio, manage invoices in Stripe, and move between tiers without losing workflow history.'
+    ? billingHasPaymentIssue
+      ? 'Stripe will retry the payment automatically. Your current access remains available during the recovery window.'
+      : 'Your workspace cycle is active. Hosting capacity is tracked separately so creators pay for production tools and podcast infrastructure in a clean way.'
     : billingStatus === 'past_due'
       ? 'Stripe needs fresh payment details. Update billing to restore paid access and keep your shows, exports, and planning flow intact.'
       : currentPlanKey === 'free'
-        ? 'Free gets you started. Pro and Premium turn VicPods into a cleaner production suite with higher AI limits, deeper continuity, better exports, and more control.'
+        ? 'Start with planning for free, then add Workspace and Hosting when you are ready to publish consistently.'
         : 'Stripe checkout completed. VicPods is waiting for the final subscription sync before showing every paid tool as active.';
-  const billingPlans = [
-    {
-      key: 'free',
-      eyebrow: 'Starter track',
-      title: 'Free',
-      price: pricing?.free || '€0',
-      accent: 'blue',
-      summary: 'The clean core workspace for shaping an episode idea.',
-      note: 'Included for every account.',
-      metrics: ['5/day', 'TXT', 'Core'],
-      features: [
-        'Studio, Workspace, and Pantry access',
-        '5 AI generations each day',
-        'Release Readiness Score and Show Notes Pack',
-        'Episode Brief TXT export',
-      ],
-    },
-    {
-      key: 'pro',
-      eyebrow: 'Main stage',
-      title: 'Pro',
-      price: pricing?.pro || '€19.00/mo',
-      accent: 'green',
-      summary: 'A serious weekly-show workflow with stronger continuity and tone.',
-      note: '',
-      metrics: ['50/day', 'PDF', 'Tone'],
-      features: [
-        '50 AI generations each day',
-        'Continuity refresh and stronger series planning',
-        'Tone consistency scoring',
-        'Episode Brief TXT and PDF exports',
-      ],
-    },
-    {
-      key: 'premium',
-      eyebrow: 'Full mix',
-      title: 'Premium',
-      price: pricing?.premium || '€39.00/mo',
-      accent: 'pink',
-      summary: 'The complete VicPods suite for creators who want maximum control.',
-      note: '',
-      metrics: ['Unlimited', 'DOCX', 'Voice'],
-      features: [
-        'Unlimited AI generations',
-        'Tone Fix and Voice Persona controls',
-        'Highest continuity workflow access',
-        'Episode Brief TXT, PDF, and DOCX exports',
-      ],
-    },
-  ];
+  const workspacePlans = pricing?.workspacePlans || [];
+  const hostingPlans = pricing?.hostingPlans || [];
+  const workspacePriority = { free: 0, creator: 1, growth: 2, studio: 3 };
+  const hostingPriority = { none: 0, starter: 1, growth: 2, studio: 3 };
+  const includedHostingPlanKey = billing?.usage?.includedHostingPlan || billing?.includedHostingPlan || 'none';
+  const minimumHostingUpgradePriority = Math.max(
+    hostingPriority[includedHostingPlanKey] || 0,
+    hostingPriority[currentHostingPlanKey] || 0
+  );
+  const planAccents = { free: 'blue', creator: 'green', growth: 'pink', studio: 'blue', none: 'blue', starter: 'green' };
+  const workspacePlanEyebrows = {
+    free: 'Planning only',
+    creator: 'Weekly creator',
+    growth: 'Business show',
+    studio: 'Team room',
+  };
+  const hostingPlanEyebrows = {
+    none: 'No hosting',
+    starter: 'One show',
+    growth: 'Multi-show',
+    studio: 'Network',
+  };
+  const metricLabel = (value, suffix) => value === null || typeof value === 'undefined'
+    ? '0'
+    : (value === Infinity ? 'Unlimited' : String(value) + (suffix || ''));
 %>
 
 <section class="billing-upgrade-shell">
@@ -98,7 +84,8 @@
       <p><%= billingHeroBody %></p>
       <div class="billing-chip-row">
         <span class="badge <%= billingStatusClass %>"><%= billingStatusLabel %></span>
-        <span class="mini-label"><%= currentPlanLabel %> plan</span>
+        <span class="mini-label"><%= currentPlanLabel %> workspace</span>
+        <span class="mini-label"><%= currentHostingPlanLabel %> hosting</span>
         <% if (billing?.currentPeriodEndLabel && paidActive) { %>
           <span class="mini-label">through <%= billing.currentPeriodEndLabel %></span>
         <% } %>
@@ -109,8 +96,18 @@
       <% if (billing?.cancelAtPeriodEnd && billing?.currentPeriodEndLabel) { %>
         <p class="flash flash-error">Your plan will end on <%= billing.currentPeriodEndLabel %> unless renewed.</p>
       <% } %>
-      <% if (billingStatus === 'past_due') { %>
-        <p class="flash flash-error">Payment is past due. Update billing details to reactivate paid access.</p>
+      <% if (billingHasPaymentIssue) { %>
+        <p class="flash flash-error">
+          Payment needs attention. Stripe will retry automatically.
+          <% if (billing?.billingNextPaymentAttemptAtLabel) { %>
+            Next attempt: <%= billing.billingNextPaymentAttemptAtLabel %>.
+          <% } %>
+          <% if (paymentGraceLabel) { %>
+            Update billing before <%= paymentGraceLabel %> to avoid losing paid access.
+          <% } %>
+        </p>
+      <% } else if (billingStatus === 'past_due') { %>
+        <p class="flash flash-error">Payment is past due. Update billing details to restore paid access.</p>
       <% } %>
       <div class="inline-actions studio-hero-actions">
         <form method="POST" action="/billing/portal">
@@ -123,67 +120,56 @@
     <aside class="billing-now-panel">
       <span class="billing-panel-label">Current mix</span>
       <h4><%= currentPlanLabel %></h4>
-      <p><%= paidActive ? 'Paid tools are available in Studio right now.' : 'Pick a plan when the workflow starts saving real time.' %></p>
-      <div class="studio-readiness-meter" aria-hidden="true"><span style="width: <%= currentPlanKey === 'premium' ? 100 : (currentPlanKey === 'pro' ? 66 : 34) %>%"></span></div>
+      <p><%= paidActive ? 'Workspace tools are active. Hosting capacity is measured against the plan below.' : 'Pick a workspace plan when the workflow starts saving real time.' %></p>
+      <div class="studio-readiness-meter" aria-hidden="true"><span style="width: <%= currentPlanKey === 'studio' ? 100 : (currentPlanKey === 'growth' ? 76 : (currentPlanKey === 'creator' ? 52 : 28)) %>%"></span></div>
       <div class="studio-now-meta">
         <span><%= billingStatusLabel %></span>
-        <span><%= billing?.currentPeriodEndLabel || 'No paid cycle' %></span>
+        <span><%= billing?.workspaceCurrentPeriodEndLabel || billing?.currentPeriodEndLabel || 'No paid cycle' %></span>
       </div>
     </aside>
   </div>
 
   <div class="billing-plan-metrics">
-    <div class="studio-metric-pill">
-      <span>AI capacity</span>
-      <strong><%= currentPlanKey === 'premium' ? 'Unlimited' : (currentPlanKey === 'pro' ? '50/day' : '5/day') %></strong>
-    </div>
-    <div class="studio-metric-pill">
-      <span>Export depth</span>
-      <strong><%= currentPlanKey === 'premium' ? 'DOCX' : (currentPlanKey === 'pro' ? 'PDF' : 'TXT') %></strong>
-    </div>
-    <div class="studio-metric-pill">
-      <span>Continuity</span>
-      <strong><%= currentPlanKey === 'free' ? 'Core' : 'Deep' %></strong>
-    </div>
-    <div class="studio-metric-pill">
-      <span>Status</span>
-      <strong><%= paidActive ? 'Live' : 'Ready' %></strong>
-    </div>
+    <% (billing?.usage?.metrics || []).slice(0, 4).forEach((metric) => { %>
+      <div class="studio-metric-pill">
+        <span><%= metric.label %></span>
+        <strong><%= metric.used %><%= metric.unit ? ' ' + metric.unit : '' %></strong>
+        <small><%= metric.limit === Infinity ? 'Unlimited' : 'of ' + metric.limit + (metric.unit ? ' ' + metric.unit : '') %></small>
+      </div>
+    <% }) %>
   </div>
 </section>
 
 <section class="billing-record-grid">
-  <% billingPlans.forEach((plan) => { %>
+  <% workspacePlans.forEach((plan) => { %>
     <% const planIsCurrent = currentPlanKey === plan.key && (plan.key === 'free' || paidActive); %>
     <% const planIsSyncing = currentPlanKey === plan.key && !planIsCurrent && plan.key !== 'free'; %>
-    <article class="billing-record-card billing-record-card-<%= plan.accent %> <%= planIsCurrent ? 'active-plan premium-plan-card-active' : '' %> <%= plan.key === 'pro' ? 'premium-plan-card-featured' : '' %>">
+    <% const workspaceIsLowerOrEqual = (workspacePriority[plan.key] || 0) <= (workspacePriority[currentPlanKey] || 0); %>
+    <article class="billing-record-card billing-record-card-<%= planAccents[plan.key] || 'blue' %> <%= planIsCurrent ? 'active-plan premium-plan-card-active' : '' %> <%= plan.key === 'creator' ? 'premium-plan-card-featured' : '' %>">
       <div class="billing-record-art" aria-hidden="true">
         <span class="billing-record-core"></span>
       </div>
       <div class="premium-plan-card-top">
         <div>
-          <span class="mini-label"><%= plan.eyebrow %></span>
+          <span class="mini-label"><%= workspacePlanEyebrows[plan.key] || 'Workspace' %></span>
           <h3><%= plan.title %></h3>
         </div>
         <% if (planIsCurrent) { %>
           <span class="badge badge-ready">Current</span>
         <% } else if (planIsSyncing) { %>
           <span class="badge badge-draft">Syncing</span>
-        <% } else if (plan.key === 'pro') { %>
+        <% } else if (plan.key === 'creator') { %>
           <span class="badge badge-planned">Best value</span>
-        <% } else if (plan.key === 'premium') { %>
+        <% } else if (plan.key === 'studio') { %>
           <span class="badge badge-served">Elite</span>
         <% } %>
       </div>
       <p class="price premium-price"><%= plan.price %></p>
       <p class="premium-plan-tagline"><%= plan.summary %></p>
-      <% if (plan.note) { %>
-        <p class="mini-note"><%= plan.note %></p>
-      <% } %>
       <div class="billing-plan-caps">
-        <% plan.metrics.forEach((metric) => { %>
-          <span><%= metric %></span>
-        <% }) %>
+        <span><%= metricLabel(plan.limits.aiActionsPerDay, '/day') %></span>
+        <span><%= metricLabel(plan.limits.hostedShows, ' shows') %></span>
+        <span><%= metricLabel(plan.limits.collaborators, ' seats') %></span>
       </div>
       <ul class="premium-plan-feature-list">
         <% plan.features.forEach((feature) => { %>
@@ -197,14 +183,73 @@
         <button class="btn btn-secondary" disabled><%= currentPlanKey === 'free' ? 'Current Access' : 'Always Available' %></button>
       <% } else if (planIsCurrent) { %>
         <button class="btn btn-secondary" disabled>Current Access</button>
+      <% } else if (workspaceIsLowerOrEqual) { %>
+        <button class="btn btn-secondary" disabled>Below Current Plan</button>
       <% } else { %>
         <form method="POST" action="/billing/checkout">
+          <input type="hidden" name="productType" value="workspace" />
           <input type="hidden" name="plan" value="<%= plan.key %>" />
           <button class="btn btn-primary" type="submit">Upgrade to <%= plan.title %></button>
         </form>
       <% } %>
     </article>
   <% }) %>
+</section>
+
+<section class="billing-proof-shell billing-proof-shell-studio">
+  <div class="section-head">
+    <div>
+      <h3>Podcast hosting capacity</h3>
+      <p class="mini-note">Workspace plans include matching hosting capacity. Add hosting only when you need capacity above your included tier.</p>
+    </div>
+    <span class="mini-label">Current: <%= currentHostingPlanLabel %></span>
+  </div>
+  <div class="billing-record-grid">
+    <% hostingPlans.filter((plan) => plan.key !== 'none' && (hostingPriority[plan.key] || 0) > minimumHostingUpgradePriority).forEach((plan) => { %>
+      <% const hostingIsCurrent = currentHostingPlanKey === plan.key; %>
+      <article class="billing-record-card billing-record-card-<%= planAccents[plan.key] || 'blue' %> <%= hostingIsCurrent ? 'active-plan premium-plan-card-active' : '' %>">
+        <div class="premium-plan-card-top">
+          <div>
+            <span class="mini-label"><%= hostingPlanEyebrows[plan.key] || 'Hosting' %></span>
+            <h3><%= plan.title %></h3>
+          </div>
+          <% if (hostingIsCurrent) { %>
+            <span class="badge badge-ready">Current</span>
+          <% } %>
+        </div>
+        <p class="price premium-price"><%= plan.price %></p>
+        <p class="premium-plan-tagline"><%= plan.summary %></p>
+        <div class="billing-plan-caps">
+          <span><%= plan.limits.hostedShows %> shows</span>
+          <span><%= plan.limits.storageGb %> GB</span>
+          <span><%= plan.limits.uploadHoursPerMonth %> hr/mo</span>
+        </div>
+        <p class="mini-note"><%= plan.limits.monthlyDownloads.toLocaleString() %> monthly downloads included.</p>
+        <% if (hostingIsCurrent) { %>
+          <button class="btn btn-secondary" disabled>Current Hosting</button>
+        <% } else { %>
+          <form method="POST" action="/billing/checkout">
+            <input type="hidden" name="productType" value="hosting" />
+            <input type="hidden" name="plan" value="<%= plan.key %>" />
+            <button class="btn btn-primary" type="submit">Add <%= plan.title %></button>
+          </form>
+        <% } %>
+      </article>
+    <% }) %>
+    <% if (!hostingPlans.filter((plan) => plan.key !== 'none' && (hostingPriority[plan.key] || 0) > minimumHostingUpgradePriority).length) { %>
+      <article class="billing-record-card billing-record-card-blue">
+        <div class="premium-plan-card-top">
+          <div>
+            <span class="mini-label">Included capacity</span>
+            <h3>No hosting add-on needed</h3>
+          </div>
+          <span class="badge badge-ready">Covered</span>
+        </div>
+        <p class="premium-plan-tagline">Your current workspace or hosting plan already includes the highest hosting capacity available here.</p>
+        <button class="btn btn-secondary" disabled>Included</button>
+      </article>
+    <% } %>
+  </div>
 </section>
 
 <% if (typeof billingProofSnippets !== 'undefined' && billingProofSnippets?.length) { %>

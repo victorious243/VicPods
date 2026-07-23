@@ -102,7 +102,47 @@ const userSchema = new mongoose.Schema(
       enum: ['free', 'pro', 'premium'],
       default: 'free',
     },
+    workspacePlan: {
+      type: String,
+      enum: ['free', 'creator', 'growth', 'studio'],
+      default: 'free',
+      index: true,
+    },
+    hostingPlan: {
+      type: String,
+      enum: ['none', 'starter', 'growth', 'studio'],
+      default: 'none',
+      index: true,
+    },
     planStatus: {
+      type: String,
+      enum: [
+        'active',
+        'trialing',
+        'past_due',
+        'canceled',
+        'unpaid',
+        'incomplete',
+        'incomplete_expired',
+        'paused',
+      ],
+      default: 'canceled',
+    },
+    workspacePlanStatus: {
+      type: String,
+      enum: [
+        'active',
+        'trialing',
+        'past_due',
+        'canceled',
+        'unpaid',
+        'incomplete',
+        'incomplete_expired',
+        'paused',
+      ],
+      default: 'canceled',
+    },
+    hostingPlanStatus: {
       type: String,
       enum: [
         'active',
@@ -137,6 +177,44 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
       index: true,
+    },
+    stripeWorkspaceSubscriptionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    stripeHostingSubscriptionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    workspaceCurrentPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    workspaceCurrentPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+    hostingCurrentPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    hostingCurrentPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+    hostingCancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
+    workspacePaymentGraceUntil: {
+      type: Date,
+      default: null,
+    },
+    hostingPaymentGraceUntil: {
+      type: Date,
+      default: null,
     },
     referralCode: {
       type: String,
@@ -199,6 +277,25 @@ const userSchema = new mongoose.Schema(
     billingLastSyncedAt: {
       type: Date,
       default: null,
+    },
+    billingAttentionReason: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 80,
+    },
+    billingAttentionAt: {
+      type: Date,
+      default: null,
+    },
+    billingNextPaymentAttemptAt: {
+      type: Date,
+      default: null,
+    },
+    billingPaymentAttemptCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     lastActiveAt: {
       type: Date,

@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const net = require('net');
 const Episode = require('../../models/Episode');
 const { IntegrationConnection, INTEGRATION_PROVIDERS } = require('../../models/IntegrationConnection');
 const { MediaProcessingJob } = require('../../models/MediaProcessingJob');
@@ -17,22 +19,115 @@ function compactText(value, maxLength = 500) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, maxLength);
 }
 
-function normalizeUrl(value) {
-  const url = compactText(value, 500);
-  if (!url) {
-    return '';
+function isPrivateIpv4(hostname) {
+  const parts = hostname.split('.').map((part) => Number.parseInt(part, 10));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
   }
-  return /^https?:\/\//i.test(url) ? url : '';
+
+  const [first, second] = parts;
+  return first === 10
+    || first === 127
+    || (first === 169 && second === 254)
+    || (first === 172 && second >= 16 && second <= 31)
+    || (first === 192 && second === 168)
+    || (first === 100 && second >= 64 && second <= 127)
+    || first === 0;
+}
+
+function isPrivateIpv6(hostname) {
+  const normalized = hostname.replace(/^\[/, '').replace(/\]$/, '').toLowerCase();
+  return normalized === '::1'
+    || normalized.startsWith('fc')
+    || normalized.startsWith('fd')
+    || normalized.startsWith('fe80:');
+}
+
+function isLocalHostname(hostname) {
+  const normalized = String(hostname || '').trim().toLowerCase();
+  return normalized === 'localhost'
+    || normalized === '0.0.0.0'
+    || normalized.endsWith('.localhost')
+    || normalized.endsWith('.local');
+}
+
+function assessWebhookEndpointUrl(value, { isProduction = process.env.NODE_ENV === 'production' } = {}) {
+  const rawUrl = compactText(value, 500);
+  if (!rawUrl) {
+    return { valid: false, url: '', reason: 'Endpoint URL is required.' };
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch (error) {
+    return { valid: false, url: '', reason: 'Endpoint URL must be a valid http or https URL.' };
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return { valid: false, url: '', reason: 'Endpoint URL must use http or https.' };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { valid: false, url: '', reason: 'Endpoint URL cannot include embedded credentials.' };
+  }
+
+  if (isProduction && parsed.protocol !== 'https:') {
+    return { valid: false, url: '', reason: 'Production webhook endpoints must use https.' };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const ipVersion = net.isIP(hostname);
+  const privateNetwork = isLocalHostname(hostname)
+    || (ipVersion === 4 && isPrivateIpv4(hostname))
+    || (ipVersion === 6 && isPrivateIpv6(hostname));
+
+  if (privateNetwork && isProduction) {
+    return { valid: false, url: '', reason: 'Production webhook endpoints cannot target local or private network addresses.' };
+  }
+
+  parsed.hash = '';
+  return {
+    valid: true,
+    url: parsed.toString(),
+    reason: '',
+    privateNetwork,
+  };
+}
+
+function buildWebhookIdempotencyKey({ userId, integrationId, eventType, episode = null, show = null, metadata = {} }) {
+  const entityId = metadata.idempotencyKey
+    || episode?._id
+    || show?._id
+    || metadata.weekKey
+    || metadata.requestedAt
+    || metadata.generatedAt
+    || 'global';
+  const source = [
+    String(userId || ''),
+    String(integrationId || ''),
+    String(eventType || ''),
+    String(entityId || ''),
+  ].join(':');
+
+  return crypto.createHash('sha256').update(source).digest('hex');
 }
 
 function normalizeConnectionInput(body) {
   const provider = INTEGRATION_PROVIDERS.includes(body.provider) ? body.provider : 'webhook';
   const events = Array.isArray(body.events) ? body.events : [body.events].filter(Boolean);
+  const endpointValidation = assessWebhookEndpointUrl(body.endpointUrl);
+  const endpointUrl = endpointValidation.valid ? endpointValidation.url : '';
+
+  if (!endpointValidation.valid && !compactText(body.endpointUrl, 500)) {
+    endpointValidation.reason = '';
+  }
 
   return {
     provider,
     label: compactText(body.label, 120) || provider,
-    endpointUrl: normalizeUrl(body.endpointUrl),
+    endpointUrl,
+    endpointValidation,
     status: ['configured', 'paused', 'needs_auth'].includes(body.status) ? body.status : 'configured',
     events: events.filter((event) => INTEGRATION_EVENTS.includes(event)).slice(0, 12),
     settings: {
@@ -41,6 +136,15 @@ function normalizeConnectionInput(body) {
       exportFolder: compactText(body.exportFolder, 200),
     },
   };
+}
+
+function isWebhookConnectionConfigured(connection) {
+  if (!['webhook', 'zapier'].includes(connection.provider)) {
+    return false;
+  }
+
+  const endpointValidation = assessWebhookEndpointUrl(connection.endpointUrl);
+  return connection.status === 'configured' && endpointValidation.valid;
 }
 
 function buildWebhookPayload({ eventType, episode, show, baseUrl, metadata = {} }) {
@@ -80,19 +184,48 @@ async function queueWebhookDeliveries({ userId, eventType, episode = null, show 
   });
   const payload = buildWebhookPayload({ eventType, episode, show, baseUrl, metadata });
 
-  return Promise.all(connections.map((connection) => WebhookDelivery.create({
-    userId,
-    integrationId: connection._id,
-    eventType,
-    targetUrl: connection.endpointUrl,
-    payload,
-    payloadPreview: JSON.stringify(payload).slice(0, 4000),
-    status: connection.endpointUrl ? 'queued' : 'skipped',
-    nextAttemptAt: new Date(),
-  })));
+  return Promise.all(connections.map(async (connection) => {
+    const endpointValidation = assessWebhookEndpointUrl(connection.endpointUrl);
+    const idempotencyKey = buildWebhookIdempotencyKey({
+      userId,
+      integrationId: connection._id,
+      eventType,
+      episode,
+      show,
+      metadata,
+    });
+    const delivery = {
+      userId,
+      integrationId: connection._id,
+      eventType,
+      idempotencyKey,
+      targetUrl: endpointValidation.url,
+      payload,
+      payloadPreview: JSON.stringify(payload).slice(0, 4000),
+      status: endpointValidation.valid ? 'queued' : 'skipped',
+      nextAttemptAt: new Date(),
+      errorMessage: endpointValidation.valid ? '' : endpointValidation.reason,
+    };
+
+    return WebhookDelivery.findOneAndUpdate(
+      {
+        userId,
+        integrationId: connection._id,
+        idempotencyKey,
+      },
+      {
+        $setOnInsert: delivery,
+      },
+      {
+        returnDocument: 'after',
+        upsert: true,
+      }
+    );
+  }));
 }
 
 async function queueConnectionTestDelivery({ connection, userId, baseUrl = '' }) {
+  const endpointValidation = assessWebhookEndpointUrl(connection.endpointUrl);
   const payload = buildWebhookPayload({
     eventType: 'integration.test',
     baseUrl,
@@ -107,11 +240,12 @@ async function queueConnectionTestDelivery({ connection, userId, baseUrl = '' })
     userId,
     integrationId: connection._id,
     eventType: 'integration.test',
-    targetUrl: connection.endpointUrl,
+    targetUrl: endpointValidation.url,
     payload,
     payloadPreview: JSON.stringify(payload).slice(0, 4000),
-    status: connection.endpointUrl ? 'queued' : 'skipped',
+    status: endpointValidation.valid ? 'queued' : 'skipped',
     nextAttemptAt: new Date(),
+    errorMessage: endpointValidation.valid ? '' : endpointValidation.reason,
   });
 }
 
@@ -216,7 +350,11 @@ async function buildAdvancedMediaDashboard({ userId }) {
   return {
     providers: INTEGRATION_PROVIDERS,
     events: INTEGRATION_EVENTS,
-    connections,
+    connections: connections.map((connection) => ({
+      ...connection.toObject(),
+      endpointSafe: assessWebhookEndpointUrl(connection.endpointUrl).valid,
+      configuredForDelivery: isWebhookConnectionConfigured(connection),
+    })),
     episodes: episodes.map((episode) => ({
       id: String(episode._id),
       title: episode.title || 'Untitled episode',
@@ -233,7 +371,7 @@ async function buildAdvancedMediaDashboard({ userId }) {
     deliveries,
     metrics: {
       connections: connections.length,
-      activeConnections: connections.filter((connection) => connection.status === 'configured').length,
+      activeConnections: connections.filter((connection) => isWebhookConnectionConfigured(connection)).length,
       queuedJobs: jobs.filter((job) => ['queued', 'processing'].includes(job.status)).length,
       failedJobs: jobs.filter((job) => job.status === 'failed').length,
       webhookQueue: deliveries.filter((delivery) => ['queued', 'retrying', 'processing'].includes(delivery.status)).length,
@@ -244,12 +382,15 @@ async function buildAdvancedMediaDashboard({ userId }) {
 
 module.exports = {
   INTEGRATION_EVENTS,
+  assessWebhookEndpointUrl,
   buildAdvancedMediaDashboard,
   buildCaptionDraft,
   buildClipSuggestions,
   buildDescriptExportPack,
   buildRiversideExportPack,
+  buildWebhookIdempotencyKey,
   buildWebhookPayload,
+  isWebhookConnectionConfigured,
   normalizeConnectionInput,
   queueConnectionTestDelivery,
   queueWebhookDeliveries,

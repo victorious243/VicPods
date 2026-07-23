@@ -16,7 +16,7 @@ const audioAssetSchema = new mongoose.Schema(
     },
     storageProvider: {
       type: String,
-      enum: ['local_public', 'remote_url'],
+      enum: ['local_public', 'remote_url', 'object_storage'],
       default: 'local_public',
     },
     storageKey: {

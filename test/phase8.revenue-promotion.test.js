@@ -6,6 +6,9 @@ const PodcastShow = require('../models/PodcastShow');
 const PrivateFeedToken = require('../models/PrivateFeedToken');
 const { MediaProcessingJob } = require('../models/MediaProcessingJob');
 const {
+  buildPrivateFeedEntitlementSnapshot,
+  estimatePrivateFeedRevenue,
+  getPrivateFeedGraceUntil,
   getPrivateFeedOfferConfig,
   isPrivateFeedCheckoutSession,
   isPrivateFeedSubscription,
@@ -44,10 +47,48 @@ test('Phase 8 private feed offer config returns polished defaults', () => {
   });
 
   assert.equal(offer.enabled, true);
+  assert.equal(offer.payoutsReady, false);
+  assert.equal(offer.payoutMode, 'setup_only');
+  assert.equal(offer.platformFeeBps, 1000);
   assert.equal(offer.title, 'Founder feed');
   assert.equal(offer.description, 'Premium weekly debriefs for subscribers.');
   assert.equal(offer.priceId, 'price_123');
   assert.equal(offer.ctaLabel, 'Join now');
+});
+
+test('Phase 8 private feed economics make VicPods fee and creator net explicit', () => {
+  const economics = estimatePrivateFeedRevenue({
+    subscriberCount: 25,
+    priceAmountCents: 700,
+    platformFeeBps: 1000,
+  });
+
+  assert.equal(economics.grossCents, 17500);
+  assert.equal(economics.platformFeeCents, 1750);
+  assert.equal(economics.creatorNetCents, 15750);
+});
+
+test('Phase 8 private feed entitlement snapshots expose lifecycle state', () => {
+  const currentPeriodEnd = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const graceUntil = getPrivateFeedGraceUntil({
+    status: 'past_due',
+    currentPeriodEnd,
+  });
+  const snapshot = buildPrivateFeedEntitlementSnapshot({
+    status: 'active',
+    accessType: 'subscriber_entitlement',
+    entitlementStatus: 'past_due',
+    subscriberEmail: 'listener@example.com',
+    currentPeriodEnd,
+    expiresAt: graceUntil,
+    stripeSubscriptionId: 'sub_123',
+    stripePriceId: 'price_123',
+  });
+
+  assert.ok(graceUntil > currentPeriodEnd);
+  assert.equal(snapshot.accessible, true);
+  assert.equal(snapshot.statusLabel, 'Past Due');
+  assert.equal(snapshot.stripePriceId, 'price_123');
 });
 
 test('Phase 8 private feed access rules distinguish creator tokens from entitlements', () => {
@@ -86,14 +127,24 @@ test('Phase 8 quote card generator creates social-ready SVG assets', () => {
   assert.ok(cards[0].svgMarkup.includes('<svg'));
   assert.ok(cards[1].downloadUrl.startsWith('data:image/svg+xml'));
   assert.ok(cards[2].quoteText.length >= 24);
+  assert.equal(cards[0].aspectRatio, '4:5');
+  assert.ok(cards[0].filename.endsWith('-instagram.svg'));
+  assert.ok(cards[0].captionText.includes('#podcast'));
+  assert.ok(cards[0].altText.includes('VicPods Weekly'));
 });
 
 test('Phase 8 schemas expose entitlement and promotional media fields', () => {
+  const quoteCardSchema = Episode.schema.path('advancedMedia.quoteCards').schema;
+
   assert.ok(PodcastShow.schema.paths['monetization.privateFeedTitle']);
   assert.ok(PodcastShow.schema.paths['monetization.privateFeedPriceId']);
   assert.ok(PrivateFeedToken.schema.paths.accessType);
   assert.ok(PrivateFeedToken.schema.paths.entitlementStatus);
+  assert.ok(PrivateFeedToken.schema.paths.stripePriceId);
+  assert.ok(PrivateFeedToken.schema.paths.currentPeriodEnd);
   assert.ok(Episode.schema.paths['advancedMedia.quoteCards']);
+  assert.ok(quoteCardSchema.paths.captionText);
+  assert.ok(quoteCardSchema.paths.filename);
   assert.ok(MediaProcessingJob.schema.paths.jobType.enumValues.includes('quote_cards'));
 });
 

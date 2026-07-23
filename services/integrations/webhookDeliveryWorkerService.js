@@ -44,7 +44,7 @@ async function claimNextWebhookDelivery(now = new Date()) {
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       sort: { nextAttemptAt: 1, createdAt: 1 },
     }
   );

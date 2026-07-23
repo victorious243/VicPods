@@ -1,6 +1,10 @@
 const Episode = require('../../models/Episode');
 const PodcastShow = require('../../models/PodcastShow');
 const PrivateFeedToken = require('../../models/PrivateFeedToken');
+const {
+  estimatePrivateFeedRevenue,
+  getPrivateFeedOfferConfig,
+} = require('./privateFeedEntitlementService');
 const { buildPodcastFeedUrl } = require('../publish/publishService');
 
 const AD_SLOT_POSITIONS = [
@@ -46,6 +50,27 @@ function formatMoney(value) {
   }
 
   return '$' + amount.toLocaleString('en-US');
+}
+
+function formatCents(value) {
+  const cents = Number.parseInt(String(value || 0), 10) || 0;
+  return '$' + (cents / 100).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function parsePrivateFeedMonthlyPriceCents(show) {
+  const monetization = show?.monetization || {};
+  const explicitCents = Number.parseInt(String(monetization.privateFeedMonthlyPriceCents || '').trim(), 10);
+  if (Number.isFinite(explicitCents) && explicitCents > 0) {
+    return explicitCents;
+  }
+
+  const fallbackDollars = Number.parseFloat(String(process.env.DEFAULT_PRIVATE_FEED_PRICE || '5').trim());
+  return Number.isFinite(fallbackDollars) && fallbackDollars > 0
+    ? Math.round(fallbackDollars * 100)
+    : 500;
 }
 
 function buildPrivateFeedUrl({ show, token, baseUrl }) {
@@ -216,6 +241,13 @@ async function buildCreatorMonetizationDashboard({ userId, baseUrl, analytics = 
 
     const showEpisodes = episodes.filter((episode) => String(episode.showId?._id || episode.showId || '') === String(show._id));
     const mediaKit = await buildMediaKit({ show, episodes: showEpisodes, analytics, baseUrl });
+    const privateFeedOffer = getPrivateFeedOfferConfig(show);
+    const privateFeedPriceCents = parsePrivateFeedMonthlyPriceCents(show);
+    const privateFeedRevenue = estimatePrivateFeedRevenue({
+      subscriberCount: subscriberCountsByShowId.get(String(show._id)) || 0,
+      priceAmountCents: privateFeedPriceCents,
+      platformFeeBps: privateFeedOffer.platformFeeBps,
+    });
 
     return {
       show,
@@ -225,6 +257,14 @@ async function buildCreatorMonetizationDashboard({ userId, baseUrl, analytics = 
       adSlotPlanner: buildAdSlotPlanner(showEpisodes),
       privateFeedUrl: privateToken ? buildPrivateFeedUrl({ show, token: privateToken, baseUrl }) : '',
       privateToken,
+      privateFeedOffer,
+      privateFeedRevenue: {
+        ...privateFeedRevenue,
+        priceLabel: formatCents(privateFeedRevenue.priceAmountCents),
+        grossLabel: formatCents(privateFeedRevenue.grossCents),
+        platformFeeLabel: formatCents(privateFeedRevenue.platformFeeCents),
+        creatorNetLabel: formatCents(privateFeedRevenue.creatorNetCents),
+      },
       privateSubscriberCount: subscriberCountsByShowId.get(String(show._id)) || 0,
     };
   }));

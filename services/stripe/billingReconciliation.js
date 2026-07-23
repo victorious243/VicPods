@@ -1,6 +1,7 @@
 const User = require('../../models/User');
-const { mapPriceIdToPlan } = require('./planMapping');
+const { mapPriceIdToBillingSelection, mapPriceIdToPlan } = require('./planMapping');
 const { getStripeClient } = require('./stripeClient');
+const { getSubscriptionPeriod } = require('./stripeObjectCompat');
 const { applySubscriptionToUser } = require('./webhookHandlers');
 
 const LINKED_SYNC_INTERVAL_MS = 15 * 60 * 1000;
@@ -20,7 +21,15 @@ function getTimestamp(value) {
 }
 
 function getSyncIntervalMs(user) {
-  if (user?.stripeCustomerId || user?.stripeSubscriptionId || user?.plan !== 'free') {
+  if (
+    user?.stripeCustomerId
+    || user?.stripeSubscriptionId
+    || user?.stripeWorkspaceSubscriptionId
+    || user?.stripeHostingSubscriptionId
+    || user?.plan !== 'free'
+    || user?.workspacePlan !== 'free'
+    || user?.hostingPlan !== 'none'
+  ) {
     return LINKED_SYNC_INTERVAL_MS;
   }
 
@@ -84,6 +93,14 @@ function buildCandidateScore({ user, customer, subscription }) {
     score += 40;
   }
 
+  if (String(subscription.id || '') === String(user.stripeWorkspaceSubscriptionId || '')) {
+    score += 40;
+  }
+
+  if (String(subscription.id || '') === String(user.stripeHostingSubscriptionId || '')) {
+    score += 40;
+  }
+
   const customerId = typeof subscription.customer === 'string'
     ? subscription.customer
     : subscription.customer?.id;
@@ -108,6 +125,10 @@ function buildCandidateScore({ user, customer, subscription }) {
     score += 10;
   }
 
+  if (mapPriceIdToBillingSelection(subscription?.items?.data?.[0]?.price?.id).productType === 'workspace') {
+    score += 5;
+  }
+
   return score;
 }
 
@@ -116,8 +137,8 @@ function compareCandidates(left, right) {
     return right.score - left.score;
   }
 
-  const rightEnd = Number(right.subscription.current_period_end || 0);
-  const leftEnd = Number(left.subscription.current_period_end || 0);
+  const rightEnd = getSubscriptionPeriod(right.subscription).currentPeriodEndUnix;
+  const leftEnd = getSubscriptionPeriod(left.subscription).currentPeriodEndUnix;
   if (rightEnd !== leftEnd) {
     return rightEnd - leftEnd;
   }
@@ -157,9 +178,15 @@ async function collectSubscriptionCandidates(stripe, user) {
   const seenSubscriptionIds = new Set();
   const userId = user._id.toString();
 
-  if (user.stripeSubscriptionId) {
+  const knownSubscriptionIds = [
+    user.stripeSubscriptionId,
+    user.stripeWorkspaceSubscriptionId,
+    user.stripeHostingSubscriptionId,
+  ].filter(Boolean);
+
+  for (const knownSubscriptionId of knownSubscriptionIds) {
     try {
-      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      const subscription = await stripe.subscriptions.retrieve(knownSubscriptionId);
       const customerId = typeof subscription.customer === 'string'
         ? subscription.customer
         : subscription.customer?.id;
@@ -239,6 +266,35 @@ async function findBestSubscriptionCandidate(stripe, user) {
     .sort(compareCandidates)[0];
 }
 
+async function findBestSubscriptionCandidatesByProduct(stripe, user) {
+  const candidates = await collectSubscriptionCandidates(stripe, user);
+  const grouped = {
+    workspace: [],
+    hosting: [],
+  };
+
+  candidates.forEach((candidate) => {
+    const priceId = candidate.subscription?.items?.data?.[0]?.price?.id;
+    const billingSelection = mapPriceIdToBillingSelection(priceId);
+    const productType = billingSelection.productType || 'workspace';
+
+    grouped[productType].push({
+      ...candidate,
+      billingSelection,
+      score: buildCandidateScore({
+        user,
+        customer: candidate.customer,
+        subscription: candidate.subscription,
+      }),
+    });
+  });
+
+  return {
+    workspace: grouped.workspace.sort(compareCandidates)[0] || null,
+    hosting: grouped.hosting.sort(compareCandidates)[0] || null,
+  };
+}
+
 async function reconcileUserBilling(user, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   if (!shouldAttemptBillingRefresh(user, { ...options, now })) {
@@ -250,9 +306,13 @@ async function reconcileUserBilling(user, options = {}) {
   }
 
   const stripe = getStripeClient();
-  const candidate = await findBestSubscriptionCandidate(stripe, user);
+  const candidatesByProduct = await findBestSubscriptionCandidatesByProduct(stripe, user);
+  const candidates = [
+    candidatesByProduct.workspace,
+    candidatesByProduct.hosting,
+  ].filter(Boolean);
 
-  if (!candidate) {
+  if (!candidates.length) {
     user.billingLastSyncedAt = now;
     await user.save();
     return {
@@ -262,17 +322,25 @@ async function reconcileUserBilling(user, options = {}) {
     };
   }
 
-  user.stripeCustomerId = candidate.customer?.id || user.stripeCustomerId;
-  await applySubscriptionToUser(user, candidate.subscription);
+  for (const candidate of candidates) {
+    user.stripeCustomerId = candidate.customer?.id || user.stripeCustomerId;
+    await applySubscriptionToUser(user, candidate.subscription);
+  }
 
   return {
     updated: true,
     skipped: false,
-    reason: 'subscription_applied',
+    reason: candidates.length > 1 ? 'subscriptions_applied' : 'subscription_applied',
     plan: user.plan,
     planStatus: user.planStatus,
+    workspacePlan: user.workspacePlan,
+    workspacePlanStatus: user.workspacePlanStatus,
+    hostingPlan: user.hostingPlan,
+    hostingPlanStatus: user.hostingPlanStatus,
     stripeCustomerId: user.stripeCustomerId,
     stripeSubscriptionId: user.stripeSubscriptionId,
+    stripeWorkspaceSubscriptionId: user.stripeWorkspaceSubscriptionId,
+    stripeHostingSubscriptionId: user.stripeHostingSubscriptionId,
   };
 }
 
@@ -315,5 +383,8 @@ async function reconcileAllUsersBilling(options = {}) {
 module.exports = {
   reconcileUserBilling,
   reconcileAllUsersBilling,
+  collectSubscriptionCandidates,
+  findBestSubscriptionCandidate,
+  findBestSubscriptionCandidatesByProduct,
   shouldAttemptBillingRefresh,
 };

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { sendEmail } = require('../email/emailService');
+const { getSubscriptionPeriod } = require('../stripe/stripeObjectCompat');
 
 const EMAIL_LOGO_CID = 'vicpods-logo@vicpods.app';
 const EMAIL_LOGO_PATH = path.resolve(__dirname, '../../public/images/logo/vicpods-logo-horizontal-dark.png');
@@ -64,6 +65,67 @@ function formatDateLabel(dateValue) {
 
 function getPlanEmailDetails(plan) {
   const normalizedPlan = String(plan || 'free').trim().toLowerCase();
+
+  const currentPlanDetails = {
+    creator: {
+      key: 'creator',
+      label: 'Creator',
+      unlocked: [
+        'One hosted show with publishing and scheduling',
+        'Standard analytics and promotion tools',
+        '50 AI generations each day',
+      ],
+    },
+    growth: {
+      key: 'growth',
+      label: 'Growth',
+      unlocked: [
+        'Three hosted shows and advanced analytics',
+        'Sponsor, private-feed, and promotion tools',
+        'Three collaborators included',
+      ],
+    },
+    studio: {
+      key: 'studio',
+      label: 'Studio',
+      unlocked: [
+        'Ten hosted shows and ten seats',
+        'Approvals, webhooks, and client-ready reports',
+        'Higher media and workflow limits',
+      ],
+    },
+    'hosting-starter': {
+      key: 'hosting-starter',
+      label: 'Starter Hosting',
+      unlocked: [
+        'One hosted show with reliable RSS publishing',
+        '20 GB storage and four upload hours each month',
+        'Up to 20,000 monthly downloads',
+      ],
+    },
+    'hosting-growth': {
+      key: 'hosting-growth',
+      label: 'Growth Hosting',
+      unlocked: [
+        'Three hosted shows with more bandwidth',
+        '100 GB storage and twelve upload hours each month',
+        'Collaborators and private subscribers',
+      ],
+    },
+    'hosting-studio': {
+      key: 'hosting-studio',
+      label: 'Studio Hosting',
+      unlocked: [
+        'Higher-capacity hosting for a studio portfolio',
+        'Expanded storage, uploads, and download capacity',
+        'Team publishing workflows',
+      ],
+    },
+  };
+
+  if (currentPlanDetails[normalizedPlan]) {
+    return currentPlanDetails[normalizedPlan];
+  }
 
   if (normalizedPlan === 'premium') {
     return {
@@ -614,15 +676,16 @@ async function sendPaymentSuccessEmailIfNeeded({ user, invoice, subscription, pl
   const appUrl = String(process.env.APP_URL || 'http://localhost:3000').trim();
   const logoAttachment = buildEmailLogoAttachment();
   const amountLabel = formatCurrencyAmount(invoice.amount_paid || invoice.total, invoice.currency);
+  const subscriptionPeriodEnd = getSubscriptionPeriod(subscription).currentPeriodEnd;
+  const isHostingPlan = planDetails.key.startsWith('hosting-');
   const message = buildPaymentSuccessEmail({
     name: user.name,
     plan: planDetails.key,
     appUrl,
     receiptUrl: invoice.hosted_invoice_url || invoice.invoice_pdf || '',
     amountLabel,
-    currentPeriodEnd: subscription?.current_period_end
-      ? new Date(subscription.current_period_end * 1000)
-      : user.currentPeriodEnd,
+    currentPeriodEnd: subscriptionPeriodEnd
+      || (isHostingPlan ? user.hostingCurrentPeriodEnd : user.currentPeriodEnd),
     logoCid: logoAttachment ? EMAIL_LOGO_CID : '',
     isRenewal: String(invoice.billing_reason || '').trim() === 'subscription_cycle',
   });

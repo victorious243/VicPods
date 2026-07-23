@@ -126,6 +126,7 @@ function getIndexablePublicPages() {
   return [
     { path: '/', changefreq: 'daily', priority: '1.0' },
     { path: '/generate-episode', changefreq: 'weekly', priority: '0.8' },
+    { path: '/pricing', changefreq: 'weekly', priority: '0.9' },
     { path: '/podcast-idea-generator', changefreq: 'weekly', priority: '0.9' },
     { path: '/examples', changefreq: 'weekly', priority: '0.9' },
     { path: '/whats-new', changefreq: 'weekly', priority: '0.8' },

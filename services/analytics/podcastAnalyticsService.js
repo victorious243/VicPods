@@ -348,7 +348,7 @@ async function aggregateDailyAnalytics({ from, to = new Date() } = {}) {
       dateKey: bucket.dateKey,
     },
     { $set: bucket },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   ));
 
   return Promise.all(writes);

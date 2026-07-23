@@ -87,7 +87,14 @@ const showCollaboratorSchema = new mongoose.Schema(
     },
     inviteToken: {
       type: String,
-      default: createInviteToken,
+      default: '',
+      trim: true,
+      maxlength: 64,
+      index: true,
+    },
+    inviteTokenHash: {
+      type: String,
+      default: '',
       trim: true,
       maxlength: 64,
       index: true,
@@ -115,9 +122,11 @@ const showCollaboratorSchema = new mongoose.Schema(
 showCollaboratorSchema.index({ showId: 1, email: 1 }, { unique: true });
 showCollaboratorSchema.index({ userId: 1, role: 1 });
 showCollaboratorSchema.index({ acceptedUserId: 1, status: 1 });
+showCollaboratorSchema.index({ inviteTokenHash: 1, status: 1 });
 
 module.exports = {
   COLLABORATOR_ROLES,
   COLLABORATOR_STATUSES,
+  createInviteToken,
   ShowCollaborator: mongoose.model('ShowCollaborator', showCollaboratorSchema),
 };

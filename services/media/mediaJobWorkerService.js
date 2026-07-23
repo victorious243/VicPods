@@ -164,7 +164,7 @@ async function claimNextMediaJob() {
     },
     { $set: { status: 'processing', lastError: '' } },
     {
-      new: true,
+      returnDocument: 'after',
       sort: { createdAt: 1 },
     }
   );

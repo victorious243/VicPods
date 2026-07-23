@@ -113,6 +113,13 @@ app.use(express.json({ limit: '80mb' }));
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 app.use(cookieParser());
 app.use('/uploads/audio', trackAudioDownload);
+app.use((req, res, next) => {
+  if (/\.md(?:$|[?#])/i.test(req.path || '')) {
+    return res.status(404).send('Not found');
+  }
+
+  return next();
+});
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,

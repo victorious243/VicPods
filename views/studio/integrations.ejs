@@ -148,6 +148,7 @@
               <small><%= connection.provider %> · <%= connection.status %> · <%= connection.lastDeliveryStatus || 'configured' %></small>
               <strong><%= connection.label || connection.provider %></strong>
               <em><%= connection.events.join(', ') || 'No events selected' %></em>
+              <em><%= connection.configuredForDelivery ? 'Delivery verified for queueing' : 'Needs a valid endpoint before delivery' %></em>
             </span>
             <form method="POST" action="/studio/integrations/connections/<%= connection._id %>/test">
               <button type="submit" class="btn btn-ghost">Send test</button>
@@ -200,11 +201,24 @@
         <div class="recording-panel">
           <span class="mini-label"><%= item.jobType || item.eventType %> · <%= item.status %></span>
           <p><%= item.provider || item.targetUrl || 'VicPods integration record' %></p>
+          <% if (item.idempotencyKey) { %>
+            <small>Delivery key <%= item.idempotencyKey.slice(0, 12) %></small>
+          <% } %>
           <% if (item.attemptCount) { %>
             <small><%= item.attemptCount %> attempt<%= item.attemptCount === 1 ? '' : 's' %><% if (item.responseCode) { %> · HTTP <%= item.responseCode %><% } %></small>
           <% } %>
+          <% if (item.nextAttemptAt && ['queued', 'retrying'].includes(item.status)) { %>
+            <small>Next attempt <%= new Date(item.nextAttemptAt).toLocaleString() %></small>
+          <% } %>
           <% if (item.errorMessage || item.lastError) { %>
             <small><%= item.errorMessage || item.lastError %></small>
+          <% } %>
+          <% if (item.attemptLog && item.attemptLog.length) { %>
+            <div class="integration-attempt-log">
+              <% item.attemptLog.slice(-3).forEach((attempt) => { %>
+                <small><%= new Date(attempt.attemptedAt).toLocaleString() %> · <%= attempt.status %><% if (attempt.responseCode) { %> · HTTP <%= attempt.responseCode %><% } %></small>
+              <% }) %>
+            </div>
           <% } %>
           <% if (item.status === 'failed') { %>
             <form method="POST" action="/studio/integrations/deliveries/<%= item._id %>/retry" class="inline-actions">

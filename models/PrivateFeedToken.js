@@ -76,6 +76,13 @@ const privateFeedTokenSchema = new mongoose.Schema(
       maxlength: 120,
       index: true,
     },
+    stripePriceId: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
+      index: true,
+    },
     checkoutSessionId: {
       type: String,
       default: '',
@@ -87,6 +94,24 @@ const privateFeedTokenSchema = new mongoose.Schema(
       enum: ['active', 'trialing', 'past_due', 'canceled', 'revoked'],
       default: 'active',
       index: true,
+    },
+    currentPeriodStart: {
+      type: Date,
+      default: null,
+    },
+    currentPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+    canceledAt: {
+      type: Date,
+      default: null,
+    },
+    lastStripeEventType: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 120,
     },
     expiresAt: {
       type: Date,
@@ -108,5 +133,6 @@ const privateFeedTokenSchema = new mongoose.Schema(
 
 privateFeedTokenSchema.index({ showId: 1, status: 1 });
 privateFeedTokenSchema.index({ showId: 1, accessType: 1, subscriberEmail: 1 });
+privateFeedTokenSchema.index({ stripeSubscriptionId: 1, entitlementStatus: 1 });
 
 module.exports = mongoose.model('PrivateFeedToken', privateFeedTokenSchema);

@@ -21,6 +21,13 @@ const webhookDeliverySchema = new mongoose.Schema(
       maxlength: 120,
       index: true,
     },
+    idempotencyKey: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 96,
+      index: true,
+    },
     targetUrl: {
       type: String,
       default: '',
@@ -117,5 +124,12 @@ const webhookDeliverySchema = new mongoose.Schema(
 
 webhookDeliverySchema.index({ userId: 1, status: 1, createdAt: -1 });
 webhookDeliverySchema.index({ status: 1, nextAttemptAt: 1 });
+webhookDeliverySchema.index(
+  { userId: 1, integrationId: 1, idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: 'string', $gt: '' } },
+  }
+);
 
 module.exports = mongoose.model('WebhookDelivery', webhookDeliverySchema);

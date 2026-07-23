@@ -403,6 +403,11 @@ async function addShowCollaborator(req, res, next) {
     );
     return res.redirect('/studio/teams');
   } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect('/studio/teams');
+    }
+
     return next(error);
   }
 }
@@ -454,7 +459,7 @@ async function saveIntegrationConnection(req, res, next) {
     const input = normalizeConnectionInput(req.body);
 
     if (['webhook', 'zapier'].includes(input.provider) && !input.endpointUrl) {
-      req.flash('error', 'Add a valid webhook or Zapier endpoint URL.');
+      req.flash('error', input.endpointValidation?.reason || 'Add a valid webhook or Zapier endpoint URL.');
       return res.redirect('/studio/integrations');
     }
 
@@ -463,14 +468,40 @@ async function saveIntegrationConnection(req, res, next) {
       return res.redirect('/studio/integrations');
     }
 
-    await IntegrationConnection.create({
-      userId: req.currentUser._id,
-      ...input,
-    });
+    await IntegrationConnection.findOneAndUpdate(
+      {
+        userId: req.currentUser._id,
+        provider: input.provider,
+        label: input.label,
+      },
+      {
+        $set: {
+          provider: input.provider,
+          label: input.label,
+          endpointUrl: input.endpointUrl,
+          status: input.status,
+          events: input.events,
+          settings: input.settings,
+          lastDeliveryStatus: input.status === 'paused' ? 'paused' : 'configured',
+        },
+        $setOnInsert: {
+          userId: req.currentUser._id,
+        },
+      },
+      {
+        returnDocument: 'after',
+        upsert: true,
+      }
+    );
 
     req.flash('success', 'Integration connection saved.');
     return res.redirect('/studio/integrations');
   } catch (error) {
+    if (error.statusCode) {
+      req.flash('error', error.message);
+      return res.redirect('/studio/integrations');
+    }
+
     return next(error);
   }
 }

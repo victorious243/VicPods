@@ -1,10 +1,26 @@
 const { renderPage } = require('../utils/render');
-const { createCheckoutSession } = require('../services/stripe/checkout');
+const { createCheckoutSession, hasActiveProductSubscription } = require('../services/stripe/checkout');
+const { buildPaymentLinkCheckout } = require('../services/stripe/paymentLinks');
 const { ensureStripeCustomerForUser, createPortalSession } = require('../services/stripe/portal');
 const { getPricingDisplay } = require('../services/billing/pricing');
+const {
+  getIncludedHostingPlan,
+  HOSTING_PRIORITY,
+  getLegacyPlanForWorkspacePlan,
+  normalizeHostingPlan,
+  normalizeWorkspacePlan,
+  WORKSPACE_PRIORITY,
+} = require('../services/billing/planCatalog');
+const { buildBillingUsageSnapshot } = require('../services/billing/usageLimitsService');
 const { reconcileCheckoutSession } = require('../services/stripe/webhookHandlers');
-const { resolveEffectivePlan } = require('../middleware/requirePlan');
+const {
+  hasActiveHostingSubscription,
+  resolveEffectiveHostingPlan,
+  resolveEffectivePlan,
+  resolveEffectiveWorkspacePlan,
+} = require('../middleware/requirePlan');
 const { recordActivityEvent } = require('../services/analytics/appActivityService');
+const { AppError } = require('../utils/errors');
 const {
   getBillingProofSnippets,
   getFeaturedExamples,
@@ -38,18 +54,50 @@ function formatDate(dateValue) {
   return new Date(dateValue).toLocaleString();
 }
 
-function buildBillingSnapshot(user, effectivePlan) {
+async function buildBillingSnapshot(user, effectivePlan) {
   const planStatus = String(user?.planStatus || 'canceled').toLowerCase();
+  const effectiveWorkspacePlan = resolveEffectiveWorkspacePlan(user);
+  const workspacePlan = normalizeWorkspacePlan(user?.workspacePlan || effectiveWorkspacePlan);
+  const hostingPlan = normalizeHostingPlan(user?.hostingPlan);
+  const hostingPlanStatus = String(user?.hostingPlanStatus || 'canceled').toLowerCase();
+  const hostingActive = hasActiveHostingSubscription(user);
+  const usage = user
+    ? await buildBillingUsageSnapshot({
+        userId: user._id,
+        workspacePlan: effectiveWorkspacePlan,
+        hostingPlan,
+        hostingActive,
+      })
+    : null;
+
   return {
     effectivePlan,
+    effectiveWorkspacePlan,
+    storedWorkspacePlan: workspacePlan,
+    storedHostingPlan: hostingPlan,
+    includedHostingPlan: getIncludedHostingPlan(effectiveWorkspacePlan),
     storedPlan: String(user?.plan || 'free').toLowerCase(),
     planStatus,
+    workspacePlanStatus: String(user?.workspacePlanStatus || user?.planStatus || 'canceled').toLowerCase(),
+    hostingPlanStatus,
     planStatusLabel: planStatus.replace(/_/g, ' '),
+    hostingPlanStatusLabel: hostingPlanStatus.replace(/_/g, ' '),
     statusBadgeClass: statusBadgeClass(planStatus),
     currentPeriodStartLabel: formatDate(user?.currentPeriodStart),
     currentPeriodEndLabel: formatDate(user?.currentPeriodEnd),
+    workspaceCurrentPeriodEndLabel: formatDate(user?.workspaceCurrentPeriodEnd || user?.currentPeriodEnd),
+    hostingCurrentPeriodEndLabel: formatDate(user?.hostingCurrentPeriodEnd),
     cancelAtPeriodEnd: Boolean(user?.cancelAtPeriodEnd),
-    isPaidActive: effectivePlan !== 'free' && ACTIVE_BILLING_STATUSES.has(planStatus),
+    hostingCancelAtPeriodEnd: Boolean(user?.hostingCancelAtPeriodEnd),
+    workspacePaymentGraceUntilLabel: formatDate(user?.workspacePaymentGraceUntil),
+    hostingPaymentGraceUntilLabel: formatDate(user?.hostingPaymentGraceUntil),
+    billingAttentionReason: String(user?.billingAttentionReason || ''),
+    billingNextPaymentAttemptAtLabel: formatDate(user?.billingNextPaymentAttemptAt),
+    isPaidActive: (
+      effectivePlan !== 'free'
+      && (ACTIVE_BILLING_STATUSES.has(planStatus) || Boolean(user?.workspacePaymentGraceUntil))
+    ) || hostingActive,
+    usage,
   };
 }
 
@@ -85,7 +133,10 @@ function buildCheckoutSyncViewModel({ sessionId, syncResult, billing }) {
   }
 
   if (billing.isPaidActive) {
-    const planLabel = billing.effectivePlan.charAt(0).toUpperCase() + billing.effectivePlan.slice(1);
+    const activePlan = billing.effectiveWorkspacePlan !== 'free'
+      ? billing.effectiveWorkspacePlan
+      : billing.storedHostingPlan;
+    const planLabel = activePlan.charAt(0).toUpperCase() + activePlan.slice(1);
     return {
       state: 'synced',
       title: `${planLabel} access is live`,
@@ -104,42 +155,86 @@ function buildCheckoutSyncViewModel({ sessionId, syncResult, billing }) {
   };
 }
 
-function showBilling(req, res) {
-  const effectivePlan = req.effectivePlan || resolveEffectivePlan(req.currentUser);
-  const billing = buildBillingSnapshot(req.currentUser, effectivePlan);
+async function showBilling(req, res, next) {
+  try {
+    const effectivePlan = req.effectivePlan || resolveEffectivePlan(req.currentUser);
+    const billing = await buildBillingSnapshot(req.currentUser, effectivePlan);
 
-  void recordActivityEvent(req, {
-    eventType: 'billing_page_viewed',
-    user: req.currentUser,
-    statusCode: 200,
-    metadata: {
-      effectivePlan,
-      surface: 'standalone',
-    },
-  });
+    void recordActivityEvent(req, {
+      eventType: 'billing_page_viewed',
+      user: req.currentUser,
+      statusCode: 200,
+      metadata: {
+        effectivePlan,
+        effectiveWorkspacePlan: billing.effectiveWorkspacePlan,
+        effectiveHostingPlan: billing.usage?.effectiveHostingPlan || '',
+        surface: 'standalone',
+      },
+    });
 
-  return renderPage(res, {
-    title: req.t('page.billing.title', 'Upgrade - VicPods'),
-    pageTitle: req.t('page.billing.header', 'Upgrade'),
-    subtitle: req.t('page.billing.subtitle', 'Choose the VicPods plan that fits your production rhythm.'),
-    view: 'billing/index',
-    data: {
-      effectivePlan,
-      billing,
-      pricing: getPricingDisplay(),
-      billingProofSnippets: getBillingProofSnippets(),
-      featuredExamples: getFeaturedExamples({ limit: 2 }),
-    },
-  });
+    return renderPage(res, {
+      title: req.t('page.billing.title', 'Upgrade - VicPods'),
+      pageTitle: req.t('page.billing.header', 'Upgrade'),
+      subtitle: req.t('page.billing.subtitle', 'Choose the VicPods plan that fits your production rhythm.'),
+      view: 'billing/index',
+      data: {
+        effectivePlan,
+        billing,
+        pricing: getPricingDisplay(),
+        billingProofSnippets: getBillingProofSnippets(),
+        featuredExamples: getFeaturedExamples({ limit: 2 }),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function createCheckout(req, res, next) {
   try {
     const plan = String(req.body.plan || '').toLowerCase();
+    const productType = String(req.body.productType || 'workspace').toLowerCase();
+    const effectiveWorkspacePlan = resolveEffectiveWorkspacePlan(req.currentUser);
+    const effectiveHostingPlan = resolveEffectiveHostingPlan(req.currentUser);
 
-    const session = await createCheckoutSession({
+    if (productType === 'workspace') {
+      const selectedWorkspacePlan = normalizeWorkspacePlan(plan);
+      if ((WORKSPACE_PRIORITY[selectedWorkspacePlan] || 0) <= (WORKSPACE_PRIORITY[effectiveWorkspacePlan] || 0)) {
+        throw new AppError('Choose a workspace plan above your current plan, or use Manage Billing for changes.', 400);
+      }
+    }
+
+    if (productType === 'hosting') {
+      const selectedHostingPlan = normalizeHostingPlan(plan);
+      const includedHostingPlan = getIncludedHostingPlan(effectiveWorkspacePlan);
+      const minimumHostingPriority = Math.max(
+        HOSTING_PRIORITY[includedHostingPlan] || 0,
+        HOSTING_PRIORITY[effectiveHostingPlan] || 0
+      );
+
+      if ((HOSTING_PRIORITY[selectedHostingPlan] || 0) <= minimumHostingPriority) {
+        throw new AppError('Choose a hosting add-on above the capacity already included with your account.', 400);
+      }
+    }
+
+    if (hasActiveProductSubscription(req.currentUser, productType)) {
+      throw new AppError(
+        productType === 'hosting'
+          ? 'You already have an active hosting subscription. Use Manage Billing to change or cancel it.'
+          : 'You already have an active workspace subscription. Use Manage Billing to change or cancel it.',
+        409
+      );
+    }
+
+    const paymentLinkCheckout = buildPaymentLinkCheckout({
       user: req.currentUser,
       plan,
+      productType,
+    });
+    const checkout = paymentLinkCheckout || await createCheckoutSession({
+      user: req.currentUser,
+      plan,
+      productType,
       appUrl: process.env.APP_URL || 'http://localhost:3000',
     });
 
@@ -149,11 +244,13 @@ async function createCheckout(req, res, next) {
       statusCode: 302,
       metadata: {
         plan,
-        checkoutSessionId: String(session.id || ''),
+        productType,
+        checkoutSource: checkout.source || 'checkout_session',
+        checkoutSessionId: String(checkout.id || ''),
       },
     });
 
-    return res.redirect(session.url);
+    return res.redirect(checkout.url);
   } catch (error) {
     if (error.statusCode) {
       req.flash('error', error.message);
@@ -202,12 +299,15 @@ async function showSuccess(req, res, next) {
       }
     }
 
-    const effectivePlan = resolveEffectivePlan(req.currentUser);
+    const effectiveWorkspacePlan = resolveEffectiveWorkspacePlan(req.currentUser);
+    const effectivePlan = getLegacyPlanForWorkspacePlan(effectiveWorkspacePlan) || resolveEffectivePlan(req.currentUser);
     req.effectivePlan = effectivePlan;
+    req.effectiveWorkspacePlan = effectiveWorkspacePlan;
     res.locals.effectivePlan = effectivePlan;
+    res.locals.effectiveWorkspacePlan = effectiveWorkspacePlan;
     res.locals.currentUser = req.currentUser;
 
-    const billing = buildBillingSnapshot(req.currentUser, effectivePlan);
+    const billing = await buildBillingSnapshot(req.currentUser, effectivePlan);
     const checkoutSync = buildCheckoutSyncViewModel({
       sessionId: checkoutSessionId,
       syncResult,

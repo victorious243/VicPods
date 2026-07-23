@@ -1,5 +1,8 @@
 const fs = require('fs/promises');
-const { buildStoredAudioAbsolutePath } = require('./audioStorageService');
+const {
+  buildStoredAudioAbsolutePath,
+  readStoredAudioBuffer,
+} = require('./audioStorageService');
 
 const MPEG_VERSION_BY_BITS = {
   0: '2.5',
@@ -169,7 +172,8 @@ async function extractAudioMetadataFromFile(absolutePath, options = {}) {
 }
 
 async function extractAudioMetadataFromStorageKey(storageKey, options = {}) {
-  return extractAudioMetadataFromFile(buildStoredAudioAbsolutePath(storageKey), options);
+  const buffer = await readStoredAudioBuffer(storageKey);
+  return extractAudioMetadataFromBuffer(buffer, options);
 }
 
 module.exports = {

@@ -23,3 +23,7 @@ yarn-error.log*
 coverage/
 .nyc_output/
 public/uploads/
+
+# Private/internal Markdown docs
+docs/**/*.md
+docs/*.md

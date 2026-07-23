@@ -712,6 +712,36 @@ const episodeSchema = new mongoose.Schema(
               default: '',
               maxlength: 32000,
             },
+            filename: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 180,
+            },
+            aspectRatio: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 40,
+            },
+            altText: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 300,
+            },
+            captionText: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 1200,
+            },
+            shareText: {
+              type: String,
+              default: '',
+              trim: true,
+              maxlength: 500,
+            },
             updatedAt: {
               type: Date,
               default: null,
@@ -865,7 +895,7 @@ episodeSchema.methods.ensureShareToken = async function ensureShareToken() {
       $set: { shareToken: token },
     },
     {
-      new: true,
+      returnDocument: 'after',
       timestamps: false,
     }
   ).select('shareToken');

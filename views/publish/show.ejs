@@ -86,7 +86,7 @@
         </div>
       <% } %>
 
-      <% if (publishedShow.privateFeedOffer && publishedShow.privateFeedOffer.enabled && publishedShow.privateFeedOffer.priceId) { %>
+      <% if (publishedShow.privateFeedOffer && publishedShow.privateFeedOffer.enabled && publishedShow.privateFeedOffer.priceId && publishedShow.privateFeedOffer.payoutsReady) { %>
         <div class="published-support-panel">
           <span class="mini-label"><%= publishedShow.privateFeedOffer.title %></span>
           <p><%= publishedShow.privateFeedOffer.description %></p>

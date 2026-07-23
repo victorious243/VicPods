@@ -194,7 +194,7 @@ async function syncPodcastShowStats(showId) {
         feedStatus: 'draft',
       };
 
-  return PodcastShow.findByIdAndUpdate(normalizedShowId, { $set: update }, { new: true });
+  return PodcastShow.findByIdAndUpdate(normalizedShowId, { $set: update }, { returnDocument: 'after' });
 }
 
 async function publishDueEpisodesForShow(showId, now = new Date()) {

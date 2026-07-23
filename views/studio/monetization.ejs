@@ -170,7 +170,7 @@
               <span class="mini-label">Paid private feed</span>
               <h4>Subscriber offer</h4>
             </div>
-            <span class="mini-label"><%= item.privateSubscriberCount || 0 %> active</span>
+            <span class="mini-label"><%= item.privateFeedOffer?.payoutMode === 'live' ? 'Live payouts' : 'Setup mode' %></span>
           </div>
           <label class="team-field">
             <span>Offer title</span>
@@ -190,7 +190,29 @@
               <input type="text" name="privateFeedCtaLabel" maxlength="80" value="<%= monetizationSettings.privateFeedCtaLabel || '' %>" placeholder="Unlock private feed" />
             </label>
           </div>
-          <p class="mini-note">Use a recurring Stripe price so listeners can subscribe and receive entitlement-based feed access automatically.</p>
+          <div class="studio-command-metrics">
+            <div class="studio-metric-pill">
+              <span>Subscribers</span>
+              <strong><%= item.privateSubscriberCount || 0 %></strong>
+              <small>Active entitlements</small>
+            </div>
+            <div class="studio-metric-pill">
+              <span>Gross/mo</span>
+              <strong><%= item.privateFeedRevenue?.grossLabel || '$0.00' %></strong>
+              <small><%= item.privateFeedRevenue?.priceLabel || '$5.00' %> estimated price</small>
+            </div>
+            <div class="studio-metric-pill">
+              <span>VicPods</span>
+              <strong><%= item.privateFeedRevenue?.platformFeeLabel || '$0.00' %></strong>
+              <small><%= ((item.privateFeedRevenue?.platformFeeBps || 0) / 100).toFixed(1) %>% platform fee</small>
+            </div>
+            <div class="studio-metric-pill">
+              <span>Creator net</span>
+              <strong><%= item.privateFeedRevenue?.creatorNetLabel || '$0.00' %></strong>
+              <small>Before Stripe fees/tax</small>
+            </div>
+          </div>
+          <p class="mini-note"><%= item.privateFeedOffer?.payoutsReady ? 'Paid private feed checkout is live for this environment.' : 'Paid private feeds stay in setup mode until Stripe Connect payouts and creator ledgers are enabled.' %></p>
         </div>
 
         <div class="inline-actions">

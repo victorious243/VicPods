@@ -1,9 +1,9 @@
-<% const planLabels = { free: t('plan.free', 'Free'), pro: t('plan.pro', 'Pro'), premium: t('plan.premium', 'Premium') }; %>
+<% const planLabels = { free: 'Free', creator: 'Creator', growth: 'Growth', studio: 'Studio', pro: 'Creator', premium: 'Growth' }; %>
 
 <section class="card settings-nav-card">
   <div class="section-head">
     <h3>Settings</h3>
-    <span class="mini-label"><%= planLabels[effectivePlan] || effectivePlan %> plan</span>
+    <span class="mini-label"><%= planLabels[effectiveWorkspacePlan || effectivePlan] || effectiveWorkspacePlan || effectivePlan %> workspace</span>
   </div>
   <div class="settings-tab-grid" id="onboarding-settings-tabs">
     <a class="settings-tab-card <%= selectedSection === 'profile' ? 'active-settings-tab' : '' %>" href="/settings?section=profile">

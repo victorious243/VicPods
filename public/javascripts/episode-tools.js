@@ -209,6 +209,7 @@
 
   function initAudioUploads() {
     var widgets = document.querySelectorAll('[data-audio-upload]');
+    var maxBrowserUploadBytes = 50 * 1024 * 1024;
 
     widgets.forEach(function bindAudioUpload(root) {
       var fileInput = root.querySelector('[data-audio-file]');
@@ -230,6 +231,11 @@
 
         if (!looksLikeMp3) {
           setAudioStatus(root, 'Only MP3 uploads are supported right now.', true);
+          return;
+        }
+
+        if (file.size > maxBrowserUploadBytes) {
+          setAudioStatus(root, 'MP3 uploads are limited to 50 MB until direct large-file upload is enabled.', true);
           return;
         }
 

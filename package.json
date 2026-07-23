@@ -17,6 +17,9 @@
     "seed:admin": "node ./scripts/createAdminUser.js",
     "billing:reconcile": "node ./scripts/reconcileStripeBilling.js",
     "stripe:setup-plans": "node ./scripts/setupStripePlans.js --write-env",
+    "stripe:configure-payment-links": "node ./scripts/configureStripePaymentLinks.js",
+    "stripe:check-billing": "node ./scripts/checkStripeBillingSetup.js",
+    "stripe:test-webhook": "node ./scripts/testStripeWebhookEndpoint.js",
     "email:test": "node ./scripts/testEmailDelivery.js",
     "email:lifecycle": "node ./scripts/runLifecycleEmailCampaigns.js",
     "google:test-client": "node ./scripts/testGoogleOidcClient.js"
