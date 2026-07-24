@@ -122,9 +122,24 @@
       border-radius: 50%;
       background:
         radial-gradient(circle at 50% 50%, #242b35 0 13%, transparent 14%),
+        conic-gradient(from 20deg, transparent 0 9%, rgba(255, 255, 255, 0.2) 12%, transparent 18% 50%, rgba(255, 255, 255, 0.1) 54%, transparent 61% 100%),
         repeating-radial-gradient(circle at 50% 50%, var(--record) 0 5px, #161a22 6px 7px);
       box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
       opacity: 0.9;
+      animation: embed-vinyl-spin 8s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes embed-vinyl-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .embed-record {
+        animation: none;
+      }
     }
 
     .embed-meter {
